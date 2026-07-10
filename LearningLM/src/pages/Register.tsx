@@ -31,16 +31,16 @@ export function Register() {
                     <div className="flex flex-col mt-[47px] w-[519px]">
                         <p className="font-bold text-[#52525B]">이메일</p>
                         <input type="email" placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-                        <button className="cursor-pointer w-[145px] h-[54px] flex items-center justify-center border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]">인증번호 전송</button>
+                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]">인증번호 전송</button>
                     </div>
                     <div className="flex flex-col w-[519px] mt-[20px]">
                         <p className="flex text-[#52525B] font-bold">비밀번호</p>
-                        <input type="password" className="h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                        <input type="password" placeholder="********" className="h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
                         <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
                     </div>
                     <div className="w-[519px] flex flex-col mt-[20px]">
                         <p className="text-[#52525B] font-bold">비밀번호 확인</p>
-                        <input type="password" className="h-[54px] pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                        <input type="password" placeholder="********" className="h-[54px] pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
                     </div>
                     <div className="flex flex-col w-[519px] mt-[20px]">
                         <p className="text-[#52525B] font-bold">닉네임</p>
@@ -63,11 +63,11 @@ export function Register() {
                                 <span className="link font-bold text-[#6366F1]">개인정보 처리방침</span>에 동의합니다.
                             </span>
                         </label>
-                        <button className="cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]
+                        <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]
                         mt-[20px]"
                             onClick={() => {
                                 navigate("/home")
-                            }}><span className="text-[#9D9ED0] text-[24px] font-bold ">회원가입</span></button>
+                            }}><span className="text-[24px] font-bold ">회원가입</span></button>
                     </div>
                     <p className="text-[#52525B] mt-[71px]">이미 계정이 있으신가요? {" "}
                         <button onClick={() => {
