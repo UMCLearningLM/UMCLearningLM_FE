@@ -32,11 +32,12 @@ export function PwFind() {
                         <p className="font-bold">이메일</p>
                         <input type="email" placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
                     </div>
-                    <button className="cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+                    <button className="cursor-pointer hover:bg-[#6366F1]
+                        hover:text-white text-[#9D9ED0] w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                         onClick={() => {
                             navigate("/home")
                         }}>
-                        <span className="text-[#9D9ED0] text-[24px] font-bold ">다음</span>
+                        <span className=" text-[24px] font-bold ">다음</span>
                     </button>
                     <div>
                         <p className=" mt-[71px]">계정이 없으신가요? {" "}
