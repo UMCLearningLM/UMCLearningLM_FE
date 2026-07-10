@@ -34,7 +34,7 @@ export function Login() {
                     </div>
                     <div className="flex flex-col w-[519px] mt-[30px]">
                         <p className="text-[24px]">비밀번호</p>
-                        <input type="password" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                        <input type="password" placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
                     </div>
 
                     {/*login state && login btn */}
@@ -52,11 +52,11 @@ export function Login() {
                                 로그인 상태 유지
                             </span>
                         </label>
-                        <button className="cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+                        <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                             onClick={() => {
                                 navigate("/home")
                             }}>
-                            <span className="text-[#9D9ED0] text-[24px] font-bold ">로그인</span>
+                            <span className="text-[24px] font-bold ">로그인</span>
                         </button>
                     </div>
                     {/*login state && login btn 끝*/}
