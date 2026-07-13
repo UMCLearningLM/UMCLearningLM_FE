@@ -14,64 +14,55 @@ export function Login() {
 
     const [email, setEmail] = useState("");
     const [pw, setPw] = useState("");
-    const [emailFail, setEmailFail] = useState(false);
-    const [pwCheckFail, setPwCheckFail] = useState(false);
-    const [pwNumFail, setPwNumFail] = useState(false);
+    const [emailState, setEmailState] = useState<"basic" | "incorrect" | "success">("basic");
+    const [pwCheckState, setPwCheckState] = useState<"basic" | "incorrect" | "success">("basic");
+    const [pwNumFail, setPwNumFail] = useState<"basic" | "incorrect" | "success">("basic");
 
-    console.log(email);
-    console.log(pw);
     const login = async () => {
-
-
-        if (emailFail || pwCheckFail || pwNumFail) {
-            if (email != "sam") {
-                setEmailFail(true);
-            } else {
-                setEmailFail(false);
-            }
-            if (pw != "12345678") {
-                if (0 < pw.length && pw.length < 8) {
-                    setPwNumFail(true);
-                } else {
-                    setPwNumFail(false);
-                }
-                setPwCheckFail(true);
-            } else {
-                setPwCheckFail(false);
-            }
+        if (email == "sam" && pw == "12345678") {
+            navigate("/home");
         }
         else {
-            console.log("emailFaile", emailFail);
-            console.log("pwCheckFail", pwCheckFail);
-            console.log("pwNumFail", pwNumFail);
-            // navigate("/home");
+            console.log("로그인 실패");
+            if (email != "sam") {
+                setEmailState("incorrect");
+            } else {
+                setEmailState("success");
+            }
+            if (pw != "12345678") {
+                setPwCheckState("incorrect");
+            } else {
+                setPwCheckState("success");
+            }
+
+            if (0 < pw.length && pw.length < 8) {
+                setPwNumFail("incorrect");
+            } else {
+                setPwNumFail("success");
+            }
+            // console.log("emailState", emailState);
+            // console.log("pwCheckState", pwCheckState);
+            // console.log("pwNumFail", pwNumFail);
         }
-        console.log(email);
-        console.log(pw);
+        // try {
+        //     const response = await axios.post("/auth/login", {
+        //         email,
+        //         password: pw,
+        //     });
 
+        //     console.log(response.data);
 
-        try {
-            const response = await axios.post("/auth/login", {
-                email,
-                password: pw,
-            });
+        //     navigate("/home");
 
-            console.log(response.data);
-
-            navigate("/home");
-
-        } catch (error) {
-            console.log(error);
-        }
+        // } catch (error) {
+        //     console.log(error);
+        // }
 
     }
-    useEffect(() => {
-        if (0 < pw.length && pw.length < 8) {
-            setPwNumFail(true);
-        } else {
-            setPwNumFail(false);
-        }
-    }, [pw]);
+
+
+
+
 
     return (
         <>
@@ -103,7 +94,7 @@ export function Login() {
                             }}
                             value={email}
                             placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-                        {emailFail && (
+                        {emailState == "incorrect" && (
                             <>
                                 <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
                             </>
@@ -117,12 +108,12 @@ export function Login() {
                             }}
                             value={pw}
                             placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
-                        {pwCheckFail && (
+                        {pwCheckState == "incorrect" && (
                             <>
                                 <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호가 맞지 않습니다. 다시 입력해주세요.</p>
                             </>
                         )}
-                        {pwNumFail && (
+                        {pwNumFail == "incorrect" && (
                             <>
                                 <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호 8자리 이상 입력해주세요.</p>
                             </>
