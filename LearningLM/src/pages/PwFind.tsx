@@ -6,12 +6,6 @@ import { useNavigate } from "react-router-dom"
 export function PwFind() {
     const navigate = useNavigate();
     //이메일 인증
-    var bor = "#F8A3A3";
-    // 기본 - E4E4E7
-    // 오류 - F8A3A3
-    var text = "#52525B";
-    // 기본 - 52525B
-    // 오류 - EF8888
     const [email, setEmail] = useState("");
     const [emailState, setEmailState] = useState<"basic" | "notEnroll" | "success">("basic");
     const [emailForm, setEmailForm] = useState(false);
