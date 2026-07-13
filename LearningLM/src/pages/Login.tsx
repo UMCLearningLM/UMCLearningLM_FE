@@ -1,11 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 {/* npm install react-icons */ }
 import { useNavigate } from "react-router-dom"
 
 export function Login() {
+
+
+
     const navigate = useNavigate();
     const [checked, setChecked] = useState(false);
+
+    const [email, setEmail] = useState("");
+    const [pw, setPw] = useState("");
+    const [emailFail, setEmailFail] = useState(false);
+    const [pwCheckFail, setPwCheckFail] = useState(false);
+    const [pwNumFail, setPwNumFail] = useState(false);
+
+    console.log(email);
+    console.log(pw);
+    const login = async () => {
+
+        if (email != "sam") {
+            setEmailFail(true);
+        } else {
+            setEmailFail(false);
+        }
+        if (pw != "12345678") {
+            if (0 < pw.length && pw.length < 8) {
+                setPwNumFail(true);
+            } else {
+                setPwNumFail(false);
+            }
+            setPwCheckFail(true);
+        } else {
+            setPwCheckFail(false);
+        }
+        if (!emailFail && !pwCheckFail && !pwNumFail) {
+            navigate("/home");
+        }
+        console.log(email);
+        console.log(pw);
+
+    }
+    useEffect(() => {
+        if (0 < pw.length && pw.length < 8) {
+            setPwNumFail(true);
+        } else {
+            setPwNumFail(false);
+        }
+    }, [pw]);
+
     return (
         <>
             <div className="min-h-screen flex flex-col items-center bg-[#F5F5F7] text-[#464646] text-[18px] py-[100px]">
@@ -30,11 +74,36 @@ export function Login() {
                     {/*email */}
                     <div className="flex flex-col mt-[47px] w-[519px]">
                         <p className="text-[24px]">이메일</p>
-                        <input type="email" placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                        <input type="email"
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                            }}
+                            value={email}
+                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                        {emailFail && (
+                            <>
+                                <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
+                            </>
+                        )}
                     </div>
                     <div className="flex flex-col w-[519px] mt-[30px]">
                         <p className="text-[24px]">비밀번호</p>
-                        <input type="password" placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                        <input type="password"
+                            onChange={(e) => {
+                                setPw(e.target.value);
+                            }}
+                            value={pw}
+                            placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                        {pwCheckFail && (
+                            <>
+                                <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호가 맞지 않습니다. 다시 입력해주세요.</p>
+                            </>
+                        )}
+                        {pwNumFail && (
+                            <>
+                                <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호 8자리 이상 입력해주세요.</p>
+                            </>
+                        )}
                     </div>
 
                     {/*login state && login btn */}
@@ -54,7 +123,8 @@ export function Login() {
                         </label>
                         <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                             onClick={() => {
-                                navigate("/home")
+                                // navigate("/home")
+                                login();
                             }}>
                             <span className="text-[24px] font-bold ">로그인</span>
                         </button>
