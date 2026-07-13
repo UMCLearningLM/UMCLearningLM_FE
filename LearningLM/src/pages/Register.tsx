@@ -1,6 +1,7 @@
 import { Box, Check, CircleCheckBig } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export function Register() {
     const navigate = useNavigate();
@@ -9,12 +10,27 @@ export function Register() {
     const [email, setEmail] = useState("");
     const regex = /^([0-9a-zA-Z_\.-]+)@([0-9a-zA-Z_-]+)(\.[0-9a-zA-Z_-]+){1,2}$/;
     const [emailCheck, setEmailCheck] = useState(false);
+    //비밀번호 인증
+    const [pw, setPw] = useState("");
+    const [pwCheck, setPwCheck] = useState("");
+    const [pwOk, setPwOk] = useState(false);
     //인증번호
     const [code, setCode] = useState("");
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
     const [count, setCount] = useState(180);
+
+    const [pwNull, setPwNull] = useState(false);
+
+    const [name, setName] = useState("");
+    const [nameNull, setNameNull] = useState(false);
+
+    //----------------동의 확인-----------------
+    const [ckBox, setCkBox] = useState(false);
+    const [noAgree, setNoAgree] = useState(false);
+    const [mem, setMem] = useState(false);
+
 
     const [verifiedStatus, setVerifiedStatus] = useState<
         "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("none");
@@ -32,15 +48,18 @@ export function Register() {
         // console.log("180으로 초기화");
         setEmailCheck(true);
         setCount(180);
-        const res = await fetch("http://localhost:8080/api/email/send", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email
-            })
-        });
+        try {
+            const res = await axios.post("/auth/signup", {
+                email: email,
+                password: pw,
+                nickname: name,
+                termsAgreed: !noAgree,
+            });
+            console.log(res.data);
+
+        } catch (error) {
+            console.log(error);
+        }
 
         if (res.status === 200) {
             console.log("180으로 초기화");
@@ -268,9 +287,6 @@ export function Register() {
     //----------------비밀번호 확인-----------------
 
     //비밀번호 확인
-    const [pw, setPw] = useState("");
-    const [pwCheck, setPwCheck] = useState("");
-    const [pwOk, setPwOk] = useState(false);
     useEffect(() => {
         if (pw != "") {
             if (pw === pwCheck) {
@@ -284,11 +300,8 @@ export function Register() {
 
         }
     }, [pw, pwCheck, pwOk]);
-    const [pwNull, setPwNull] = useState(false);
 
     //----------------닉네임 확인-----------------
-    const [name, setName] = useState("");
-    const [nameNull, setNameNull] = useState(false);
     useEffect(() => {
         if (name != "") {
             setNameNull(false);
@@ -296,9 +309,6 @@ export function Register() {
     }, [name])
 
     //----------------동의 확인-----------------
-    const [ckBox, setCkBox] = useState(false);
-    const [noAgree, setNoAgree] = useState(false);
-    const [mem, setMem] = useState(false);
     useEffect(() => {
         if (!ckBox) {
             setNoAgree(true);
