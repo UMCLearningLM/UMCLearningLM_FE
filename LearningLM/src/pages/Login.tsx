@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 {/* npm install react-icons */ }
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+{/*npm install axios */ }
 
 export function Login() {
 
@@ -20,26 +22,47 @@ export function Login() {
     console.log(pw);
     const login = async () => {
 
-        if (email != "sam") {
-            setEmailFail(true);
-        } else {
-            setEmailFail(false);
-        }
-        if (pw != "12345678") {
-            if (0 < pw.length && pw.length < 8) {
-                setPwNumFail(true);
+
+        if (emailFail || pwCheckFail || pwNumFail) {
+            if (email != "sam") {
+                setEmailFail(true);
             } else {
-                setPwNumFail(false);
+                setEmailFail(false);
             }
-            setPwCheckFail(true);
-        } else {
-            setPwCheckFail(false);
+            if (pw != "12345678") {
+                if (0 < pw.length && pw.length < 8) {
+                    setPwNumFail(true);
+                } else {
+                    setPwNumFail(false);
+                }
+                setPwCheckFail(true);
+            } else {
+                setPwCheckFail(false);
+            }
         }
-        if (!emailFail && !pwCheckFail && !pwNumFail) {
-            navigate("/home");
+        else {
+            console.log("emailFaile", emailFail);
+            console.log("pwCheckFail", pwCheckFail);
+            console.log("pwNumFail", pwNumFail);
+            // navigate("/home");
         }
         console.log(email);
         console.log(pw);
+
+
+        try {
+            const response = await axios.post("/auth/login", {
+                email,
+                password: pw,
+            });
+
+            console.log(response.data);
+
+            navigate("/home");
+
+        } catch (error) {
+            console.log(error);
+        }
 
     }
     useEffect(() => {
