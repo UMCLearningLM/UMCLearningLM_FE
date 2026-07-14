@@ -19,44 +19,45 @@ export function Login() {
     const [pwNumFail, setPwNumFail] = useState<"basic" | "incorrect" | "success">("basic");
 
     const login = async () => {
-        if (email == "sam" && pw == "12345678") {
-            navigate("/home");
-        }
-        else {
-            console.log("로그인 실패");
-            if (email != "sam") {
-                setEmailState("incorrect");
-            } else {
-                setEmailState("success");
-            }
-            if (pw != "12345678") {
-                setPwCheckState("incorrect");
-            } else {
-                setPwCheckState("success");
-            }
-
-            if (0 < pw.length && pw.length < 8) {
-                setPwNumFail("incorrect");
-            } else {
-                setPwNumFail("success");
-            }
-            // console.log("emailState", emailState);
-            // console.log("pwCheckState", pwCheckState);
-            // console.log("pwNumFail", pwNumFail);
-        }
-        // try {
-        //     const response = await axios.post("/auth/login", {
-        //         email,
-        //         password: pw,
-        //     });
-
-        //     console.log(response.data);
-
+        // if (email == "sam" && pw == "12345678") {
         //     navigate("/home");
-
-        // } catch (error) {
-        //     console.log(error);
         // }
+        // else {
+        //     console.log("로그인 실패");
+        //     if (email != "sam") {
+        //         setEmailState("incorrect");
+        //     } else {
+        //         setEmailState("success");
+        //     }
+        //     if (pw != "12345678") {
+        //         setPwCheckState("incorrect");
+        //     } else {
+        //         setPwCheckState("success");
+        //     }
+
+        //     if (0 < pw.length && pw.length < 8) {
+        //         setPwNumFail("incorrect");
+        //     } else {
+        //         setPwNumFail("success");
+        //     }
+        //     // console.log("emailState", emailState);
+        //     // console.log("pwCheckState", pwCheckState);
+        //     // console.log("pwNumFail", pwNumFail);
+        // }
+        try {
+            const response = await axios.post("/auth/login", {
+                email,
+                password: pw,
+                rememberMe: true
+            });
+
+            console.log(response.data);
+
+            navigate("/home");
+
+        } catch (error) {
+            console.log(error);
+        }
 
     }
 
