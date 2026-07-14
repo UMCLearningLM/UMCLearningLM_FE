@@ -9,13 +9,14 @@ export function Register() {
     const [checked, setChecked] = useState(false);
     //이메일 인증
     const [email, setEmail] = useState("");
-    const regex = /^([0-9a-zA-Z_\.-]+)@([0-9a-zA-Z_-]+)(\.[0-9a-zA-Z_-]+){1,2}$/;
     const [emailCheck, setEmailCheck] = useState(false);
+    const [emailFormErr, setEmailFormErr] = useState(false);
     //비밀번호 인증
     const [pw, setPw] = useState("");
     const [pwCheck, setPwCheck] = useState("");
     // const [pwOk, setPwOk] = useState(false);
     const [pwOk, setPwOk] = useState<"basic" | "notSame" | "same">("basic");
+    const [pwFormErr, setPwFormErr] = useState(false);
     //인증번호
     const [code, setCode] = useState("");
     //인증번호 보낸 여부
@@ -36,20 +37,24 @@ export function Register() {
 
     const [verifiedStatus, setVerifiedStatus] = useState<
         "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("none");
-
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
     const sendEmail = async () => {
         console.log(email);
-        if (!regex.test(email.trim())) {
-            console.log("이메일 검사 실패");
-            setEmailCheck(false);
-            setVerifiedStatus("emailError");
-            return;
-        }
 
+        if (!validateEmail(email)) {
+            setEmailFormErr(true);
+            setEmailCheck(false);
+        } else {
+            setEmailFormErr(false);
+            setEmailCheck(true);
+        }
         // console.log("sendEmail 실행");
         // console.log("180으로 초기화");
-        setEmailCheck(true);
-        setCount(180);
+        if (emailCheck)
+            setCount(180);
         try {
             const res = await axios.post("/auth/email/request", {
                 verificationType: "NON_LOGIN",
@@ -90,6 +95,7 @@ export function Register() {
         return () => clearTimeout(timer);
     }, [count, isSendCode]);
 
+
     const verifyCode = async () => {
         //이메일&&인증번호 백엔드 전송
         if (code === "123456") {
@@ -113,7 +119,13 @@ export function Register() {
 
         } catch (error) {
             console.log("회원가입 실패");
-            console.log(error);
+            console.log(error); {
+                emailFormErr && (
+                    <>
+                        <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
+                    </>
+                )
+            }
         }
 
         const emailSec = (<>
@@ -130,7 +142,7 @@ export function Register() {
                         sendEmail()
 
                         //api 완성되면 제거 ((; 테스트용 생성))
-                        if (emailCheck == true) {
+                        if (emailCheck == true && !emailFormErr) {
                             setIsSendCode(true);
                             setVerifiedStatus("sendCode");
                         }
@@ -282,7 +294,13 @@ export function Register() {
 
         }
     }, [pw, pwCheck, pwOk]);
-
+    // useEffect(() => {
+    //     if (0 < pw.length && pw.length < 8) {
+    //         setPwNumFail("incorrect");
+    //     } else {
+    //         setPwNumFail("success");
+    //     }
+    // },)
     //----------------닉네임 확인-----------------
     useEffect(() => {
         if (name != "") {
@@ -306,7 +324,9 @@ export function Register() {
 
     //----------------회원가입 확인-----------------
     const memberOk = () => {
-        if (verifiedStatus != "succ") {
+
+
+        if (verifiedStatus != "succ" || !emailFormErr) {
             setVerifiedStatus("emailcertificationNo");
         }
         if (pwOk != "same") {
@@ -375,6 +395,11 @@ export function Register() {
                             placeholder="you@example.com" className={`h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
 
                         {renderVerifyCode()}
+                        {emailFormErr && (
+                            <>
+                                <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
+                            </>
+                        )}
 
 
                     </div>
