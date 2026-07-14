@@ -2,6 +2,7 @@ import { Box, Check, CircleCheckBig } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+//.\gradlew bootRun 스프링부트 서버 키는 방법
 
 export function Register() {
     const navigate = useNavigate();
@@ -13,7 +14,8 @@ export function Register() {
     //비밀번호 인증
     const [pw, setPw] = useState("");
     const [pwCheck, setPwCheck] = useState("");
-    const [pwOk, setPwOk] = useState(false);
+    // const [pwOk, setPwOk] = useState(false);
+    const [pwOk, setPwOk] = useState<"basic" | "notSame" | "same">("basic");
     //인증번호
     const [code, setCode] = useState("");
     //인증번호 보낸 여부
@@ -21,7 +23,7 @@ export function Register() {
     //인증 남은 시간
     const [count, setCount] = useState(180);
 
-    const [pwNull, setPwNull] = useState(false);
+    const [pwNull, setPwNull] = useState<"basic" | "null" | "notNull">("basic");
 
     const [name, setName] = useState("");
     const [nameNull, setNameNull] = useState(false);
@@ -49,28 +51,29 @@ export function Register() {
         setEmailCheck(true);
         setCount(180);
         try {
-            const res = await axios.post("/auth/signup", {
-                email: email,
-                password: pw,
-                nickname: name,
-                termsAgreed: !noAgree,
+            const res = await axios.post("/auth/email/request", {
+                verificationType: "NON_LOGIN",
+                purpose: "SIGNUP",
+                email: "sally1954@naver.com"
             });
+            console.log("인증번호 전송 성공");
             console.log(res.data);
 
         } catch (error) {
-            console.log(error);
+            console.log("인증번호 전송 실패");
+            // console.log(error);
         }
 
-        if (res.status === 200) {
-            console.log("180으로 초기화");
-            setCount(180);
-            // setIsSendCode(true);
-            setVerifiedStatus("sendCode");
+        // if (res.status === 200) {
+        //     console.log("180으로 초기화");
+        //     setCount(180);
+        //     // setIsSendCode(true);
+        //     setVerifiedStatus("sendCode");
 
-            alert("인증번호 발송 완료");
-        } else if (res.status === 401) {
-            alert("이미 존재하는 이메일입니다.");
-        }
+        //     alert("인증번호 발송 완료");
+        // } else if (res.status === 401) {
+        //     alert("이미 존재하는 이메일입니다.");
+        // }
     }
     useEffect(() => {
         if (!isSendCode) return;
@@ -90,16 +93,27 @@ export function Register() {
     const verifyCode = async () => {
         //이메일&&인증번호 백엔드 전송
         if (code === "123456") {
-            // setIsVerified(true);
             setIsSendCode(false);
-            // setIsSuccessVerified(true);
-            // setIsFailVerified(false);
             setVerifiedStatus("succ");
             // alert("인증 완료");
         } else {
-            // setIsFailVerified(true);
             setVerifiedStatus("fail");
             // alert("인증번호 올바르지 않음");
+        }
+
+        try {
+            const res = await axios.post("/auth/signup", {
+                email: "sally1954@naver.com",
+                password: "12345678",
+                nickname: "sam",
+                termsAgreed: !noAgree,
+            });
+            console.log("회원가입 성공");
+            console.log(res.data);
+
+        } catch (error) {
+            console.log("회원가입 실패");
+            console.log(error);
         }
 
         const emailSec = (<>
@@ -112,7 +126,7 @@ export function Register() {
 
                 <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
                     onClick={() => {
-                        console.log(email)
+                        // console.log(email)
                         sendEmail()
 
                         //api 완성되면 제거 ((; 테스트용 생성))
@@ -148,15 +162,9 @@ export function Register() {
             case "none":
                 return (
                     <>
-                        <p className="font-bold text-[#52525B]">이메일</p>
-                        <input type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-
-
                         <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
                             onClick={() => {
-                                console.log(email)
+                                // console.log(email)
                                 sendEmail()
 
                                 //api 완성되면 제거 ((; 테스트용 생성))
@@ -173,11 +181,6 @@ export function Register() {
             case "sendCode":
                 return (
                     <>
-                        <p className="font-bold text-[#52525B]">이메일</p>
-                        <input type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-
                         <input type="text"
                             onChange={(e) => setCode(e.target.value)}
                             placeholder="인증번호 6자리를 입력해주세요." className="h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#E4E4E7]" />
@@ -205,11 +208,6 @@ export function Register() {
             case "fail":
                 return (
                     <>
-                        <p className="font-bold text-[#52525B]">이메일</p>
-                        <input type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-
                         <input type="text"
                             onChange={(e) => setCode(e.target.value)}
                             placeholder="인증번호 6자리를 입력해주세요." className="h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#F8A3A3]" />
@@ -231,24 +229,11 @@ export function Register() {
                 )
             case "succ":
                 return (
-                    <>
-                        <>
-                            <p className="font-bold text-[#52525B]">이메일</p>
-                            <input type="email" value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-
-                            <p className="text-[#5FAA81] font-bold mt-[15px]">인증을 완료했습니다.</p>
-                        </>
-                    </>
+                    <p className="text-[#5FAA81] font-bold mt-[15px]">인증을 완료했습니다.</p>
                 )
             case "emailError":
                 return (
                     <>
-                        <p className="font-bold text-[#52525B]">이메일</p>
-                        <input type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#F8A3A3]" />
                         <p className="text-[#F8A3A3] my-[15px]">유요한 이메일이 아닙니다. 다시 작성해 주세요.</p>
                         <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] border-[#] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
                             onClick={() => {
@@ -264,10 +249,6 @@ export function Register() {
             case "emailcertificationNo":
                 return (
                     <>
-                        <p className="font-bold text-[#52525B]">이메일</p>
-                        <input type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#F8A3A3]" />
                         <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] mt-[11px] border-[#] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
                             onClick={() => {
                                 sendEmail();
@@ -289,13 +270,14 @@ export function Register() {
     //비밀번호 확인
     useEffect(() => {
         if (pw != "") {
+
             if (pw === pwCheck) {
-                setPwOk(pw === pwCheck);
+                setPwOk("same");
                 if (pwOk) {
-                    setPwNull(false);
+                    setPwNull("notNull");
                 }
             } else {
-                setPwOk(false);
+                setPwOk("notSame");
             }
 
         }
@@ -312,7 +294,6 @@ export function Register() {
     useEffect(() => {
         if (!ckBox) {
             setNoAgree(true);
-            // setMem(true);
             // console.log("ckBox", ckBox);
             // console.log("noAgree", noAgree);
         } else {
@@ -328,8 +309,9 @@ export function Register() {
         if (verifiedStatus != "succ") {
             setVerifiedStatus("emailcertificationNo");
         }
-        if (!pwOk) {
-            setPwNull(true);
+        if (pwOk != "same") {
+            if (pw == "" || pwCheck == "")
+                setPwNull("null");
         }
         if (!name) {
             setNameNull(true);
@@ -338,8 +320,9 @@ export function Register() {
             setMem(true);
             setNoAgree(true);
         }
+        // console.log(pwNull);
 
-        if (verifiedStatus == "succ" && pwOk && name && ckBox) {
+        if (verifiedStatus == "succ" && pwOk == "same" && name && ckBox) {
             //api로 회원정보 등록 코드
             {/** 
                 
@@ -348,7 +331,16 @@ export function Register() {
             navigate("/home")
         }
     }
-
+    useEffect(() => {
+        if (pwNull != "basic") {
+            if (pw == "" || pwCheck == "")
+                setPwNull("null");
+            else if (pw != "" && pwCheck != "") {
+                setPwNull("notNull");
+            }
+        }
+    }, [pwNull]);
+    // console.log("pwNull", pwNull);
 
     return (
         <>
@@ -377,12 +369,48 @@ export function Register() {
                         <input type="email" value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" /> */}
+                        <p className="font-bold text-[#52525B]">이메일</p>
+                        <input type="email" value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com" className={`h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
 
                         {renderVerifyCode()}
 
 
                     </div>
-                    {pwNull ? (
+                    <div className="flex flex-col w-[519px] mt-[20px]">
+                        <p className="flex text-[#52525B] font-bold">비밀번호</p>
+                        <input type="password"
+                            onChange={(e) => {
+                                setPw(e.target.value)
+                                // console.log(pw);
+                            }}
+                            placeholder="********"
+                            className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                        <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
+                    </div>
+                    <div className="w-[519px] flex flex-col mt-[20px]">
+                        <p className="text-[#52525B] font-bold">비밀번호 확인</p>
+                        <input type="password"
+                            onChange={(e) => {
+                                setPwCheck(e.target.value)
+                                // console.log(pw);
+                                // console.log(pwCheck);
+                            }}
+                            placeholder="********"
+                            className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                        {pwNull == "basic" || pwNull == "null" ? (<></>) : (<>{pwOk == "same" ? (
+                            <>
+                                <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="font-bold text-[#F8A3A3] mt-[11px]">입력한 비밀번호가 같지 않습니다.</p>
+                            </>
+                        )}</>)}
+
+                    </div>
+                    {/* {pwNull ? (
                         <>
                             <div className="flex flex-col w-[519px] mt-[20px]">
                                 <p className="flex text-[#52525B] font-bold">비밀번호</p>
@@ -431,8 +459,6 @@ export function Register() {
                                     <input type="password"
                                         onChange={(e) => {
                                             setPwCheck(e.target.value)
-                                            // console.log(pw);
-                                            // console.log(pwCheck);
                                         }}
                                         placeholder="********" className="h-[54px] pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
                                     {pwOk && (
@@ -442,28 +468,20 @@ export function Register() {
                                     )}
                                 </div>
                             </>
-                        )}
+                        )} */}
 
                     <div className="flex flex-col w-[519px] mt-[20px]">
                         <p className="text-[#52525B] font-bold">닉네임</p>
-                        {nameNull ? (
-                            <>
-                                <input type="text"
-                                    onChange={(e) => {
-                                        setName(e.target.value);
-                                    }}
-                                    placeholder="학습자 닉네임을 입력하세요." className="h-[54px] items-center pl-[20px] mt-[11px] text-[20px] text-[#9A9AA3] border-[2px] rounded-[8px] border-[#F8A3A3]" />
+                        <input type="text"
+                            onChange={(e) => {
+                                setName(e.target.value);
+                            }}
+                            placeholder="학습자 닉네임을 입력하세요." className={`h-[54px] items-center pl-[20px] mt-[11px] text-[20px] text-[#9A9AA3] border-[2px] rounded-[8px] ${nameNull ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                        {nameNull &&
+                            (
                                 <p className="font-bold text-[#F8A3A3] mt-[11px]">닉네임이 입력되지 않았습니다.</p>
-                            </>
-                        ) : (
-                            <>
-                                <input type="text"
-                                    onChange={(e) => {
-                                        setName(e.target.value);
-                                    }}
-                                    placeholder="학습자 닉네임을 입력하세요." className="h-[54px] items-center pl-[20px] mt-[11px] text-[20px] text-[#9A9AA3] border-[2px] rounded-[8px] border-[#E4E4E7]" />
-                            </>
-                        )}
+                            )
+                        }
                     </div>
 
                     <div className="w-[519px] mt-[47px]">
