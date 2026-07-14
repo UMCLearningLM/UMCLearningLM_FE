@@ -7,57 +7,79 @@ import axios from "axios";
 
 export function Login() {
 
-
-
     const navigate = useNavigate();
     const [checked, setChecked] = useState(false);
 
     const [email, setEmail] = useState("");
     const [pw, setPw] = useState("");
     const [emailState, setEmailState] = useState<"basic" | "incorrect" | "success">("basic");
+    const [emailFormErr, setEmailFormErr] = useState(false);
     const [pwCheckState, setPwCheckState] = useState<"basic" | "incorrect" | "success">("basic");
     const [pwNumFail, setPwNumFail] = useState<"basic" | "incorrect" | "success">("basic");
+    const [pwFormErr, setPwFormErr] = useState(false);
+
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    const validatePw = (pw: string) => {
+        if (0 < pw.length && pw.length < 8) {
+            setPwFormErr(true);
+        } else { setPwFormErr(false) }
+    }
+
+    useEffect(() => {
+        if (0 < pw.length && pw.length < 8) {
+            setPwNumFail("incorrect");
+        } else {
+            setPwNumFail("success");
+        }
+    }, [pw]);
 
     const login = async () => {
-        // if (email == "sam" && pw == "12345678") {
-        //     navigate("/home");
-        // }
-        // else {
-        //     console.log("로그인 실패");
-        //     if (email != "sam") {
-        //         setEmailState("incorrect");
-        //     } else {
-        //         setEmailState("success");
-        //     }
-        //     if (pw != "12345678") {
-        //         setPwCheckState("incorrect");
-        //     } else {
-        //         setPwCheckState("success");
-        //     }
 
-        //     if (0 < pw.length && pw.length < 8) {
-        //         setPwNumFail("incorrect");
-        //     } else {
-        //         setPwNumFail("success");
-        //     }
-        //     // console.log("emailState", emailState);
-        //     // console.log("pwCheckState", pwCheckState);
-        //     // console.log("pwNumFail", pwNumFail);
-        // }
-        try {
-            const response = await axios.post("/auth/login", {
-                email,
-                password: pw,
-                rememberMe: true
-            });
-
-            console.log(response.data);
-
+        if (email == "ssemilife@gmail.com" && pw == "12345678" && !emailFormErr) {
             navigate("/home");
-
-        } catch (error) {
-            console.log(error);
         }
+        else {
+            console.log("로그인 실패");
+            if (!validateEmail(email)) {
+                setEmailFormErr(true);
+            } else {
+                setEmailFormErr(false);
+            }
+            if (email != "ssemilife@gmail.com") {
+                setEmailState("incorrect");
+            } else if (!validateEmail(email)) {
+
+            } else { setEmailState("success"); }
+
+
+
+            if (pw != "12345678") {
+                setPwCheckState("incorrect");
+            } else { setPwCheckState("success"); }
+
+
+            console.log("emailState", emailState);
+            console.log("pwCheckState", pwCheckState);
+            console.log("pwNumFail", pwNumFail);
+            console.log("setPwNumFail", pwNumFail);
+        }
+        // try {
+        //     const response = await axios.post("/auth/login", {
+        //         email,
+        //         password: pw,
+        //         rememberMe: true
+        //     });
+
+        //     console.log(response.data);
+
+        //     navigate("/home");
+
+        // } catch (error) {
+        //     console.log(error);
+        // }
 
     }
 
@@ -98,6 +120,11 @@ export function Login() {
                         {emailState == "incorrect" && (
                             <>
                                 <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
+                            </>
+                        )}
+                        {emailFormErr && (
+                            <>
+                                <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
                             </>
                         )}
                     </div>
