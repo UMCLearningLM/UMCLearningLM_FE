@@ -16,6 +16,7 @@ import { TutorialCard } from '../../features/tutorial/components/TutorialCard'
 const MAX_LEVEL_FILTER_COUNT = 2
 const MAX_CATEGORY_FILTER_COUNT = 3
 const ITEMS_PER_PAGE = 6
+const AUTO_SLIDE_INTERVAL_MS = 5000
 
 const levelButtonClassMap: Record<TutorialLevel, string> = {
   입문: 'border-emerald-500 bg-emerald-50 text-emerald-600',
@@ -46,7 +47,8 @@ function FilterButton({
       className={[
         'rounded-lg border px-3 py-1.5 text-sm font-black transition',
         isSelected
-          ? selectedClassName || 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-sm'
+          ? selectedClassName ||
+            'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-sm'
           : 'border-slate-700 bg-white text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-500',
       ].join(' ')}
     >
@@ -58,7 +60,6 @@ function FilterButton({
 export function OfficialTutorialPage() {
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedLevels, setSelectedLevels] = useState<TutorialLevel[]>([])
   const [selectedCategories, setSelectedCategories] = useState<
     TutorialCategory[]
@@ -92,14 +93,23 @@ export function OfficialTutorialPage() {
     })
   }, [normalizedKeyword, selectedCategories, selectedLevels])
 
-  const totalPages = Math.ceil(filteredTutorials.length / ITEMS_PER_PAGE)
+  const tutorialPages = useMemo(() => {
+    const pages = []
+
+    for (
+      let index = 0;
+      index < filteredTutorials.length;
+      index += ITEMS_PER_PAGE
+    ) {
+      pages.push(filteredTutorials.slice(index, index + ITEMS_PER_PAGE))
+    }
+
+    return pages
+  }, [filteredTutorials])
+
+  const totalPages = tutorialPages.length
   const canGoPrev = totalPages > 1 && currentPage > 0
   const canGoNext = totalPages > 1 && currentPage < totalPages - 1
-
-  const paginatedTutorials = filteredTutorials.slice(
-    currentPage * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE + ITEMS_PER_PAGE,
-  )
 
   const hasSearchCondition =
     normalizedKeyword.length > 0 ||
@@ -114,6 +124,28 @@ export function OfficialTutorialPage() {
   useEffect(() => {
     setCurrentPage(0)
   }, [keyword, selectedLevels, selectedCategories])
+
+  useEffect(() => {
+    if (currentPage <= totalPages - 1) {
+      return
+    }
+
+    setCurrentPage(0)
+  }, [currentPage, totalPages])
+
+  useEffect(() => {
+    if (totalPages <= 1) {
+      return
+    }
+
+    const timerId = window.setInterval(() => {
+      setCurrentPage((prev) => (prev + 1 >= totalPages ? 0 : prev + 1))
+    }, AUTO_SLIDE_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(timerId)
+    }
+  }, [totalPages])
 
   const toggleLevel = (level: TutorialLevel) => {
     setSelectedLevels((prev) => {
@@ -179,56 +211,53 @@ export function OfficialTutorialPage() {
               />
               <input
                 value={keyword}
-                onFocus={() => setIsFilterOpen(true)}
                 onChange={(event) => setKeyword(event.target.value)}
                 placeholder="튜토리얼 검색"
                 className="h-10 w-full bg-transparent pl-9 pr-4 text-base font-semibold text-slate-700 outline-none placeholder:text-slate-400"
               />
             </label>
 
-            {isFilterOpen && (
-              <div className="mt-5 border-t border-dashed border-slate-300 pt-7">
-                <div className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="mr-1 text-sm font-black text-slate-700">
-                      난이도{' '}
-                      <span className="text-indigo-500">
-                        {selectedLevels.length}/{MAX_LEVEL_FILTER_COUNT}
-                      </span>
+            <div className="mt-5 border-t border-dashed border-slate-300 pt-7">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="mr-1 text-sm font-black text-slate-700">
+                    난이도{' '}
+                    <span className="text-indigo-500">
+                      {selectedLevels.length}/{MAX_LEVEL_FILTER_COUNT}
                     </span>
+                  </span>
 
-                    {tutorialLevels.map((level) => (
-                      <FilterButton
-                        key={level}
-                        label={level}
-                        isSelected={selectedLevels.includes(level)}
-                        selectedClassName={levelButtonClassMap[level]}
-                        onClick={() => toggleLevel(level)}
-                      />
-                    ))}
-                  </div>
+                  {tutorialLevels.map((level) => (
+                    <FilterButton
+                      key={level}
+                      label={level}
+                      isSelected={selectedLevels.includes(level)}
+                      selectedClassName={levelButtonClassMap[level]}
+                      onClick={() => toggleLevel(level)}
+                    />
+                  ))}
+                </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="mr-1 text-sm font-black text-slate-700">
-                      카테고리{' '}
-                      <span className="text-indigo-500">
-                        {selectedCategories.length}/{MAX_CATEGORY_FILTER_COUNT}
-                      </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="mr-1 text-sm font-black text-slate-700">
+                    카테고리{' '}
+                    <span className="text-indigo-500">
+                      {selectedCategories.length}/{MAX_CATEGORY_FILTER_COUNT}
                     </span>
+                  </span>
 
-                    {tutorialCategories.map((category) => (
-                      <FilterButton
-                        key={category}
-                        label={category}
-                        isSelected={selectedCategories.includes(category)}
-                        selectedClassName={selectedCategoryButtonClassName}
-                        onClick={() => toggleCategory(category)}
-                      />
-                    ))}
-                  </div>
+                  {tutorialCategories.map((category) => (
+                    <FilterButton
+                      key={category}
+                      label={category}
+                      isSelected={selectedCategories.includes(category)}
+                      selectedClassName={selectedCategoryButtonClassName}
+                      onClick={() => toggleCategory(category)}
+                    />
+                  ))}
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {hasSearchCondition && (
@@ -238,17 +267,34 @@ export function OfficialTutorialPage() {
           )}
 
           <div className="relative">
-            {paginatedTutorials.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {paginatedTutorials.map((tutorial) => (
-                  <TutorialCard
-                    key={tutorial.id}
-                    tutorial={tutorial}
-                    onStart={(tutorialId) =>
-                      navigate(`/official-tutorials/${tutorialId}`)
-                    }
-                  />
-                ))}
+            {filteredTutorials.length > 0 ? (
+              <div className="overflow-hidden">
+                <div
+                  className="flex transition-transform duration-700 ease-in-out"
+                  style={{
+                    transform: `translateX(-${currentPage * 100}%)`,
+                  }}
+                >
+                  {tutorialPages.map((pageTutorials, pageIndex) => (
+                    <div
+                      key={pageIndex}
+                      className="w-full shrink-0"
+                      aria-hidden={currentPage !== pageIndex}
+                    >
+                      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                        {pageTutorials.map((tutorial) => (
+                          <TutorialCard
+                            key={tutorial.id}
+                            tutorial={tutorial}
+                            onStart={(tutorialId) =>
+                              navigate(`/official-tutorials/${tutorialId}`)
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
