@@ -11,15 +11,15 @@ export function PwFind() {
     const [emailForm, setEmailForm] = useState(false);
     //비밀번호 변경
     const [pw, setPw] = useState("");
-    const [pwChange, setPwChange] = useState("");
-    const [pwNull, setPwNull] = useState(false);
+    const [pwCheck, setPwCheck] = useState("");
+    const [pwNull, setPwNull] = useState<"basic" | "false" | "true">("basic");
     const [pwForm, setPwForm] = useState<"basic" | "err">("basic");
 
     //비밀번호 인증
     const [pwOk, setPwOk] = useState(false);
 
     const emailFind = () => {
-        if (email == "123" && emailForm) {
+        if (email == "ssemilife@gmail.com" && emailForm) {
             console.log("이메일 찾기 성공");
             setEmailState("success");
             console.log(emailState);
@@ -43,14 +43,21 @@ export function PwFind() {
     //----------------비밀번호 확인-----------------
 
     //비밀번호 확인
+    //validatePw(pw) == false  -> 유효
+    //               == true   -> 유효하지 않음
+    const validatePw = (pw: string) => {
+        // const pwRegex = /^[A-Za-z0-9]+$/;
+        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+        return pwRegex.test(email);
+    }
     useEffect(() => {
-        if (pw != "" && pwChange != "") {
-            setPwNull(false);
-            setPwOk(pw === pwChange);
+        if (pw != "" && pwCheck != "") {
+            setPwNull("false");
+            setPwOk(pw === pwCheck);
         } else {
-            setPwNull(true);
+            setPwNull("true");
         }
-    }, [pw, pwChange, pwOk]);
+    }, [pw, pwCheck, pwOk]);
     useEffect(() => {
         if (0 < pw.length) {
             setPwForm("basic");
@@ -58,13 +65,24 @@ export function PwFind() {
             setPwForm("err");
         }
     }, [email]);
+    useEffect(() => {
+        if (!validatePw(pw) && (pw.length >= 8) && (pwCheck.length >= 8)) {
+            setPwOk(true);
+        } else {
+            setPwOk(false);
+        }
+    }, [validatePw(pw), pw, pwCheck]);
 
     const pwChangeFun = () => {
-        console.log("클릭");
+
+        if (!validatePw(pw)) {
+            setPwNull("basic");
+        }
+
         if (pwOk) {
-            alert("비밀번호 변경 완료");
+            navigate("/home");
         } else {
-            alert("비밀번호 변경 실패");
+            // alert("비밀번호 변경 실패");
         }
     }
 
@@ -119,39 +137,47 @@ export function PwFind() {
                                 <p className="w-[519px] text-[32px] font-bold text-[#27272A]">비밀번호 변경</p>
                                 <p className="w-[519px] mt-[7px]">변경할 비밀번호를 입력해주세요.</p>
                                 {/*main content */}
-                                {/*email */}
-                                <div className="flex flex-col mt-[47px] w-[519px]">
-                                    <p className="font-bold">비밀번호</p>
+                                {/*password */}
+                                <div className="flex flex-col w-[519px] mt-[20px]">
+                                    <p className="flex text-[#52525B] font-bold">비밀번호</p>
                                     <input type="password"
-                                        onChange={(e) => {
-                                            setPw(e.target.value);
-                                        }}
                                         value={pw}
-                                        placeholder="••••••••"
-                                        className={`h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${pwForm == "err" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                                    <p className="mt-[11px] text-[#9A9AA3]">영문,숫자 포함 8자 이상</p>
+                                        onChange={(e) => {
+                                            setPw(e.target.value)
+                                        }}
+                                        placeholder="********"
+                                        className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${(pw != pwCheck) || (validatePw(pw) && pwNull == "basic") ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                                    <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
+                                    {((pw.length > 0 && pw.length < 8) && pwNull == "basic") && (
+                                        <p className="text-[#EF8888] font-bold mt-[11px]">
+                                            비밀번호는 영문·숫자 포함 8자 이상 작성해주세요.
+                                        </p>
+                                    )}
+                                    {(validatePw(pw) && (pw.length > 0 && pwCheck.length > 0)) && (
+                                        <p className="text-[#EF8888] font-bold mt-[11px]">
+                                            비밀번호는 영문·숫자만 포함할 수 있습니다
+                                        </p>
+                                    )}
+
                                 </div>
-                                <div className="flex flex-col mt-[20px] w-[519px]">
-                                    <p className="font-bold">비밀번호 확인</p>
+                                <div className="w-[519px] flex flex-col mt-[20px]">
+                                    <p className="text-[#52525B] font-bold">비밀번호 확인</p>
                                     <input type="password"
                                         onChange={(e) => {
-                                            setPwChange(e.target.value);
+                                            setPwCheck(e.target.value)
                                         }}
-                                        value={pwChange}
-                                        placeholder="••••••••"
-                                        className={`h-[54px] flex items-center pl-[20px] my-[11px] rounded-[8px] border-2 ${pwOk || pwNull ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                                    {!pwNull ? (!pwOk ? (
+                                        placeholder="********"
+                                        className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pw == pwCheck ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                                    {pw.length == 0 ? (<></>) : (<>{pw == pwCheck ? (
                                         <>
-                                            <p className="text-[#EF8888] font-bold">입력한 비밀번호가 같지 않습니다. 다시 확인해주세요.</p>
+                                            <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
                                         </>
-                                    ) :
-                                        (
-                                            <>
-                                                <p className="text-[#5FAA81] font-bold">입력한 비밀번호가 같습니다.</p>
-                                            </>
-                                        )
-                                    ) : (<>
-                                    </>)}
+                                    ) : (
+                                        <>
+                                            <p className="font-bold text-[#EF8888] mt-[11px]">입력한 비밀번호가 같지 않습니다.</p>
+                                        </>
+                                    )}</>)}
+
                                 </div>
                                 <button className="cursor-pointer hover:bg-[#6366F1]
                         hover:text-white text-[#9D9ED0] mt-[47px] w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
@@ -178,7 +204,7 @@ export function PwFind() {
                     <p>이용약관</p>
                     <p>개인정보처리방침</p>
                 </div>
-            </div>
+            </div >
 
         </>
     )
