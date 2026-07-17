@@ -1,8 +1,7 @@
-import { RouterProvider } from 'react-router-dom'
-import { router } from './routes/router'
+import { StudioNodeCardTestPage } from './pages/dev/StudioNodeCardTestPage'
 
 function App() {
-  return <RouterProvider router={router} />
+  return <StudioNodeCardTestPage />
 }
 
 export default App
