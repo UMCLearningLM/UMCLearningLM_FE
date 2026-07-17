@@ -400,10 +400,6 @@ export function Register() {
                             placeholder="you@example.com" className={`h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
 
                         {renderVerifyCode()}
-
-
-
-
                     </div>
                     <div className="flex flex-col w-[519px] mt-[20px]">
                         <p className="flex text-[#52525B] font-bold">비밀번호</p>
