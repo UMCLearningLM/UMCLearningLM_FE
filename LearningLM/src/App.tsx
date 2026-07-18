@@ -1,7 +1,7 @@
-import { HomePage } from './pages/home/HomePage'
+import { StudioNodeCardTestPage } from './pages/dev/StudioNodeCardTestPage'
 
 function App() {
-  return <HomePage />
+  return <StudioNodeCardTestPage />
 }
 
 export default App
