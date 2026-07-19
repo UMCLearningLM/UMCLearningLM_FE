@@ -3,6 +3,7 @@ import { FcGoogle } from "react-icons/fc";
 {/* npm install react-icons */ }
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Check } from "lucide-react";
 {/*npm install axios */ }
 
 export function Login() {
@@ -17,6 +18,10 @@ export function Login() {
     const [pwCheckState, setPwCheckState] = useState<"basic" | "incorrect" | "success">("basic");
     const [pwNumFail, setPwNumFail] = useState<"basic" | "incorrect" | "success">("basic");
     const [pwFormErr, setPwFormErr] = useState(false);
+    const [ckBox, setCkBox] = useState(false);
+    const [noAgree, setNoAgree] = useState(false);
+    const [mem, setMem] = useState(false);
+
 
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,6 +40,15 @@ export function Login() {
             setPwNumFail("success");
         }
     }, [pw]);
+
+    useEffect(() => {
+        if (!ckBox) {
+            setNoAgree(true);
+        } else {
+            setNoAgree(false);
+            setMem(true);
+        }
+    }, [ckBox]);
 
     const login = async () => {
 
@@ -60,6 +74,10 @@ export function Login() {
                 setPwCheckState("incorrect");
             } else { setPwCheckState("success"); }
 
+            if (!ckBox) {
+                setMem(true);
+                setNoAgree(true);
+            }
 
             console.log("emailState", emailState);
             console.log("pwCheckState", pwCheckState);
@@ -108,61 +126,71 @@ export function Login() {
                         <p className="text-[#52525B] mt-[7px]">학습을 이어서 진행하려면 로그인하세요.</p>
                     </div>
                     {/*main content */}
-                    {/*email */}
-                    <div className="flex flex-col mt-[47px] w-[519px]">
-                        <p className="text-[24px]">이메일</p>
-                        <input type="email"
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                            }}
-                            value={email}
-                            placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
-                        {emailState == "incorrect" && (
-                            <>
-                                <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
-                            </>
-                        )}
-                        {emailFormErr && (
-                            <>
-                                <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
-                            </>
-                        )}
-                    </div>
-                    <div className="flex flex-col w-[519px] mt-[30px]">
-                        <p className="text-[24px]">비밀번호</p>
-                        <input type="password"
-                            onChange={(e) => {
-                                setPw(e.target.value);
-                            }}
-                            value={pw}
-                            placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
-                        {pwCheckState == "incorrect" && (
-                            <>
-                                <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호가 맞지 않습니다. 다시 입력해주세요.</p>
-                            </>
-                        )}
-                        {pwNumFail == "incorrect" && (
-                            <>
-                                <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호 8자리 이상 입력해주세요.</p>
-                            </>
-                        )}
-                    </div>
-
-                    {/*login state && login btn */}
-                    <div className="w-[519px]">
-                        <label className="agreement flex items-center my-[30px]">
-                            <div className="cursor-pointer w-[24px] h-[24px] border-2 rounded border-[#6366F1]">
-                                <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    className="hidden"
-                                    onChange={(e) => setChecked(e.target.checked)}
-                                />
+                    <div className="flex flex-col gap-[30px]">
+                        {/*email */}
+                        <div className="flex flex-col mt-[47px] w-[519px]">
+                            <p className="text-[24px]">이메일</p>
+                            <input type="email"
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                }}
+                                value={email}
+                                placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                            {emailState == "incorrect" && (
+                                <>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
+                                </>
+                            )}
+                            {emailFormErr && (
+                                <>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
+                                </>
+                            )}
+                        </div>
+                        {/* password */}
+                        <div className="flex flex-col w-[519px]">
+                            <p className="text-[24px]">비밀번호</p>
+                            <input type="password"
+                                onChange={(e) => {
+                                    setPw(e.target.value);
+                                }}
+                                value={pw}
+                                placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                            {pwCheckState == "incorrect" && (
+                                <>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호가 맞지 않습니다. 다시 입력해주세요.</p>
+                                </>
+                            )}
+                            {pwNumFail == "incorrect" && (
+                                <>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호 8자리 이상 입력해주세요.</p>
+                                </>
+                            )}
+                        </div>
+                        {/* agreeBtn */}
+                        {/*login state && login btn */}
+                        <label className="w-[519px] cursor-pointer agreement flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={checked}
+                                className="hidden"
+                                onChange={(e) => setChecked(e.target.checked)}
+                                onClick={() => {
+                                    setCkBox(!ckBox);
+                                }}
+                            />
+                            <div className={`w-[24px] h-[24px] flex items-center justify-center text-center border-2 rounded border-[#6366F1] 
+                            ${checked ? "bg-[#6366F1]" : "border-[#6366F1]"
+                                }`}
+                            >
+                                {checked && <Check size={18} className="text-white stroke-[3]" />}
                             </div>
-                            <span className="ml-[10px]">
-                                로그인 상태 유지
+                            <span className="text-[#52525B]">
+                                <span className="link pl-[7px] font-bold text-[#6366F1]">이용약관</span> 및{" "}
+                                <span className="link font-bold text-[#6366F1]">개인정보 처리방침</span>에 동의합니다.
                             </span>
                         </label>
+                        {/* loginBtn */}
                         <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                             onClick={() => {
                                 // navigate("/home")
@@ -171,6 +199,12 @@ export function Login() {
                             <span className="text-[24px] font-bold ">로그인</span>
                         </button>
                     </div>
+
+
+
+
+
+
                     {/*login state && login btn 끝*/}
                     <div className="flex items-center w-[519px] my-[34px]">
                         <div className="flex-1 h-px bg-[#E4E4E7]" />
