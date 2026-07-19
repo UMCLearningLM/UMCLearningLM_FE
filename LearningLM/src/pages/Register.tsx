@@ -199,7 +199,7 @@ export function Register() {
                     <>
                         <input type="text"
                             onChange={(e) => setCode(e.target.value)}
-                            placeholder="인증번호 6자리를 입력해주세요." className="h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                            placeholder="인증번호 6자리를 입력해주세요." className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#E4E4E7]" />
                         <div className="flex justify-center items-center">
                             <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
                                 <span className="cursor-pointer text-[#6366F1] ml-[12px]"
