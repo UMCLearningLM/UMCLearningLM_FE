@@ -1,10 +1,12 @@
+import { Footer } from "../components/layout/Footer";
 import { Header } from "../components/layout/Header";
 
 export function Stdio_create1() {
 
     return (
         <>
-            <div className="w-[1920px] min-h-[2528px] bg-[#F5F5F7]">
+            {/* w-[1920px] min-h-[2528px] */}
+            <div className="min-h-screen bg-[#F5F5F7]">
                 <Header />
                 {/*블록 팔레트 */}
                 <div className="relative z-30 w-[358px] bg-white flex flex-col items-center justify-center">
@@ -35,14 +37,16 @@ export function Stdio_create1() {
                         </div>
                     </div>
                 </div>
+                {/*메인 화면 */}
+                <div className="flex-1 min-h-screen relative z-10">
+
+                </div>
                 {/*인스펙터 */}
                 <div className="relative z-30">
 
                 </div>
-                {/*메인 화면 */}
-                <div className="relative z-10">
 
-                </div>
+                <Footer />
             </div>
         </>
     )
