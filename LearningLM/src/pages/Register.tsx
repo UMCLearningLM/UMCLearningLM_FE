@@ -176,11 +176,9 @@ export function Register() {
             case "none":
                 return (
                     <>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
+                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
                             onClick={() => {
-                                // console.log(email)
                                 sendEmail()
-
                                 //api 완성되면 제거 ((; 테스트용 생성))
                                 if (emailCheck == "true") {
                                     setIsSendCode(true);
@@ -252,7 +250,7 @@ export function Register() {
                 return (
                     <>
                         <p className="text-[#EF8888] my-[15px]">유요한 이메일이 아닙니다. 다시 작성해 주세요.</p>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] border-[#] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
+                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
                             onClick={() => {
                                 sendEmail();
                                 //api 완성되면 제거 ((; 테스트용 생성))
@@ -265,14 +263,14 @@ export function Register() {
             case "emailcertificationNo":
                 return (
                     <>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[145px] h-[54px] mt-[11px] border-[#] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
+                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] mt-[11px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
                             onClick={() => {
                                 sendEmail();
                                 //api 완성되면 제거 ((; 테스트용 생성))
                                 setIsSendCode(true)
                             }}
                         >
-                            인증번호 전송.</button>
+                            인증번호 전송</button>
                         <p className="text-[#EF8888] font-bold my-[11px]">이메일 인증을 완료해주세요.</p>
                     </>
                 )
@@ -393,80 +391,79 @@ export function Register() {
                     </div>
                     {/*main content */}
                     {/*email */}
-                    <div className="flex flex-col mt-[47px] w-[519px]">
-                        <p className="font-bold text-[#52525B]">이메일</p>
-                        <input type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com" className={`h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                    <div className="flex flex-col gap-[20px]">
+                        <div className="flex flex-col mt-[47px] w-[519px]">
+                            <p className="font-bold text-[#52525B]">이메일</p>
+                            <input type="email" value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com" className={`hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
 
-                        {renderVerifyCode()}
+                            {renderVerifyCode()}
+                        </div>
+                        <div className="flex flex-col w-[519px]">
+                            <p className="flex text-[#52525B] font-bold">비밀번호</p>
+                            <input type="password"
+                                onChange={(e) => {
+                                    setPw(e.target.value)
+                                }}
+                                placeholder="********"
+                                className={`hover:border-[#666666] h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwNull == "null" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                            <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
+                            {(pwNull == "lengNo") && (
+                                <p className="text-[#EF8888] font-bold mt-[11px]">
+                                    비밀번호는 영문·숫자 포함 8자 이상 작성해주세요.
+                                </p>
+                            )}
+                            {(pwForm == "formErr") && (
+                                <p className="text-[#EF8888] font-bold mt-[11px]">
+                                    비밀번호는 영문·숫자만 포함할 수 있습니다
+                                </p>
+                            )}
+
+                        </div>
+                        <div className="w-[519px] flex flex-col">
+                            <p className="text-[#52525B] font-bold">비밀번호 확인</p>
+                            <input type="password"
+                                onChange={(e) => {
+                                    setPwCheck(e.target.value)
+                                }}
+                                placeholder="********"
+                                className={`hover:border-[#666666] h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwNull == "null" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                            {pwNull == "null" ? (<>{pwOk == "same" ? (
+                                <>
+                                    <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
+                                </>
+                            ) : (
+                                <>
+                                </>
+                            )}</>) : (<>{pwOk == "same" ? (
+                                <>
+                                    <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="font-bold text-[#EF8888] mt-[11px]">입력한 비밀번호가 같지 않습니다.</p>
+                                </>
+                            )}</>)}
+
+                        </div>
+
+                        <div className="flex flex-col w-[519px]">
+                            <p className="text-[#52525B] font-bold">닉네임</p>
+                            <input type="text"
+                                onChange={(e) => {
+                                    setName(e.target.value);
+                                }}
+                                placeholder="학습자 닉네임을 입력하세요." className={`hover:border-[#666666] h-[54px] items-center pl-[20px] mt-[11px] text-[20px] text-[#9A9AA3] border-[2px] rounded-[8px] ${nameNull ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                            {nameNull &&
+                                (
+                                    <p className="font-bold text-[#EF8888] mt-[11px]">닉네임이 입력되지 않았습니다.</p>
+                                )
+                            }
+                        </div>
                     </div>
-                    <div className="flex flex-col w-[519px] mt-[20px]">
-                        <p className="flex text-[#52525B] font-bold">비밀번호</p>
-                        <input type="password"
-                            onChange={(e) => {
-                                setPw(e.target.value)
-                            }}
-                            placeholder="********"
-                            className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwNull == "null" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                        <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
-                        {(pwNull == "lengNo") && (
-                            <p className="text-[#EF8888] font-bold mt-[11px]">
-                                비밀번호는 영문·숫자 포함 8자 이상 작성해주세요.
-                            </p>
-                        )}
-                        {(pwForm == "formErr") && (
-                            <p className="text-[#EF8888] font-bold mt-[11px]">
-                                비밀번호는 영문·숫자만 포함할 수 있습니다
-                            </p>
-                        )}
-
-                    </div>
-                    <div className="w-[519px] flex flex-col mt-[20px]">
-                        <p className="text-[#52525B] font-bold">비밀번호 확인</p>
-                        <input type="password"
-                            onChange={(e) => {
-                                setPwCheck(e.target.value)
-                            }}
-                            placeholder="********"
-                            className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwNull == "null" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                        {pwNull == "null" ? (<>{pwOk == "same" ? (
-                            <>
-                                <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
-                            </>
-                        ) : (
-                            <>
-                            </>
-                        )}</>) : (<>{pwOk == "same" ? (
-                            <>
-                                <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
-                            </>
-                        ) : (
-                            <>
-                                <p className="font-bold text-[#EF8888] mt-[11px]">입력한 비밀번호가 같지 않습니다.</p>
-                            </>
-                        )}</>)}
-
-                    </div>
-
-                    <div className="flex flex-col w-[519px] mt-[20px]">
-                        <p className="text-[#52525B] font-bold">닉네임</p>
-                        <input type="text"
-                            onChange={(e) => {
-                                setName(e.target.value);
-                            }}
-                            placeholder="학습자 닉네임을 입력하세요." className={`h-[54px] items-center pl-[20px] mt-[11px] text-[20px] text-[#9A9AA3] border-[2px] rounded-[8px] ${nameNull ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
-                        {nameNull &&
-                            (
-                                <p className="font-bold text-[#EF8888] mt-[11px]">닉네임이 입력되지 않았습니다.</p>
-                            )
-                        }
-                    </div>
-
                     <div className="w-[519px] mt-[47px]">
                         <label className="cursor-pointer agreement flex items-center">
-
-
                             <input
                                 type="checkbox"
                                 checked={checked}
@@ -490,12 +487,12 @@ export function Register() {
                         {noAgree && mem && (
                             <p className="font-bold text-[#EF8888] mt-[20px]">이용약관 및 개인정보 처리에 체크해주세요.</p>
                         )}
-
-                        <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] mt-[20px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
-                            onClick={() => {
-                                memberOk();
-                            }}><span className="text-[24px] font-bold ">회원가입</span></button>
                     </div>
+                    <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] mt-[20px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+                        onClick={() => {
+                            memberOk();
+                        }}><span className="text-[24px] font-bold ">회원가입</span></button>
+
                     <p className="text-[#52525B] mt-[71px]">이미 계정이 있으신가요? {" "}
                         <button onClick={() => {
                             navigate("/")
