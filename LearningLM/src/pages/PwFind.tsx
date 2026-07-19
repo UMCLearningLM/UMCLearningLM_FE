@@ -118,7 +118,7 @@ export function PwFind() {
                                     }}
                                     value={email}
                                     placeholder="you@example.com"
-                                    className={`h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${emailState == "notEnroll" ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                                    className={`hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${emailState == "notEnroll" ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
                                 {emailState == "notEnroll" && (
                                     <p className="font-bold text-[#EF8888] mt-[15px]">등록되지 않은 이메일입니다. 다시 입력해주세요.</p>
                                 )}
@@ -146,7 +146,7 @@ export function PwFind() {
                                             setPw(e.target.value)
                                         }}
                                         placeholder="********"
-                                        className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${(pw != pwCheck) || (validatePw(pw) && pwNull == "basic") ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                                        className={`hover:border-[#666666] h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${(pw != pwCheck) || (validatePw(pw) && pwNull == "basic") ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
                                     <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
                                     {((pw.length > 0 && pw.length < 8) && pwNull == "basic") && (
                                         <p className="text-[#EF8888] font-bold mt-[11px]">
@@ -167,7 +167,7 @@ export function PwFind() {
                                             setPwCheck(e.target.value)
                                         }}
                                         placeholder="********"
-                                        className={`h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pw == pwCheck ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
+                                        className={`hover:border-[#666666] h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${pw == pwCheck ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
                                     {pw.length == 0 ? (<></>) : (<>{pw == pwCheck ? (
                                         <>
                                             <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
