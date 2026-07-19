@@ -135,7 +135,7 @@ export function Login() {
                                     setEmail(e.target.value);
                                 }}
                                 value={email}
-                                placeholder="you@example.com" className="h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                                placeholder="you@example.com" className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
                             {emailState == "incorrect" && (
                                 <>
                                     <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
@@ -155,7 +155,7 @@ export function Login() {
                                     setPw(e.target.value);
                                 }}
                                 value={pw}
-                                placeholder="********" className="h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                                placeholder="********" className="hover:border-[#666666] h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
                             {pwCheckState == "incorrect" && (
                                 <>
                                     <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호가 맞지 않습니다. 다시 입력해주세요.</p>
