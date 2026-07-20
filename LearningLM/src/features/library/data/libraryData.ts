@@ -76,7 +76,7 @@ export const libraryCategories: LibraryCategory[] = [
   '반복 작업 정리',
 ]
 
-export const libraryItems: LibraryItem[] = [
+const baseLibraryItems: LibraryItem[] = [
   {
     id: 1,
 
@@ -279,6 +279,25 @@ export const libraryItems: LibraryItem[] = [
 
     commentItems: [],
   },
+]
+
+export const libraryItems: LibraryItem[] = [
+  ...baseLibraryItems,
+  ...Array.from({ length: 6 }, (_, index) => {
+    const sourceItem = baseLibraryItems[index % baseLibraryItems.length]
+    const variantNumber = index + 1
+
+    return {
+      ...sourceItem,
+      id: baseLibraryItems.length + variantNumber,
+      authorName: `워크플로 작성자 ${variantNumber}`,
+      authorInitial: `${variantNumber}`,
+      title: `${sourceItem.title} 활용 ${variantNumber}`,
+      description: `${sourceItem.description} 다양한 상황에 적용할 수 있도록 확장한 버전입니다.`,
+      saves: sourceItem.saves + variantNumber * 3,
+      copies: sourceItem.copies + variantNumber * 2,
+    }
+  }),
 ]
 
 export function getLibraryItemById(

@@ -18,10 +18,11 @@ const levelClassMap: Record<Tutorial['level'], string> = {
 
 function WireframeThumbnail() {
   return (
-    <div className="relative h-28 overflow-hidden border-b border-slate-300 bg-white">
-      <div className="absolute left-0 top-0 h-px w-[120%] origin-left rotate-[14deg] border-t border-dashed border-slate-300" />
-
-      <div className="absolute bottom-0 left-0 h-px w-[120%] origin-left -rotate-[14deg] border-t border-dashed border-slate-300" />
+    <div className="relative h-24 overflow-hidden rounded-t-2xl border-b border-slate-300 bg-white">
+      <div className="absolute inset-0">
+        <div className="absolute left-0 top-0 h-px w-[120%] origin-left rotate-[14deg] border-t border-dashed border-slate-300" />
+        <div className="absolute bottom-0 left-0 h-px w-[120%] origin-left -rotate-[14deg] border-t border-dashed border-slate-300" />
+      </div>
     </div>
   )
 }
@@ -37,19 +38,19 @@ export function SavedTutorialCard({
     <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
       <WireframeThumbnail />
 
-      <div className="px-5 py-4">
-        <h3 className="text-lg font-black text-slate-950">
+      <div className="px-6 py-5">
+        <h3 className="text-xl font-black tracking-tight text-slate-950">
           {tutorial.title}
         </h3>
 
-        <p className="mt-2 line-clamp-2 min-h-10 text-sm font-medium leading-5 text-slate-500">
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
           {tutorial.description}
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <span
             className={[
-              'rounded-lg border px-2.5 py-1 text-xs font-bold',
+              'inline-flex items-center rounded-lg border px-3 py-1 text-xs font-bold',
               levelClassMap[tutorial.level],
             ].join(' ')}
           >
@@ -59,14 +60,14 @@ export function SavedTutorialCard({
           {tutorial.categories.slice(0, 2).map((category) => (
             <span
               key={category}
-              className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600"
+              className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
             >
               {category}
             </span>
           ))}
         </div>
 
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-7 flex items-end justify-between gap-4">
           <span className="text-xs font-semibold text-slate-400">
             {currentStep}/{totalSteps} 단계
           </span>
@@ -80,7 +81,7 @@ export function SavedTutorialCard({
             </Button>
 
             <Button
-              variant="link"
+              variant="secondary"
               size="sm"
               onClick={() => onRemove(tutorial.id)}
             >

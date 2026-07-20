@@ -52,9 +52,9 @@ export function CreateWorkflowCard({ workflow, onEdit, onPreview, onToggleVisibi
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={() => onEdit(workflow.id)}>편집하기</Button>
-            <Button size="sm" onClick={() => onPreview(workflow.id)}>미리보기</Button>
+            <Button variant="secondary" size="sm" onClick={() => onPreview(workflow.id)}>미리보기</Button>
           </div>
-          <Button size="sm" onClick={() => onToggleVisibility(workflow.id)}>
+          <Button variant="secondary" size="sm" onClick={() => onToggleVisibility(workflow.id)}>
             {isPublic ? '비공개로 전환' : '공개로 전환'}
           </Button>
         </div>

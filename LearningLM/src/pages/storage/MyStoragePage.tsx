@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,17 +12,17 @@ import { Header } from '../../components/layout/Header'
 import { Footer } from '../../components/layout/Footer'
 import { PageContainer } from '../../components/layout/PageContainer'
 
-import { tutorials } from '../../feature/tutorial/data/tutorials'
+import { tutorials } from '../../features/tutorial/data/tutorials'
 
 import {
   mockCreatedWorkflows as initialCreatedWorkflows,
   mockSavedTutorialRecords as initialSavedTutorialRecords,
   mockCopiedWorkflows as initialCopiedWorkflows,
-} from '../../feature/storage/data/storage'
+} from '../../features/storage/data/storage'
 
-import { SavedTutorialCard } from '../../feature/storage/components/SavedTutorialCard'
-import { CreateWorkflowCard } from '../../feature/storage/components/CreateWorkflowCard'
-import { CopiedWorkflowCard, type CopiedWorkflow } from '../../feature/storage/components/CopiedWorkflowCard'
+import { SavedTutorialCard } from '../../features/storage/components/SavedTutorialCard'
+import { CreateWorkflowCard } from '../../features/storage/components/CreateWorkflowCard'
+import { CopiedWorkflowCard, type CopiedWorkflow } from '../../features/storage/components/CopiedWorkflowCard'
 
 type StorageTab = 'saved' | 'created' | 'copied'
 
@@ -30,9 +30,15 @@ const ITEMS_PER_PAGE = 6
 
 function MyStoragePage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
 
   const [selectedTab, setSelectedTab] =
-    useState<StorageTab>('saved')
+    useState<StorageTab>(
+      requestedTab === 'created' || requestedTab === 'copied'
+        ? requestedTab
+        : 'saved',
+    )
 
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -49,8 +55,7 @@ function MyStoragePage() {
   const [copiedWorkflows] = useState(initialCopiedWorkflows)
 
   /*
-   * 저장 데이터에는 tutorialId만 있으므로
-   * tutorials.ts에서 실제 튜토리얼 정보를 찾아 합칩니다.
+   * 저장 데이터에 대한 정보를 준비합니다.
    */
   const savedTutorials = useMemo(() => {
     return savedTutorialRecords
@@ -69,7 +74,7 @@ function MyStoragePage() {
           totalSteps: savedRecord.totalSteps,
         }
       })
-      .filter((item) => item !== null)
+      .filter((item): item is NonNullable<typeof item> => item !== null)
   }, [savedTutorialRecords])
 
   const tabs = [
@@ -238,7 +243,7 @@ function MyStoragePage() {
               내 저장소
             </p>
 
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
               저장한 학습과 워크플로우
             </h1>
           </div>
@@ -359,23 +364,19 @@ function MyStoragePage() {
 
           {/* 페이지 표시 점 */}
           {totalPages > 1 && (
-            <div className="mt-10 flex justify-center gap-3">
-              {Array.from({ length: totalPages }).map(
-                (_, pageIndex) => (
-                  <button
-                    key={pageIndex}
-                    type="button"
-                    aria-label={`${pageIndex + 1}페이지`}
-                    onClick={() => setCurrentPage(pageIndex)}
-                    className={[
-                      'h-3 w-3 rounded-full border-2 border-indigo-500 transition',
-                      currentPage === pageIndex
-                        ? 'bg-indigo-500'
-                        : 'bg-white',
-                    ].join(' ')}
-                  />
-                ),
-              )}
+            <div className="flex items-center justify-center gap-3 pt-10">
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  aria-label={`${index + 1}번째 튜토리얼 페이지`}
+                  onClick={() => setCurrentPage(index)}
+                  className={[
+                    'h-3 w-3 rounded-full border-2 border-indigo-500 transition',
+                    currentPage === index ? 'bg-indigo-500' : 'bg-white',
+                  ].join(' ')}
+                />
+              ))}
             </div>
           )}
         </section>

@@ -2,10 +2,12 @@ import type {
   TutorialCategory,
   TutorialLevel,
 } from '../../tutorial/data/tutorials'
+import type { StudioStage } from '../../studio/types/studioNode'
 
 export interface CreatedWorkflowFlowStep {
   id: string
   label: string
+  stage: StudioStage
 }
 
 export interface SavedTutorialRecord {
@@ -70,8 +72,23 @@ export const mockSavedTutorialRecords: SavedTutorialRecord[] = [
     currentStep: 3,
     totalSteps: 4,
   },
+  {
+    tutorialId: 7,
+    currentStep: 1,
+    totalSteps: 4,
+  },
+  {
+    tutorialId: 8,
+    currentStep: 2,
+    totalSteps: 5,
+  },
+  {
+    tutorialId: 9,
+    currentStep: 1,
+    totalSteps: 6,
+  },
 ]
-export const mockCopiedWorkflows: CopiedWorkflow[] = [
+const baseMockCopiedWorkflows: CopiedWorkflow[] = [
   {
     id: 201,
     originalWorkflowId: 1001,
@@ -83,7 +100,21 @@ export const mockCopiedWorkflows: CopiedWorkflow[] = [
     categories: ['자료조사'],
   },
 ]
-export const mockCreatedWorkflows: CreatedWorkflow[] = [
+
+export const mockCopiedWorkflows: CopiedWorkflow[] = [
+  ...baseMockCopiedWorkflows,
+  ...Array.from({ length: 8 }, (_, index) => ({
+    ...baseMockCopiedWorkflows[0],
+    id: 202 + index,
+    originalWorkflowId: 1002 + index,
+    authorName: `워크플로 작성자 ${index + 2}`,
+    authorInitial: `${index + 2}`,
+    title: `공개 워크플로 복사본 ${index + 2}`,
+    description: '공개 라이브러리에서 복사해 편집 중인 흐름입니다.',
+  })),
+]
+
+const baseMockCreatedWorkflows: CreatedWorkflow[] = [
   {
     id: 101,
     title: '경쟁사 리서치 정리표',
@@ -98,22 +129,27 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
       {
         id: 'topic-input',
         label: '주제 입력',
+        stage: 'INPUT',
       },
       {
         id: 'web-search',
         label: '웹 검색',
+        stage: 'CONTEXT',
       },
       {
         id: 'table-summary',
         label: '표 정리',
+        stage: 'PROCESS',
       },
       {
         id: 'review',
         label: '검토',
+        stage: 'REVIEW',
       },
       {
         id: 'output',
         label: '출력',
+        stage: 'OUTPUT',
       },
     ],
 
@@ -145,22 +181,27 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
       {
         id: 'review-upload',
         label: '파일 업로드',
+        stage: 'INPUT',
       },
       {
         id: 'keyword-extract',
         label: '핵심 키워드',
+        stage: 'CONTEXT',
       },
       {
         id: 'summary',
         label: '요약하기',
+        stage: 'PROCESS',
       },
       {
         id: 'missing-check',
         label: '누락 확인',
+        stage: 'REVIEW',
       },
       {
         id: 'text-output',
         label: '텍스트로 출력',
+        stage: 'OUTPUT',
       },
     ],
 
@@ -192,18 +233,22 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
       {
         id: 'task-input',
         label: '업무 입력',
+        stage: 'INPUT',
       },
       {
         id: 'task-classification',
         label: '업무 분류',
+        stage: 'CONTEXT',
       },
       {
         id: 'priority',
         label: '우선순위 정리',
+        stage: 'PROCESS',
       },
       {
         id: 'checklist',
         label: '체크리스트 생성',
+        stage: 'OUTPUT',
       },
     ],
 
@@ -235,18 +280,22 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
       {
         id: 'topic-input',
         label: '주제 입력',
+        stage: 'INPUT',
       },
       {
         id: 'reader-select',
         label: '대상 독자 설정',
+        stage: 'CONTEXT',
       },
       {
         id: 'outline',
         label: '목차 생성',
+        stage: 'PROCESS',
       },
       {
         id: 'draft',
         label: '초안 작성',
+        stage: 'OUTPUT',
       },
     ],
 
@@ -278,18 +327,22 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
       {
         id: 'minutes-input',
         label: '회의록 입력',
+        stage: 'INPUT',
       },
       {
         id: 'decision-summary',
         label: '결정사항 추출',
+        stage: 'PROCESS',
       },
       {
         id: 'task-extract',
         label: '담당 업무 분리',
+        stage: 'REVIEW',
       },
       {
         id: 'deadline',
         label: '마감일 정리',
+        stage: 'OUTPUT',
       },
     ],
 
@@ -321,18 +374,22 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
       {
         id: 'tool-input',
         label: '도구 입력',
+        stage: 'INPUT',
       },
       {
         id: 'feature-search',
         label: '특징 조사',
+        stage: 'CONTEXT',
       },
       {
         id: 'comparison',
         label: '장단점 비교',
+        stage: 'PROCESS',
       },
       {
         id: 'recommendation',
         label: '추천 정리',
+        stage: 'OUTPUT',
       },
     ],
 
@@ -349,4 +406,14 @@ export const mockCreatedWorkflows: CreatedWorkflow[] = [
     creatorNote:
       '비교 목적과 사용 환경을 같이 입력하면 추천 결과가 더 구체적입니다.',
   },
+]
+
+export const mockCreatedWorkflows: CreatedWorkflow[] = [
+  ...baseMockCreatedWorkflows,
+  ...baseMockCreatedWorkflows.slice(0, 3).map((workflow, index) => ({
+    ...workflow,
+    id: 107 + index,
+    title: `${workflow.title} 확장 ${index + 1}`,
+    updatedAt: '방금 전',
+  })),
 ]
