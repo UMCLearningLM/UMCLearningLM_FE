@@ -8,6 +8,7 @@ import MyStoragePage from './pages/storage/MyStoragePage'
 import { PublicLibraryPage } from './pages/library/PublicLibraryPage'
 import LibraryDetailPage from './pages/library/LibraryDetailPage'
 import WorkflowDetailPage from './pages/storage/WorkflowDetailPage'
+import { StudioNodeCardTestPage } from './pages/dev/StudioNodeCardTestPage'
 
 function App() {
   return (
@@ -30,6 +31,10 @@ function App() {
         <Route
           path="/my-storage/workflows/:workflowId"
           element={<WorkflowDetailPage />}
+        />
+        <Route
+          path="/studionodecardtestpage"
+          element={<StudioNodeCardTestPage />}
         />
 
       </Routes>
