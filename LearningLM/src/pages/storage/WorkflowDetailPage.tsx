@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import {
   ArrowLeft,
-  Eye,
   Globe2,
+  Info,
   Lock,
-  Pencil,
-  Trash2,
 } from 'lucide-react'
 import {
   Link,
@@ -22,7 +20,8 @@ import { Card } from '../../components/ui/Card'
 
 import {
   mockCreatedWorkflows,
-} from '../../feature/storage/data/storage'
+} from '../../features/storage/data/storage'
+import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
 
 function WorkflowDetailPage() {
   const { workflowId } = useParams()
@@ -35,6 +34,9 @@ function WorkflowDetailPage() {
   const [visibility, setVisibility] = useState<
     'public' | 'private'
   >(workflow?.visibility ?? 'private')
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] =
+    useState(false)
 
   if (!workflow) {
     return (
@@ -69,10 +71,6 @@ function WorkflowDetailPage() {
     navigate(`/studio/${workflow.id}/edit`)
   }
 
-  const handlePreview = () => {
-    navigate(`/workflows/${workflow.id}/preview`)
-  }
-
   const handleToggleVisibility = () => {
     setVisibility((previousVisibility) =>
       previousVisibility === 'public'
@@ -82,6 +80,10 @@ function WorkflowDetailPage() {
   }
 
   const handleDelete = () => {
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
     console.log('삭제할 워크플로우:', workflow.id)
 
     navigate('/my-storage')
@@ -148,17 +150,17 @@ function WorkflowDetailPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button
-                variant="secondary"
-                onClick={handlePreview}
-              >
-                <Eye size={16} />
-                미리보기
+              <Button onClick={handleEdit}>
+                편집
               </Button>
 
-              <Button onClick={handleEdit}>
-                <Pencil size={16} />
-                편집
+              <Button
+                variant="secondary"
+                onClick={handleToggleVisibility}
+              >
+                {visibility === 'public'
+                  ? '비공개로 설정'
+                  : '공개로 설정'}
               </Button>
             </div>
           </section>
@@ -171,24 +173,38 @@ function WorkflowDetailPage() {
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               {workflow.flowSteps.map(
-                (step, index) => (
-                  <div
-                    key={step.id}
-                    className="flex items-center gap-3"
-                  >
-                    <span className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-600">
-                      <span className="h-2.5 w-2.5 rounded-sm bg-indigo-500" />
+                (step, index) => {
+                  const stageMeta = studioStageMeta[step.stage]
+
+                  return (
+                    <div
+                      key={step.id}
+                      className="flex items-center gap-3"
+                    >
+                    <span
+                      className={[
+                        'inline-flex items-center gap-2 rounded-lg border-2 bg-white px-3 py-2 text-sm font-bold text-slate-600',
+                        stageMeta.handleClassName,
+                      ].join(' ')}
+                    >
+                      <span
+                        className={[
+                          'h-2.5 w-2.5 rounded-sm',
+                          stageMeta.slotMarkClassName,
+                        ].join(' ')}
+                      />
                       {step.label}
                     </span>
 
                     {index <
                       workflow.flowSteps.length - 1 && (
-                      <span className="text-lg font-black text-slate-300">
+                      <span className="text-lg font-bold text-slate-500">
                         →
                       </span>
                     )}
                   </div>
-                ),
+                  )
+                },
               )}
             </div>
           </Card>
@@ -215,15 +231,9 @@ function WorkflowDetailPage() {
                   (result, index) => (
                     <div
                       key={`${result}-${index}`}
-                      className="flex items-center gap-3"
+                      className="h-3 rounded-full bg-slate-100"
                     >
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-600">
-                        {index + 1}
-                      </span>
-
-                      <span className="text-sm font-semibold text-slate-600">
-                        {result}
-                      </span>
+                      <div className="h-3 w-4/5 rounded-full bg-slate-200" />
                     </div>
                   ),
                 )}
@@ -244,59 +254,68 @@ function WorkflowDetailPage() {
 
           {/* 공개 설정 */}
           <Card className="px-6 py-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-black text-slate-700">
-                  공개 설정
-                </p>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm font-bold text-slate-400">
+                공개 설정
+              </p>
 
-                <p className="mt-2 text-sm font-medium text-slate-400">
-                  현재 이 워크플로우는{' '}
-                  <span className="font-black text-slate-600">
-                    {visibility === 'public'
-                      ? '공개'
-                      : '비공개'}
-                  </span>
-                  상태입니다.
-                </p>
-              </div>
-
-              <Button
-                variant="secondary"
-                onClick={handleToggleVisibility}
-              >
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-500 bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">
                 {visibility === 'public' ? (
-                  <Lock size={16} />
+                  <Globe2 size={14} />
                 ) : (
-                  <Globe2 size={16} />
+                  <Lock size={14} />
                 )}
-
                 {visibility === 'public'
-                  ? '비공개로 전환'
-                  : '공개로 전환'}
-              </Button>
+                  ? '공개'
+                  : '비공개'}
+              </span>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
-              <Button onClick={handleEdit}>
-                <Pencil size={16} />
-                편집
+            <ul className="mt-5 space-y-3 text-sm font-semibold text-slate-600">
+              {[
+                '제목 · 한 줄 요약 작성됨',
+                '블록 흐름 1개 이상',
+                '예시 입력·결과 작성 권장',
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3">
+                  <span className="h-3.5 w-3.5 rounded-sm border-2 border-indigo-500" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm font-semibold text-slate-600">
+              <Info size={17} className="shrink-0 text-amber-600" />
+              {visibility === 'public'
+                ? '현재 다른 사용자가 이 흐름을 보고 복사할 수 있습니다.'
+                : '공개하면 다른 사용자가 흐름을 보고 복사할 수 있습니다.'}
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-4">
+              <Button
+                size="lg"
+                onClick={() => setVisibility('public')}
+              >
+                {visibility === 'public'
+                  ? '공개 상태 유지'
+                  : '공개로 게시'}
               </Button>
 
               <Button
                 variant="secondary"
-                onClick={handlePreview}
+                size="lg"
+                onClick={() => setVisibility('private')}
               >
-                <Eye size={16} />
-                미리보기
+                {visibility === 'public'
+                  ? '비공개로 전환'
+                  : '비공개로 유지'}
               </Button>
 
               <button
                 type="button"
                 onClick={handleDelete}
-                className="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-white px-4 py-2 text-sm font-black text-rose-500 transition hover:bg-rose-50"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-rose-300 bg-white px-5 text-base font-semibold text-rose-500 transition hover:bg-rose-50"
               >
-                <Trash2 size={16} />
                 삭제
               </button>
             </div>
@@ -305,6 +324,49 @@ function WorkflowDetailPage() {
       </PageContainer>
 
       <Footer />
+
+      {isDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#181818]/[0.42] px-6"
+          onClick={() => setIsDeleteModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-workflow-title"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2
+              id="delete-workflow-title"
+              className="text-xl font-black text-[#C0473C]"
+            >
+              워크플로우를 삭제할까요?
+            </h2>
+
+            <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">
+              “{workflow.title}” 워크플로우가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                취소
+              </Button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#C0473C] px-4 text-sm font-semibold text-white transition hover:bg-[#A93D34]"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

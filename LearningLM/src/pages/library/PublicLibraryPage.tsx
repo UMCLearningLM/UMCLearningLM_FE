@@ -10,23 +10,22 @@ import { Header } from '../../components/layout/Header'
 import { Footer } from '../../components/layout/Footer'
 import { PageContainer } from '../../components/layout/PageContainer'
 
-import { LibraryCard } from '../../feature/library/component/LibraryCard'
+import { LibraryCard } from '../../features/library/component/LibraryCard'
 
 import {
   libraryCategories,
   libraryItems,
   libraryLevels,
-} from '../../feature/library/data/libraryData'
+} from '../../features/library/data/libraryData'
 
 import type {
   LibraryCategory,
   LibraryLevel,
-} from '../../feature/library/data/libraryData'
+} from '../../features/library/data/libraryData'
 
 const MAX_LEVEL_FILTER_COUNT = 2
 const MAX_CATEGORY_FILTER_COUNT = 3
 const ITEMS_PER_PAGE = 6
-const AUTO_SLIDE_INTERVAL_MS = 5000
 
 const levelButtonClassMap: Record<
   LibraryLevel,
@@ -78,6 +77,9 @@ export function PublicLibraryPage() {
 
   const [searchKeyword, setSearchKeyword] =
     useState('')
+
+  const [isFilterOpen, setIsFilterOpen] =
+    useState(false)
 
   const [selectedLevels, setSelectedLevels] =
     useState<LibraryLevel[]>([])
@@ -138,11 +140,11 @@ export function PublicLibraryPage() {
     )
   }
 
-  const filteredLibraryItems = useMemo(() => {
-    const normalizedKeyword = searchKeyword
-      .trim()
-      .toLowerCase()
+  const normalizedKeyword = searchKeyword
+    .trim()
+    .toLowerCase()
 
+  const filteredLibraryItems = useMemo(() => {
     return libraryItems.filter((item) => {
       const matchesSearch =
         normalizedKeyword === '' ||
@@ -173,10 +175,32 @@ export function PublicLibraryPage() {
       )
     })
   }, [
-    searchKeyword,
+    normalizedKeyword,
     selectedLevels,
     selectedCategories,
   ])
+
+  const hasSubmittedKeyword = normalizedKeyword.length > 0
+  const hasSelectedOptions =
+    selectedLevels.length > 0 || selectedCategories.length > 0
+  const hasSearchCondition = hasSubmittedKeyword || hasSelectedOptions
+
+  const resultTitle =
+    hasSubmittedKeyword
+      ? `“${normalizedKeyword}” 에 대한 검색결과`
+      : '선택한 조건에 대한 검색결과'
+
+  const quoteOptions = (options: string[]) =>
+    options.map((option) => `“${option}”`).join(', ')
+
+  const optionSummary = [
+    selectedLevels.length > 0
+      ? `${quoteOptions(selectedLevels)}에 대한 난이도 옵션`
+      : '',
+    selectedCategories.length > 0
+      ? `${quoteOptions(selectedCategories)}에 대한 카테고리 옵션`
+      : '',
+  ].filter(Boolean).join(' + ')
 
   const totalPages = Math.ceil(
     filteredLibraryItems.length /
@@ -214,27 +238,6 @@ export function PublicLibraryPage() {
     }
   }, [currentPage, totalPages])
 
-  useEffect(() => {
-    if (totalPages <= 1) {
-      return
-    }
-
-    const intervalId = window.setInterval(
-      () => {
-        setCurrentPage((previousPage) =>
-          previousPage >= totalPages - 1
-            ? 0
-            : previousPage + 1,
-        )
-      },
-      AUTO_SLIDE_INTERVAL_MS,
-    )
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [totalPages])
-
   const handleLibraryClick = (
     libraryId: number,
   ) => {
@@ -242,39 +245,23 @@ export function PublicLibraryPage() {
   }
 
   const handlePreviousPage = () => {
-    setCurrentPage((previousPage) => {
-      if (totalPages <= 1) {
-        return 0
-      }
-
-      return previousPage === 0
-        ? totalPages - 1
-        : previousPage - 1
-    })
+    setCurrentPage((previousPage) =>
+      Math.max(previousPage - 1, 0),
+    )
   }
 
   const handleNextPage = () => {
-    setCurrentPage((previousPage) => {
-      if (totalPages <= 1) {
-        return 0
-      }
-
-      return previousPage >= totalPages - 1
-        ? 0
-        : previousPage + 1
-    })
+    setCurrentPage((previousPage) =>
+      Math.min(previousPage + 1, totalPages - 1),
+    )
   }
 
   const handleResetFilters = () => {
     setSearchKeyword('')
     setSelectedLevels([])
     setSelectedCategories([])
+    setCurrentPage(0)
   }
-
-  const hasActiveFilter =
-    searchKeyword.length > 0 ||
-    selectedLevels.length > 0 ||
-    selectedCategories.length > 0
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -293,98 +280,89 @@ export function PublicLibraryPage() {
             </h1>
           </div>
 
-          <div className="mt-10 max-w-3xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-dashed border-slate-300 pb-4">
+          <div className="mt-12 w-full max-w-3xl rounded-lg border border-slate-200 bg-white px-8 py-6 shadow-sm">
+            <label className="relative block">
               <Search
-                size={17}
-                className="shrink-0 text-slate-400"
+                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-slate-400"
+                size={24}
               />
 
               <input
                 type="text"
                 value={searchKeyword}
+                onFocus={() => setIsFilterOpen(true)}
                 onChange={(event) =>
                   setSearchKeyword(
                     event.target.value,
                   )
                 }
                 placeholder="워크플로우 검색"
-                className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                className="h-10 w-full bg-transparent pl-9 pr-4 text-base font-semibold text-slate-700 outline-none placeholder:text-slate-400"
               />
-            </div>
+            </label>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="mr-2 text-sm font-black text-slate-700">
-                난이도
-              </span>
+            {isFilterOpen && (
+              <div className="mt-5 border-t border-dashed border-slate-300 pt-7">
+                <div className="space-y-6">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="mr-1 text-sm font-black text-slate-700">
+                      난이도{' '}
+                      <span className="text-indigo-500">
+                        {selectedLevels.length}/{MAX_LEVEL_FILTER_COUNT}
+                      </span>
+                    </span>
 
-              {libraryLevels.map((level) => (
-                <FilterButton
-                  key={level}
-                  label={level}
-                  isSelected={selectedLevels.includes(
-                    level,
-                  )}
-                  onClick={() =>
-                    handleLevelClick(level)
-                  }
-                  selectedClassName={
-                    levelButtonClassMap[level]
-                  }
-                />
-              ))}
-            </div>
+                    {libraryLevels.map((level) => (
+                      <FilterButton
+                        key={level}
+                        label={level}
+                        isSelected={selectedLevels.includes(level)}
+                        onClick={() => handleLevelClick(level)}
+                        selectedClassName={levelButtonClassMap[level]}
+                      />
+                    ))}
+                  </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="mr-2 text-sm font-black text-slate-700">
-                카테고리
-              </span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="mr-1 text-sm font-black text-slate-700">
+                      카테고리{' '}
+                      <span className="text-indigo-500">
+                        {selectedCategories.length}/{MAX_CATEGORY_FILTER_COUNT}
+                      </span>
+                    </span>
 
-              {libraryCategories.map(
-                (category) => (
-                  <FilterButton
-                    key={category}
-                    label={category}
-                    isSelected={selectedCategories.includes(
-                      category,
-                    )}
-                    onClick={() =>
-                      handleCategoryClick(
-                        category,
-                      )
-                    }
-                    selectedClassName={
-                      selectedCategoryButtonClassName
-                    }
-                  />
-                ),
-              )}
-            </div>
-
-            {hasActiveFilter && (
-              <div className="mt-5 border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="text-sm font-black text-slate-400 transition hover:text-indigo-500"
-                >
-                  검색 조건 초기화
-                </button>
+                    {libraryCategories.map((category) => (
+                      <FilterButton
+                        key={category}
+                        label={category}
+                        isSelected={selectedCategories.includes(category)}
+                        onClick={() => handleCategoryClick(category)}
+                        selectedClassName={selectedCategoryButtonClassName}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
-            <p className="text-sm font-bold text-slate-500">
-              총{' '}
-              <span className="text-indigo-600">
-                {filteredLibraryItems.length}
-              </span>
-              개의 워크플로우
-            </p>
-          </div>
+          {hasSearchCondition && (
+            <div className="mt-12">
+              {hasSubmittedKeyword && (
+                <h2 className="text-4xl font-black tracking-tight text-slate-700">
+                  {resultTitle}
+                </h2>
+              )}
 
-          <div className="relative mt-6">
+              {hasSelectedOptions && (
+                <p className={hasSubmittedKeyword ? 'mt-5 text-sm font-semibold text-slate-600' : 'text-sm font-semibold text-slate-600'}>
+                  {optionSummary} 적용
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="relative mt-12">
             {visibleLibraryItems.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {visibleLibraryItems.map(
@@ -400,20 +378,34 @@ export function PublicLibraryPage() {
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
-                <p className="text-lg font-black text-slate-700">
-                  검색 결과가 없습니다.
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
+                <p className="text-xl font-black text-slate-700">
+                  {hasSubmittedKeyword && hasSelectedOptions
+                    ? '해당 검색어와 옵션에 부합하는 워크플로우가 없습니다.'
+                    : hasSubmittedKeyword
+                      ? `“${searchKeyword.trim()}”에 대한 워크플로우가 없습니다.`
+                      : '해당 옵션에 맞는 워크플로우가 없습니다.'}
                 </p>
 
                 <p className="mt-2 text-sm font-medium text-slate-400">
-                  검색어나 선택한 필터를
-                  변경해보세요.
+                  {hasSubmittedKeyword && hasSelectedOptions
+                    ? '검색어 혹은 옵션을 다시 선택해주세요.'
+                    : hasSubmittedKeyword
+                      ? '검색어를 다시 입력해주세요.'
+                      : '옵션을 다시 선택해주세요.'}
                 </p>
+
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                >
+                  필터 초기화
+                </button>
               </div>
             )}
 
-            {totalPages > 1 && (
-              <>
+            {totalPages > 1 && currentPage > 0 && (
                 <button
                   type="button"
                   aria-label="이전 페이지"
@@ -425,7 +417,9 @@ export function PublicLibraryPage() {
                     strokeWidth={3}
                   />
                 </button>
+            )}
 
+            {totalPages > 1 && currentPage < totalPages - 1 && (
                 <button
                   type="button"
                   aria-label="다음 페이지"
@@ -437,7 +431,6 @@ export function PublicLibraryPage() {
                     strokeWidth={3}
                   />
                 </button>
-              </>
             )}
           </div>
 

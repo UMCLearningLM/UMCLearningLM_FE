@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   ArrowLeft,
   Bookmark,
+  CheckCircle2,
   Copy,
   Heart,
 } from 'lucide-react'
@@ -20,12 +21,14 @@ import { Card } from '../../components/ui/Card'
 
 import {
   getLibraryItemById,
-} from '../../feature/library/data/libraryData'
+} from '../../features/library/data/libraryData'
 
 import type {
   LibraryFlowColor,
   LibraryLevel,
-} from '../../feature/library/data/libraryData'
+} from '../../features/library/data/libraryData'
+import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
+import type { StudioStage } from '../../features/studio/types/studioNode'
 
 const PAGE_MAX_WIDTH = 'max-w-[1250px]'
 const levelClassMap: Record<
@@ -40,31 +43,12 @@ const levelClassMap: Record<
     'border-rose-200 bg-rose-50 text-rose-600',
 }
 
-const flowDotClassMap: Record<
-  LibraryFlowColor,
-  string
-> = {
-  blue: 'bg-blue-500',
-  teal: 'bg-teal-500',
-  indigo: 'bg-indigo-500',
-  amber: 'bg-amber-500',
-  green: 'bg-emerald-500',
-}
-
-const flowStepClassMap: Record<
-  LibraryFlowColor,
-  string
-> = {
-  blue:
-    'border-blue-300 bg-blue-50 text-blue-700',
-  teal:
-    'border-teal-300 bg-teal-50 text-teal-700',
-  indigo:
-    'border-indigo-300 bg-indigo-50 text-indigo-700',
-  amber:
-    'border-amber-300 bg-amber-50 text-amber-700',
-  green:
-    'border-emerald-300 bg-emerald-50 text-emerald-700',
+const flowColorStageMap: Record<LibraryFlowColor, StudioStage> = {
+  blue: 'INPUT',
+  teal: 'CONTEXT',
+  indigo: 'PROCESS',
+  amber: 'REVIEW',
+  green: 'OUTPUT',
 }
 
 interface FlowStepProps {
@@ -76,17 +60,19 @@ function FlowStep({
   label,
   color,
 }: FlowStepProps) {
+  const stageMeta = studioStageMeta[flowColorStageMap[color]]
+
   return (
     <span
       className={[
-        'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-black',
-        flowStepClassMap[color],
+        'inline-flex items-center gap-2 rounded-lg border-2 bg-white px-3 py-2 text-sm font-bold text-slate-600',
+        stageMeta.handleClassName,
       ].join(' ')}
     >
       <span
         className={[
           'h-2.5 w-2.5 rounded-sm',
-          flowDotClassMap[color],
+          stageMeta.slotMarkClassName,
         ].join(' ')}
       />
 
@@ -110,9 +96,20 @@ export function LibraryDetailPage() {
   const [isLiked, setIsLiked] =
     useState(false)
 
+  const [isCopyModalOpen, setIsCopyModalOpen] =
+    useState(false)
+
   const [comment, setComment] = useState('')
 
   const handleCopyWorkflow = () => {
+    if (!libraryItem) {
+      return
+    }
+
+    setIsCopyModalOpen(true)
+  }
+
+  const handleContinueToStudio = () => {
     if (!libraryItem) {
       return
     }
@@ -284,7 +281,7 @@ export function LibraryDetailPage() {
                       libraryItem.flowSteps
                         .length -
                         1 && (
-                      <span className="text-lg font-black text-slate-300">
+                      <span className="text-lg font-bold text-slate-500">
                         →
                       </span>
                     )}
@@ -311,23 +308,9 @@ export function LibraryDetailPage() {
                 예시 결과
               </p>
 
-              <div className="mt-5 space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-                {libraryItem.exampleResult.map(
-                  (result, index) => (
-                    <div
-                      key={`${result}-${index}`}
-                      className="flex items-center gap-3"
-                    >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-600">
-                        {index + 1}
-                      </span>
-
-                      <span className="text-sm font-semibold text-slate-600">
-                        {result}
-                      </span>
-                    </div>
-                  ),
-                )}
+              <div className="relative mt-5 h-36 overflow-hidden rounded-xl border border-slate-300 bg-white">
+                <div className="absolute left-0 top-0 h-px w-[110%] origin-left rotate-[13deg] border-t border-dashed border-slate-300" />
+                <div className="absolute bottom-0 left-0 h-px w-[110%] origin-left -rotate-[13deg] border-t border-dashed border-slate-300" />
               </div>
             </Card>
           </section>
@@ -355,8 +338,8 @@ export function LibraryDetailPage() {
               className={[
                 'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-black transition',
                 isLiked
-                  ? 'border-rose-300 bg-rose-50 text-rose-500'
-                  : 'border-slate-200 bg-white text-slate-500 hover:border-rose-300 hover:text-rose-500',
+                  ? 'border-indigo-300 bg-indigo-50 text-indigo-500'
+                  : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-500',
               ].join(' ')}
             >
               <Heart
@@ -470,6 +453,50 @@ export function LibraryDetailPage() {
       </PageContainer>
 
       <Footer />
+
+      {isCopyModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#181818]/[0.42] px-6"
+          onClick={() => setIsCopyModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="copy-workflow-title"
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2
+              id="copy-workflow-title"
+              className="text-xl font-black text-slate-900"
+            >
+              복사해서 시작
+            </h2>
+
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <CheckCircle2
+                size={20}
+                className="mt-0.5 shrink-0 text-emerald-600"
+              />
+              <p className="text-sm font-semibold leading-6 text-slate-600">
+                내 저장소에 비공개 복사본을 만들었습니다. 스튜디오에서 자유롭게 편집할 수 있습니다.
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/my-storage?tab=copied')}
+              >
+                내 저장소에서 보기
+              </Button>
+              <Button onClick={handleContinueToStudio}>
+                스튜디오로 계속
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
