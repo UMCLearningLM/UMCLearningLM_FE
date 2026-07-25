@@ -128,8 +128,8 @@ export function Studio_create_review_details1() {
                 <p className="text-[#52525B] text-[20.2px] font-bold"
                     onClick={() => {
 
-                    }}>← 편집으로</p>
-                <p className="flex-1 pl-[38px] text-[#9A9AA3] text-[16.5px]">1 / 3 · 검토 — 흐름과 저장 조건 확인</p>
+                    }}>← 검토</p>
+                <p className="flex-1 pl-[38px] text-[#9A9AA3] text-[16.5px]">2 / 3 · 상세 정보 — 이름·요약·분류 입력</p>
                 <p className="hover:bg-[#3A3DC2] w-[193px] h-[55.5px] bg-[#6366F1] flex items-center justify-center rounded-[12px]
                 text-white text-[20px] font-bold"
                     onClick={() => {
