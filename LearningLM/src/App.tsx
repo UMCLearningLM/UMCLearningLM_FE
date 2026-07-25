@@ -1,11 +1,8 @@
-import { CommonComponentTestPage } from './pages/dev/CommonComponentTestPage'
-import { StudioNodeCardTestPage } from './pages/dev/StudioNodeCardTestPage'
-import { Stdio_create1 } from './pages/Stdio_create1'
-import { OfficialTutorialPage } from './pages/tutorial/OfficialTutorialPage'
-import { TutorialDetailPage } from './pages/tutorial/TutorialDetailPage'
+import { RouterProvider } from 'react-router-dom'
+import { router } from './routes/router'
 
 function App() {
-  return <Stdio_create1 />
+  return <RouterProvider router={router} />
 }
 
 export default App
