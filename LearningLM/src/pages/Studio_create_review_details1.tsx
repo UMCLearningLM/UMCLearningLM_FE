@@ -1,7 +1,7 @@
 import { Footer } from "../components/layout/Footer";
 import { Header } from "../components/layout/Header";
 
-export function Studio_create_review1() {
+export function Studio_create_review_details1() {
     return (
         <>
             <Header />
