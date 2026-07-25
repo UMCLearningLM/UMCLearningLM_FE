@@ -7,6 +7,7 @@ import MyStoragePage from '../pages/storage/MyStoragePage'
 import { PublicLibraryPage } from '../pages/library/PublicLibraryPage'
 import LibraryDetailPage from '../pages/library/LibraryDetailPage'
 import WorkflowDetailPage from '../pages/storage/WorkflowDetailPage'
+import { StudioNodeCardTestPage } from '../pages/dev/StudioNodeCardTestPage'
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
   {
     path: '/my-storage/workflows/:workflowId',
     element: <WorkflowDetailPage />,
+  },
+  {
+    path: '/studionodecardtestpage',
+    element: <StudioNodeCardTestPage />,
   },
   {
     path: '*',
