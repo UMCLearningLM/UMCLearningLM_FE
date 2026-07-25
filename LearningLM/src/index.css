@@ -28,3 +28,10 @@ textarea,
 select {
   font: inherit;
 }
+
+.setting-block-fields
+  .text-xs.font-bold.text-slate-700:not(.setting-block-help) {
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: -0.03em;
+}

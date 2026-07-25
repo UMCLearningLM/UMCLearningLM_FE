@@ -7,6 +7,8 @@ interface ToggleSwitchProps {
   onChange: (checked: boolean) => void
   label?: ReactNode
   description?: ReactNode
+  labelClassName?: string
+  descriptionClassName?: string
   size?: ToggleSwitchSize
   disabled?: boolean
   className?: string
@@ -32,6 +34,8 @@ export function ToggleSwitch({
   onChange,
   label,
   description,
+  labelClassName = '',
+  descriptionClassName = '',
   size = 'md',
   disabled = false,
   className = '',
@@ -69,10 +73,19 @@ export function ToggleSwitch({
       {(label || description) && (
         <span className="flex flex-col">
           {label && (
-            <span className="text-sm font-black text-slate-700">{label}</span>
+            <span
+              className={['text-sm font-black text-slate-700', labelClassName].join(' ')}
+            >
+              {label}
+            </span>
           )}
           {description && (
-            <span className="text-xs font-semibold text-slate-400">
+            <span
+              className={[
+                'text-xs font-semibold text-slate-400',
+                descriptionClassName,
+              ].join(' ')}
+            >
               {description}
             </span>
           )}
