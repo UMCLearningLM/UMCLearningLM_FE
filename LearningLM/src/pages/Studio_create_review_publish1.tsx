@@ -156,36 +156,36 @@ export function Studio_create_review_publish1() {
                         />
 
                         {/* 팝업 */}
-                        <div className="relative z-10 w-[690px] h-[374px] rounded-2xl bg-white p-8 shadow-xl">
+                        <div className="relative z-10 w-[680px] h-[290px] rounded-2xl bg-white pt-[24px] px-[24px] shadow-xl">
                             <div className="flex items-center">
-                                <div className="w-[39px] h-[39px] bg-[#3C7A52] flex items-center justify-center rounded-[50px]
-                                text-white text-[21px] font-bold">✓</div>
+                                <div className="w-[30px] h-[30px] bg-[#3C7A52] flex items-center justify-center rounded-[50px]
+                                text-white text-[14px] font-bold">✓</div>
                                 <p className="ml-[15px] text-xl font-bold"> 저장 완료</p>
                             </div>
 
-                            <div className="w-[628px] h-[94px] mt-[21px] pl-[22.5px] pt-[19.5px] bg-[#F5F5F7] flex gap-[15px] border-[1.5px] border-[#E4E4E7] rounded-[12px]">
-                                <div className="w-[27px] h-[27px] bg-[#3C7A52] flex items-center justify-center rounded-[50px]
-                                text-white text-[16.5px] font-bold">✓</div>
-                                <p className="text-[16px]"><span className="font-bold">"제품 리뷰 요약기"</span>를 내 저장소에<span className="font-bold"> 비공개 </span>로 저장했어요. 언제든 편집하거나
+                            <div className="w-[628px] h-[78px] mt-[14px] pl-[22.5px] pt-[14px] bg-[#F5F5F7] flex gap-[15px] border-[1.5px] border-[#E4E4E7] rounded-[12px]">
+                                <div className="w-[22px] h-[22px] bg-[#3C7A52] flex items-center justify-center rounded-[50px]
+                                text-white text-[12px] font-bold">✓</div>
+                                <p className="mt-[-4px] text-[15px]"><span className="font-bold">"제품 리뷰 요약기"</span>를 내 저장소에<span className="font-bold"> 비공개 </span>로 저장했어요. 언제든 편집하거나
                                     <br />공개로 전환할 수 있습니다.</p>
                             </div>
 
-                            <div className="h-[33px] mt-[21px] flex items-center font-bold">
-                                <p className="w-[94px] h-[33px] flex items-center justify-center bg-[#F0F0F3] rounded-[8px]
-                                text-[#52525B] text-[16.5px]">🔒 비공개</p>
-                                <p className="w-[69.4px] h-[33px] ml-[10.5px] bg-[#EEF1F7] flex items-center justify-center rounded-[8px] text-[#4A5E8A]">기초</p>
-                                <p className="ml-[21px] text-[#6366F1] text-[18px] text-[#6366F1]">결과물 검토</p>
+                            <div className="h-[33px] mt-[16px] flex items-center font-bold">
+                                <p className="w-[90px] h-[30px] flex items-center justify-center bg-[#F0F0F3] rounded-[8px]
+                                text-[#52525B] text-[14px]">🔒 비공개</p>
+                                <p className="w-[66px] h-[30px] ml-[10.5px] bg-[#EEF1F7] flex items-center justify-center rounded-[8px] text-[#4A5E8A]">기초</p>
+                                <p className="ml-[21px] text-[#6366F1] text-[16px] text-[#6366F1]">결과물 검토</p>
                             </div>
 
-                            <div className="mt-[48.8px] flex items-center justify-end gap-[36px]">
+                            <div className="mt-[20px] flex items-center justify-end gap-[36px]">
                                 <p
                                     onClick={() => setSaveBtn(false)}
-                                    className="cursor-pointer text-[#52525B] text-[20.2px] font-bold"
+                                    className="cursor-pointer text-[#52525B] text-[16px] font-bold"
                                 >
                                     계속 편집
                                 </p>
 
-                                <p className="cursor-pointer w-[200.6px] h-[57px] flex items-center justify-center rounded-lg text-[20.2px] font-bold bg-[#6366F1] text-white">
+                                <p className="cursor-pointer w-[160px] h-[44px] flex items-center justify-center rounded-lg text-[16px] font-bold bg-[#6366F1] text-white">
                                     내 저장소 보기
                                 </p>
                             </div>
