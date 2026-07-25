@@ -11,6 +11,13 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
+.font-SplineSansMono {
+  font-family: "Spline Sans Mono", sans-serif;
+}
 
 * {
   box-sizing: border-box;
