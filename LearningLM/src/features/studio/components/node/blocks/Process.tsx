@@ -403,19 +403,19 @@ export default function Process() {
           <div className={`absolute whitespace-nowrap flex w-[11px] h-[20px] top-[663.83px] left-[232.5px] font-inter font-bold text-[16.5px] leading-none  flex items-center justify-center ${
           count3==="setcount3"? "text-[#FFFFFF]" : "text-[#9A9AA3]"}`}>3</div>
 
-          <div onClick={()=>{setCount3("setcount5")}}
+          <div onClick={()=>{setCount3(count=>count+5)}}
           className={`absolute w-[38.93px] h-[44.25px] top-[654.38px] left-[270.68px] border border-[1.5px] flex items-center justify-center rounded-[12px] ${
           count3==="setcount5"? "border-[#6366F1] bg-[#6366F1]" : "border-[#E4E4E7] bg-[#FFFFFF]"}`}></div>
           <div className={`absolute whitespace-nowrap flex w-[11px] h-[20px] top-[663.83px] left-[284.93px] font-inter font-bold text-[16.5px] leading-none  flex items-center justify-center ${
           count3==="setcount5"? "text-[#FFFFFF]" : "text-[#9A9AA3]"}`}>5</div>
 
-          <div onClick={()=>{setCount3("setcount10")}}
+          <div onClick={()=>{setCount3(count=>count+10)}}
           className={`absolute w-[38.93px] h-[44.25px] top-[654.38px] left-[327.2px] border border-[1.5px] flex items-center justify-center rounded-[12px] ${
           count3==="setcount10"? "border-[#6366F1] bg-[#6366F1]" : "border-[#E4E4E7] bg-[#FFFFFF]"}`}></div>
           <div className={`absolute whitespace-nowrap flex w-[20px] h-[20px] top-[663.83px] left-[337.13px] font-inter font-bold text-[16.5px] leading-none  flex items-center justify-center ${
           count3==="setcount10"? "text-[#FFFFFF]" : "text-[#9A9AA3]"}`}>10</div>
 
-          <div onClick={()=>{setCount3("setcountx")}}
+          <div onClick={()=>{setCount3("count=>count+")}}
           className={`absolute w-[85.55px] h-[44.25px] top-[654.38px] left-[382.99px] border border-[1.5px]  flex items-center justify-center rounded-[12px] ${
             count3==="setcountx"?"border-[#6366F1] bg-[#6366F1]" : "border-[#E4E4E7] bg-[#FFFFFF]"}`}></div>
           <div className={`absolute w-[61px] h-[20px] top-[663.83px] left-[397.24px] font-inter font-bold text-[16.5px] leading-none  flex items-center justify-center ${
