@@ -1,9 +1,14 @@
 import { ArrowLeft, ArrowRight, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import {
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom'
+
 import { Footer } from '../../components/layout/Footer'
 import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
+
 import {
   tutorialCategories,
   tutorialLevels,
@@ -11,6 +16,7 @@ import {
   type TutorialCategory,
   type TutorialLevel,
 } from '../../features/tutorial/data/tutorials'
+
 import { TutorialCard } from '../../features/tutorial/components/TutorialCard'
 
 const MAX_LEVEL_FILTER_COUNT = 2
@@ -46,7 +52,8 @@ function FilterButton({
       className={[
         'rounded-lg border px-3 py-1.5 text-sm font-black transition',
         isSelected
-          ? selectedClassName || 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-sm'
+          ? selectedClassName ||
+            'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-sm'
           : 'border-slate-700 bg-white text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-500',
       ].join(' ')}
     >
@@ -55,14 +62,51 @@ function FilterButton({
   )
 }
 
+function isTutorialLevel(value: string): value is TutorialLevel {
+  return tutorialLevels.includes(value as TutorialLevel)
+}
+
+function isTutorialCategory(
+  value: string,
+): value is TutorialCategory {
+  return tutorialCategories.includes(value as TutorialCategory)
+}
+
 export function OfficialTutorialPage() {
   const navigate = useNavigate()
-  const [keyword, setKeyword] = useState('')
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [selectedLevels, setSelectedLevels] = useState<TutorialLevel[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<
-    TutorialCategory[]
-  >([])
+
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const [keyword, setKeyword] = useState(
+    () => searchParams.get('keyword') ?? '',
+  )
+
+  const [isFilterOpen, setIsFilterOpen] = useState(
+    () =>
+      searchParams.has('keyword') ||
+      searchParams.has('level') ||
+      searchParams.has('category'),
+  )
+
+  const [selectedLevels, setSelectedLevels] = useState<
+    TutorialLevel[]
+  >(() =>
+    searchParams
+      .getAll('level')
+      .filter(isTutorialLevel)
+      .slice(0, MAX_LEVEL_FILTER_COUNT),
+  )
+
+  const [
+    selectedCategories,
+    setSelectedCategories,
+  ] = useState<TutorialCategory[]>(() =>
+    searchParams
+      .getAll('category')
+      .filter(isTutorialCategory)
+      .slice(0, MAX_CATEGORY_FILTER_COUNT),
+  )
+
   const [currentPage, setCurrentPage] = useState(0)
 
   const normalizedKeyword = keyword.trim()
@@ -73,14 +117,21 @@ export function OfficialTutorialPage() {
     return tutorials.filter((tutorial) => {
       const matchesKeyword =
         loweredKeyword.length === 0 ||
-        tutorial.title.toLowerCase().includes(loweredKeyword) ||
-        tutorial.description.toLowerCase().includes(loweredKeyword) ||
+        tutorial.title
+          .toLowerCase()
+          .includes(loweredKeyword) ||
+        tutorial.description
+          .toLowerCase()
+          .includes(loweredKeyword) ||
         tutorial.categories.some((category) =>
-          category.toLowerCase().includes(loweredKeyword),
+          category
+            .toLowerCase()
+            .includes(loweredKeyword),
         )
 
       const matchesLevel =
-        selectedLevels.length === 0 || selectedLevels.includes(tutorial.level)
+        selectedLevels.length === 0 ||
+        selectedLevels.includes(tutorial.level)
 
       const matchesCategory =
         selectedCategories.length === 0 ||
@@ -88,18 +139,35 @@ export function OfficialTutorialPage() {
           selectedCategories.includes(category),
         )
 
-      return matchesKeyword && matchesLevel && matchesCategory
+      return (
+        matchesKeyword &&
+        matchesLevel &&
+        matchesCategory
+      )
     })
-  }, [normalizedKeyword, selectedCategories, selectedLevels])
+  }, [
+    normalizedKeyword,
+    selectedCategories,
+    selectedLevels,
+  ])
 
-  const totalPages = Math.ceil(filteredTutorials.length / ITEMS_PER_PAGE)
-  const canGoPrev = totalPages > 1 && currentPage > 0
-  const canGoNext = totalPages > 1 && currentPage < totalPages - 1
-
-  const paginatedTutorials = filteredTutorials.slice(
-    currentPage * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE + ITEMS_PER_PAGE,
+  const totalPages = Math.ceil(
+    filteredTutorials.length / ITEMS_PER_PAGE,
   )
+
+  const canGoPrev =
+    totalPages > 1 && currentPage > 0
+
+  const canGoNext =
+    totalPages > 1 &&
+    currentPage < totalPages - 1
+
+  const paginatedTutorials =
+    filteredTutorials.slice(
+      currentPage * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE +
+        ITEMS_PER_PAGE,
+    )
 
   const hasSearchCondition =
     normalizedKeyword.length > 0 ||
@@ -113,34 +181,102 @@ export function OfficialTutorialPage() {
 
   useEffect(() => {
     setCurrentPage(0)
-  }, [keyword, selectedLevels, selectedCategories])
+  }, [
+    keyword,
+    selectedLevels,
+    selectedCategories,
+  ])
 
-  const toggleLevel = (level: TutorialLevel) => {
-    setSelectedLevels((prev) => {
-      if (prev.includes(level)) {
-        return prev.filter((item) => item !== level)
+  useEffect(() => {
+    const nextSearchParams =
+      new URLSearchParams()
+
+    if (normalizedKeyword) {
+      nextSearchParams.set(
+        'keyword',
+        normalizedKeyword,
+      )
+    }
+
+    selectedLevels.forEach((level) => {
+      nextSearchParams.append('level', level)
+    })
+
+    selectedCategories.forEach((category) => {
+      nextSearchParams.append(
+        'category',
+        category,
+      )
+    })
+
+    setSearchParams(nextSearchParams, {
+      replace: true,
+    })
+  }, [
+    normalizedKeyword,
+    selectedLevels,
+    selectedCategories,
+    setSearchParams,
+  ])
+
+  useEffect(() => {
+    if (totalPages === 0) {
+      setCurrentPage(0)
+      return
+    }
+
+    if (currentPage >= totalPages) {
+      setCurrentPage(totalPages - 1)
+    }
+  }, [currentPage, totalPages])
+
+  const toggleLevel = (
+    level: TutorialLevel,
+  ) => {
+    setSelectedLevels((previousLevels) => {
+      if (previousLevels.includes(level)) {
+        return previousLevels.filter(
+          (item) => item !== level,
+        )
       }
 
-      if (prev.length >= MAX_LEVEL_FILTER_COUNT) {
-        return prev
+      if (
+        previousLevels.length >=
+        MAX_LEVEL_FILTER_COUNT
+      ) {
+        return previousLevels
       }
 
-      return [...prev, level]
+      return [...previousLevels, level]
     })
   }
 
-  const toggleCategory = (category: TutorialCategory) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(category)) {
-        return prev.filter((item) => item !== category)
-      }
+  const toggleCategory = (
+    category: TutorialCategory,
+  ) => {
+    setSelectedCategories(
+      (previousCategories) => {
+        if (
+          previousCategories.includes(category)
+        ) {
+          return previousCategories.filter(
+            (item) => item !== category,
+          )
+        }
 
-      if (prev.length >= MAX_CATEGORY_FILTER_COUNT) {
-        return prev
-      }
+        if (
+          previousCategories.length >=
+          MAX_CATEGORY_FILTER_COUNT
+        ) {
+          return previousCategories
+        }
 
-      return [...prev, category]
-    })
+        return [
+          ...previousCategories,
+          category,
+        ]
+      },
+    )
   }
 
   const resetFilters = () => {
@@ -148,14 +284,23 @@ export function OfficialTutorialPage() {
     setSelectedLevels([])
     setSelectedCategories([])
     setCurrentPage(0)
+    setIsFilterOpen(false)
+    setSearchParams({}, { replace: true })
   }
 
   const goPrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 0))
+    setCurrentPage((previousPage) =>
+      Math.max(previousPage - 1, 0),
+    )
   }
 
   const goNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))
+    setCurrentPage((previousPage) =>
+      Math.min(
+        previousPage + 1,
+        totalPages - 1,
+      ),
+    )
   }
 
   return (
@@ -165,7 +310,10 @@ export function OfficialTutorialPage() {
       <PageContainer className="py-16">
         <section className="space-y-12">
           <div>
-            <p className="text-sm font-bold text-slate-400">공식 튜토리얼</p>
+            <p className="text-sm font-bold text-slate-400">
+              공식 튜토리얼
+            </p>
+
             <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
               단계별로 AI 활용 흐름 배우기
             </h1>
@@ -174,13 +322,19 @@ export function OfficialTutorialPage() {
           <div className="w-full max-w-3xl rounded-lg border border-slate-200 bg-white px-8 py-6 shadow-sm">
             <label className="relative block">
               <Search
-                className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-slate-400"
                 size={24}
               />
+
               <input
+                type="text"
                 value={keyword}
-                onFocus={() => setIsFilterOpen(true)}
-                onChange={(event) => setKeyword(event.target.value)}
+                onFocus={() =>
+                  setIsFilterOpen(true)
+                }
+                onChange={(event) =>
+                  setKeyword(event.target.value)
+                }
                 placeholder="튜토리얼 검색"
                 className="h-10 w-full bg-transparent pl-9 pr-4 text-base font-semibold text-slate-700 outline-none placeholder:text-slate-400"
               />
@@ -193,7 +347,8 @@ export function OfficialTutorialPage() {
                     <span className="mr-1 text-sm font-black text-slate-700">
                       난이도{' '}
                       <span className="text-indigo-500">
-                        {selectedLevels.length}/{MAX_LEVEL_FILTER_COUNT}
+                        {selectedLevels.length}/
+                        {MAX_LEVEL_FILTER_COUNT}
                       </span>
                     </span>
 
@@ -201,9 +356,15 @@ export function OfficialTutorialPage() {
                       <FilterButton
                         key={level}
                         label={level}
-                        isSelected={selectedLevels.includes(level)}
-                        selectedClassName={levelButtonClassMap[level]}
-                        onClick={() => toggleLevel(level)}
+                        isSelected={selectedLevels.includes(
+                          level,
+                        )}
+                        selectedClassName={
+                          levelButtonClassMap[level]
+                        }
+                        onClick={() =>
+                          toggleLevel(level)
+                        }
                       />
                     ))}
                   </div>
@@ -212,19 +373,33 @@ export function OfficialTutorialPage() {
                     <span className="mr-1 text-sm font-black text-slate-700">
                       카테고리{' '}
                       <span className="text-indigo-500">
-                        {selectedCategories.length}/{MAX_CATEGORY_FILTER_COUNT}
+                        {
+                          selectedCategories.length
+                        }
+                        /
+                        {
+                          MAX_CATEGORY_FILTER_COUNT
+                        }
                       </span>
                     </span>
 
-                    {tutorialCategories.map((category) => (
-                      <FilterButton
-                        key={category}
-                        label={category}
-                        isSelected={selectedCategories.includes(category)}
-                        selectedClassName={selectedCategoryButtonClassName}
-                        onClick={() => toggleCategory(category)}
-                      />
-                    ))}
+                    {tutorialCategories.map(
+                      (category) => (
+                        <FilterButton
+                          key={category}
+                          label={category}
+                          isSelected={selectedCategories.includes(
+                            category,
+                          )}
+                          selectedClassName={
+                            selectedCategoryButtonClassName
+                          }
+                          onClick={() =>
+                            toggleCategory(category)
+                          }
+                        />
+                      ),
+                    )}
                   </div>
                 </div>
               </div>
@@ -240,23 +415,30 @@ export function OfficialTutorialPage() {
           <div className="relative">
             {paginatedTutorials.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {paginatedTutorials.map((tutorial) => (
-                  <TutorialCard
-                    key={tutorial.id}
-                    tutorial={tutorial}
-                    onStart={(tutorialId) =>
-                      navigate(`/official-tutorials/${tutorialId}`)
-                    }
-                  />
-                ))}
+                {paginatedTutorials.map(
+                  (tutorial) => (
+                    <TutorialCard
+                      key={tutorial.id}
+                      tutorial={tutorial}
+                      onStart={(tutorialId) =>
+                        navigate(
+                          `/official-tutorials/${tutorialId}`,
+                        )
+                      }
+                    />
+                  ),
+                )}
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
                 <p className="text-xl font-black text-slate-700">
-                  조건에 맞는 튜토리얼이 없습니다.
+                  조건에 맞는 튜토리얼이
+                  없습니다.
                 </p>
+
                 <p className="mt-2 text-sm font-medium text-slate-400">
-                  검색어 또는 필터를 조정해 다시 찾아보세요.
+                  검색어 또는 필터를 조정해 다시
+                  찾아보세요.
                 </p>
 
                 <button
@@ -276,7 +458,10 @@ export function OfficialTutorialPage() {
                 onClick={goPrevPage}
                 className="absolute -left-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
               >
-                <ArrowLeft size={42} strokeWidth={3} />
+                <ArrowLeft
+                  size={42}
+                  strokeWidth={3}
+                />
               </button>
             )}
 
@@ -287,22 +472,31 @@ export function OfficialTutorialPage() {
                 onClick={goNextPage}
                 className="absolute -right-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
               >
-                <ArrowRight size={42} strokeWidth={3} />
+                <ArrowRight
+                  size={42}
+                  strokeWidth={3}
+                />
               </button>
             )}
           </div>
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 pt-10">
-              {Array.from({ length: totalPages }).map((_, index) => (
+              {Array.from({
+                length: totalPages,
+              }).map((_, index) => (
                 <button
                   key={index}
                   type="button"
                   aria-label={`${index + 1}번째 튜토리얼 페이지`}
-                  onClick={() => setCurrentPage(index)}
+                  onClick={() =>
+                    setCurrentPage(index)
+                  }
                   className={[
                     'h-3 w-3 rounded-full border-2 border-indigo-500 transition',
-                    currentPage === index ? 'bg-indigo-500' : 'bg-white',
+                    currentPage === index
+                      ? 'bg-indigo-500'
+                      : 'bg-white',
                   ].join(' ')}
                 />
               ))}
