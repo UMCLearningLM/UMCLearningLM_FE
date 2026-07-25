@@ -1,15 +1,25 @@
 import { useState } from 'react';
 import GoogleLogin from '../auth/GoogleLogin';
 
+const USE_MOCK_AUTH =
+  import.meta.env.VITE_USE_MOCK_AUTH !== 'false';
+
 export default function LoginPage() {
-  
+
   const handleGoogleLogin = () => {
     setIsLoading(true);
+
+    if (USE_MOCK_AUTH) {
+      return;
+    }
+
     window.location.href = import.meta.env.VITE_API_BASE_URL + '/auth/google';
   };
+
   const [isLoading, setIsLoading] = useState(false);
-  if(isLoading){
-    return <GoogleLogin/>
+
+  if (isLoading) {
+    return <GoogleLogin />
   }
 
   return (

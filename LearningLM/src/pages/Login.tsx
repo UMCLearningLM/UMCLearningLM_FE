@@ -6,6 +6,8 @@ import axios from "axios";
 import { Check } from "lucide-react";
 {/*npm install axios */ }
 
+const MOCK_AUTH_STORAGE_KEY = "learninglm.mock-auth-user";
+
 export function Login() {
 
     const navigate = useNavigate();
@@ -27,11 +29,13 @@ export function Login() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
+
     const validatePw = (pw: string) => {
         if (0 < pw.length && pw.length < 8) {
             setPwFormErr(true);
         } else { setPwFormErr(false) }
     }
+
 
     useEffect(() => {
         if (0 < pw.length && pw.length < 8) {
@@ -53,26 +57,41 @@ export function Login() {
     const login = async () => {
 
         if (email == "ssemilife@gmail.com" && pw == "12345678" && !emailFormErr) {
+            window.localStorage.setItem(
+                MOCK_AUTH_STORAGE_KEY,
+                JSON.stringify({
+                    id: 1,
+                    name: "민지",
+                    email,
+                    provider: "email",
+                }),
+            );
+
             navigate("/home");
         }
         else {
             console.log("로그인 실패");
+
             if (!validateEmail(email)) {
                 setEmailFormErr(true);
             } else {
                 setEmailFormErr(false);
             }
+
             if (email != "ssemilife@gmail.com") {
                 setEmailState("incorrect");
             } else if (!validateEmail(email)) {
 
-            } else { setEmailState("success"); }
-
+            } else {
+                setEmailState("success");
+            }
 
 
             if (pw != "12345678") {
                 setPwCheckState("incorrect");
-            } else { setPwCheckState("success"); }
+            } else {
+                setPwCheckState("success");
+            }
 
             if (!ckBox) {
                 setMem(true);
@@ -84,6 +103,7 @@ export function Login() {
             console.log("pwNumFail", pwNumFail);
             console.log("setPwNumFail", pwNumFail);
         }
+
         // try {
         //     const response = await axios.post("/auth/login", {
         //         email,
@@ -114,59 +134,98 @@ export function Login() {
                         <div className="flex flex-col rounded-[8px] bg-[#6366F1] px-[15px] py-[4px] justify-center items-center
                         text-[24px] font-bold text-[#FFF]
                         ">L</div>
-                        <p className="text-[#27272A] text-[28px] font-bold">LearningLM</p>
+
+                        <p className="text-[#27272A] text-[28px] font-bold">
+                            LearningLM
+                        </p>
                     </div>
-                    <p className="text-[#52525B] mt-[14px]">AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼</p>
+
+                    <p className="text-[#52525B] mt-[14px]">
+                        AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼
+                    </p>
                 </div>
+
                 {/*white box */}
                 <div className="bg-white w-[600px] min-h-[791px] flex flex-col items-center px-[10px] py-[50px] rounded-[12px]">
                     {/* title */}
                     <div className="flex flex-col w-[529px]">
-                        <p className="text-[32px] font-bold text-[#27272A]">로그인</p>
-                        <p className="text-[#52525B] mt-[7px]">학습을 이어서 진행하려면 로그인하세요.</p>
+                        <p className="text-[32px] font-bold text-[#27272A]">
+                            로그인
+                        </p>
+
+                        <p className="text-[#52525B] mt-[7px]">
+                            학습을 이어서 진행하려면 로그인하세요.
+                        </p>
                     </div>
+
                     {/*main content */}
                     <div className="flex flex-col gap-[30px]">
                         {/*email */}
                         <div className="flex flex-col mt-[47px] w-[519px]">
-                            <p className="text-[24px]">이메일</p>
-                            <input type="email"
+                            <p className="text-[24px]">
+                                이메일
+                            </p>
+
+                            <input
+                                type="email"
                                 onChange={(e) => {
                                     setEmail(e.target.value);
                                 }}
                                 value={email}
-                                placeholder="you@example.com" className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                                placeholder="you@example.com"
+                                className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 border-[#E4E4E7]"
+                            />
+
                             {emailState == "incorrect" && (
                                 <>
-                                    <p className="mt-[11px] font-bold text-[#EF8888]">이메일이 맞지 않습니다. 다시 입력해주세요.</p>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">
+                                        이메일이 맞지 않습니다. 다시 입력해주세요.
+                                    </p>
                                 </>
                             )}
+
                             {emailFormErr && (
                                 <>
-                                    <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">
+                                        유효한 이메일이 아닙니다. 다시 작성해 주세요.
+                                    </p>
                                 </>
                             )}
                         </div>
+
                         {/* password */}
                         <div className="flex flex-col w-[519px]">
-                            <p className="text-[24px]">비밀번호</p>
-                            <input type="password"
+                            <p className="text-[24px]">
+                                비밀번호
+                            </p>
+
+                            <input
+                                type="password"
                                 onChange={(e) => {
                                     setPw(e.target.value);
                                 }}
                                 value={pw}
-                                placeholder="********" className="hover:border-[#666666] h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]" />
+                                placeholder="********"
+                                className="hover:border-[#666666] h-[54px] flex items-center rounded-[8px] mt-[11px] pl-[20px] border-2 border-[#E4E4E7]"
+                            />
+
                             {pwCheckState == "incorrect" && (
                                 <>
-                                    <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호가 맞지 않습니다. 다시 입력해주세요.</p>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">
+                                        비밀번호가 맞지 않습니다. 다시 입력해주세요.
+                                    </p>
                                 </>
                             )}
+
                             {pwNumFail == "incorrect" && (
                                 <>
-                                    <p className="mt-[11px] font-bold text-[#EF8888]">비밀번호 8자리 이상 입력해주세요.</p>
+                                    <p className="mt-[11px] font-bold text-[#EF8888]">
+                                        비밀번호 8자리 이상 입력해주세요.
+                                    </p>
                                 </>
                             )}
                         </div>
+
                         {/* agreeBtn */}
                         {/*login state && login btn */}
                         <label className="w-[519px] cursor-pointer agreement flex items-center">
@@ -179,24 +238,43 @@ export function Login() {
                                     setCkBox(!ckBox);
                                 }}
                             />
-                            <div className={`w-[24px] h-[24px] flex items-center justify-center text-center border-2 rounded border-[#6366F1] 
-                            ${checked ? "bg-[#6366F1]" : "border-[#6366F1]"
-                                }`}
+
+                            <div
+                                className={`w-[24px] h-[24px] flex items-center justify-center text-center border-2 rounded border-[#6366F1] 
+                                ${checked ? "bg-[#6366F1]" : "border-[#6366F1]"
+                                    }`}
                             >
-                                {checked && <Check size={18} className="text-white stroke-[3]" />}
+                                {checked && (
+                                    <Check
+                                        size={18}
+                                        className="text-white stroke-[3]"
+                                    />
+                                )}
                             </div>
+
                             <span className="text-[#52525B]">
-                                <span className="link pl-[7px] font-bold text-[#6366F1]">이용약관</span> 및{" "}
-                                <span className="link font-bold text-[#6366F1]">개인정보 처리방침</span>에 동의합니다.
+                                <span className="link pl-[7px] font-bold text-[#6366F1]">
+                                    이용약관
+                                </span>{" "}
+                                및{" "}
+                                <span className="link font-bold text-[#6366F1]">
+                                    개인정보 처리방침
+                                </span>
+                                에 동의합니다.
                             </span>
                         </label>
+
                         {/* loginBtn */}
-                        <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+                        <button
+                            className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                             onClick={() => {
                                 // navigate("/home")
                                 login();
-                            }}>
-                            <span className="text-[24px] font-bold ">로그인</span>
+                            }}
+                        >
+                            <span className="text-[24px] font-bold ">
+                                로그인
+                            </span>
                         </button>
                     </div>
 
@@ -208,26 +286,61 @@ export function Login() {
                     {/*login state && login btn 끝*/}
                     <div className="flex items-center w-[519px] my-[34px]">
                         <div className="flex-1 h-px bg-[#E4E4E7]" />
+
                         <span className="mx-[16px] text-[#9A9AA3] text-[18px]">
                             또는
                         </span>
+
                         <div className="flex-1 h-px bg-[#E4E4E7]" />
                     </div>
-                    <button className="w-[522px] h-[60px] flex items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7]">
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            navigate("/login/google");
+                        }}
+                        className="w-[522px] h-[60px] flex items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7]"
+                    >
                         <FcGoogle size={32} />
+
                         <span className="cursor-pointer text-[20px] font-bold text-[#27272A]">
                             Google 계정으로 계속하기
                         </span>
                     </button>
+
                     <div>
-                        <p className="text-[#52525B] mt-[26px]">아직 계정이 없으신가요? {" "}
-                            <button onClick={() => { navigate("/") }}>
-                                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">회원가입</span>
+                        <p className="text-[#52525B] mt-[26px]">
+                            아직 계정이 없으신가요?{" "}
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    navigate("/register");
+                                }}
+                            >
+                                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
+                                    회원가입
+                                </span>
                             </button>
                         </p>
-                        <p className="text-[#52525B] mt-[14px]">비밀번호를 잊으셨나요? <span className="text-[#6366F1] font-bold mt-[20px]">비밀번호 찾기</span></p>
+
+                        <p className="text-[#52525B] mt-[14px]">
+                            비밀번호를 잊으셨나요?{" "}
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    navigate("/pw-find");
+                                }}
+                            >
+                                <span className="text-[#6366F1] font-bold mt-[20px]">
+                                    비밀번호 찾기
+                                </span>
+                            </button>
+                        </p>
                     </div>
                 </div>
+
                 {/*white box 끝 */}
                 <div className="flex flex-row mt-[44px] text-[#9A9AA3] gap-[36px]">
                     <p>©2026LearningLM</p>

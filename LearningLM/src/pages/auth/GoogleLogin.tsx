@@ -1,8 +1,43 @@
+import { useEffect } from 'react'
+import {
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom'
+
+const USE_MOCK_AUTH =
+  import.meta.env.VITE_USE_MOCK_AUTH !== 'false'
+
 export default function GoogleLogin() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (!USE_MOCK_AUTH) {
+      return
+    }
+
+    const result = searchParams.get('result')
+
+    const destination =
+      result === 'error'
+        ? '/auth/google/error'
+        : '/auth/google/success'
+
+    const timer = window.setTimeout(() => {
+      navigate(destination, {
+        replace: true,
+      })
+    }, 1300)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [navigate, searchParams])
+
   return (
     <div className="flex flex-col items-center justify-center h-screen w-[1920px] h-[900px] top-[7009px] left-[4559px] pt-[200px] pr-[660px] pb-[200px] pl-[660px] gap-[10px] bg-[#F5F5F7]">
-        
-            
+
+
         <div className="w-[600px] h-[500px] gap-[47px] flex flex-col justify-center items-center">
                 {/*로고+타이틀*/}
             <div className="w-[353px] h-[78px] gap-[14px] flex flex-col justify-center items-center">
@@ -17,35 +52,35 @@ export default function GoogleLogin() {
                     <h1 className="flex items-center w-[149px] h-[33px] text-[28px] font-bold tracking-[-0.03em]">
                     LearningLM
                     </h1>
-                    
+
                 </div>
                 <p className="w-[353px] h-[21px] whitespace-nowrap text-center text-[18px] tracking-[-0.03em] font-normal leading-none text-[#52525B]">
                     AI 활용 흐름을 블록형 튜토리얼로 배우는 플랫폼
                 </p>
             </div>
-            
-            
-            
+
+
+
 
             {/*박스*/}
             <div className="flex flex-col items-center  gap-[10px] w-[600px] h-[310.5px] rounded-[12px] border border-[2px] border-[#E4E4E7] pt-[50px] px-[10px] pb-[50px] pr-[10px] bg-[#FFFFFF]">
-            
+
             <div className="w-[427px] h-[210.5px] gap-[21px] flex flex-col justify-center items-center">
                 <div className=" w-[60px] h-[124.5px] gap-[24px] flex flex-col justify-center items-center">
                     <div className="relative w-[60px] h-[60px] rounded-full overflow-hidden" >
-                        
+
                         <div className="absolute left-[8.79px] w-[21.21px] h-[30px] bg-[#4285F4] outline outline-[0.75px] outline-[#4285F4] " />
                         <div className="absolute top-[8.79px]  w-[30px] h-[21.21px] bg-[#4285F4] outline outline-[0.75px] outline-[#4285F4]" />
-                        
+
                         <div className="absolute top-[30px]  w-[21.21px] h-[30px] bg-[#34A853] outline outline-[0.75px] outline-[#34A853] " />
                         <div className="absolute top-[30px] left-[8.79px] w-[21.21px] h-[30px] bg-[#34A853] outline outline-[0.75px] outline-[#34A853]" />
-                        
+
                         <div className="absolute top-[30px] left-[30px] w-[21.21px] h-[30px] bg-[#FBBC05] outline outline-[0.75px] outline-[#FBBC05] " />
                         <div className="absolute top-[30px] left-[30px] w-[30px] h-[21.21px] bg-[#FBBC05] outline outline-[0.75px] outline-[#FBBC05] " />
-                        
+
                         <div className="absolute top-[8.79px] left-[30px] w-[30px] h-[21.21px] bg-[#EA4335] outline outline-[0.75px] outline-[#EA4335]" />
                         <div className="absolute  left-[30px] w-[30px] h-[8.79px] bg-[#EA4335] outline outline-[0.75px] outline-[#EA4335]" />
-                    
+
                     </div>
                     {/* 원 */}
                     <div className="w-[40.5px] h-[40.5px] border-[4.5px] border-[#E4E4E7] rounded-full"></div>
@@ -64,7 +99,7 @@ export default function GoogleLogin() {
             {/* Footer */}
                 <footer >
                     <div className="w-[408px] h-[21px] gap-[36px] flex whitespace-nowrap ">
-                        
+
                         <span className="text-[18px] leading-none tracking-[-0.03em] font-normal w-[154px] h-[21px] text-[#9A9AA3]">
                         © 2026 LearningLM
                         </span>
@@ -80,8 +115,8 @@ export default function GoogleLogin() {
                     </div>
                 </footer>
         </div>
-            
+
     </div>
-   
+
   );
 }
