@@ -80,6 +80,13 @@
   --sidebar-ring:
     oklch(0.708 0 0);
 }
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
+.font-SplineSansMono {
+  font-family: "Spline Sans Mono", sans-serif;
+}
 
 * {
   box-sizing: border-box;
