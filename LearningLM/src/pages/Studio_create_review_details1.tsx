@@ -5,27 +5,27 @@ export function Studio_create_review1() {
     return (
         <>
             <Header />
-            <div className="h-[60px] pl-[27px] pr-[9.4px] bg-white flex items-center justify-between border-b-[1.5px] border-[#E4E4E7] text-[#27272A]">
-                <p className="font-bold">워크플로우 저장</p>
+            <div className="h-[62px] pl-[27px] pr-[9.4px] bg-white flex items-center justify-between border-b-[1.5px] border-[#E4E4E7] text-[#27272A]">
+                <p className="text-[17.5px] font-bold">워크플로우 저장</p>
                 <div className="ml-[27px] flex flex-1 items-center gap-[22px]">
                     <div className="flex items-center gap-[9px]">
                         <div className="w-[23px] h-[23px] bg-[#6366F1] rounded-[50px] flex items-center justify-center text-white" />
-                        <p className="text-[#6366F1] text-[15px] font-bold">검토</p>
+                        <p className="text-[#6366F1] text-[15.5px] font-bold">검토</p>
                     </div>
                     <div className="w-[16px] h-[3px] bg-[#E4E4E7]" />
                     <div className="flex items-center gap-[9px]">
                         <div className="w-[23px] h-[23px] bg-[#E7E7EC] rounded-[50px] flex items-center justify-center 
                         text-[#9A9AA3] text-[12px] font-bold">2</div>
-                        <p className="text-[#9A9AA3] text-[15px] font-bold">상세정보</p>
+                        <p className="text-[#9A9AA3] text-[15.5px] font-bold">상세정보</p>
                     </div>
                     <div className="w-[16px] h-[3px] bg-[#E4E4E7]" />
                     <div className="flex items-center gap-[9px]">
                         <p className="w-[23px] h-[23px] bg-[#E7E7EC] rounded-[50px] flex items-center justify-center
                          text-[#9A9AA3] text-[12px] font-bold">3</p>
-                        <p className="text-[#9A9AA3] text-[15px] font-bold">공개 설정</p>
+                        <p className="text-[#9A9AA3] text-[15.5px] font-bold">공개 설정</p>
                     </div>
                 </div>
-                <p className="text-[#9A9AA3] text-[14px]">자유 제작 흐름 · 저장 전 마지막 단계</p>
+                <p className="text-[#9A9AA3] text-[14.5px]">자유 제작 흐름 · 저장 전 마지막 단계</p>
             </div>
             <main className="min-h-screen pb-[60px] flex justify-center  bg-[#F5F5F7]">
                 <div className="w-[1158px]  flex flex-col min-h-screen text-[#27272A]">
@@ -113,11 +113,11 @@ export function Studio_create_review1() {
                     </div>
                 </div>
             </main>
-            <footer className="h-[94px] pl-[52px] pr-[28px]  flex items-center">
-                <p className="text-[#52525B] text-[20.2px] font-bold">← 편집으로</p>
-                <p className="flex-1 pl-[38px] text-[#9A9AA3] text-[16.5px]">1 / 3 · 검토 — 흐름과 저장 조건 확인</p>
-                <p className="w-[193px] h-[55.5px] bg-[#6366F1] flex items-center justify-center rounded-[12px]
-                text-white text-[20px] font-bold">다음: 상세 정보 →</p>
+            <footer className="h-[82px] pl-[52px] pr-[28px] bg-white flex items-center">
+                <p className="text-[#52525B] text-[18.5px] font-bold">← 편집으로</p>
+                <p className="flex-1 pl-[38px] text-[#9A9AA3] text-[16px]">1 / 3 · 검토 — 흐름과 저장 조건 확인</p>
+                <p className="hover:bg-[#3A3DC2] w-[186px] h-[50px] bg-[#6366F1] flex items-center justify-center rounded-[12px]
+                text-white text-[17.5px] font-bold">다음: 상세 정보 →</p>
             </footer>
         </>
     )
