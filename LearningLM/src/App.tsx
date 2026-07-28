@@ -3,7 +3,11 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from './routes/router'
 
 function App() {
-  return <RouterProvider router={router} />
+  if (window.location.pathname === '/block-common-components') {
+    return <BlockCommonComponentTestPage />
+  }
+
+  return <InputTestPage />
 }
 
 export default App
