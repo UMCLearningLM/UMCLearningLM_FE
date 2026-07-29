@@ -1,8 +1,14 @@
-import { HomePage } from './pages/home/HomePage'
-import { Studio_create_review1 } from './pages/Studio_create_review1'
+
+import { RouterProvider } from 'react-router-dom'
+import { router } from './routes/router'
 
 function App() {
-  return <Studio_create_review1 />
+  if (window.location.pathname === '/block-common-components') {
+    return <BlockCommonComponentTestPage />
+  }
+
+  return <InputTestPage />
 }
 
 export default App
+
