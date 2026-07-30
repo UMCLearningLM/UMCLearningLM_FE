@@ -12,51 +12,25 @@ import {
   StudioNodeCard,
 } from './StudioNodeCard'
 
-/**
- * React Flow에 등록할 LearningLM Studio 노드 타입입니다.
- */
 export const STUDIO_FLOW_NODE_TYPE =
   'studioNode' as const
 
-/**
- * React Flow 노드의 data에 저장되는 값입니다.
- */
 export type StudioFlowNodeData = {
   node: StudioNodeCardData
-
   footerLabel?: string
-
   showTargetHandle?: boolean
-
   showSourceHandle?: boolean
-
-  /**
-   * 왼쪽 target Handle ID입니다.
-   */
   targetHandleId?: string
-
-  /**
-   * 오른쪽 source Handle ID입니다.
-   */
   sourceHandleId?: string
-
-  /**
-   * 외부 조건에 따라 이 노드의 연결을 차단할 수 있습니다.
-   */
   handlesConnectable?: boolean
 }
 
-/**
- * LearningLM Studio에서 사용하는 React Flow 노드 타입입니다.
- */
-export type StudioFlowNodeInstance = Node<
-  StudioFlowNodeData,
-  typeof STUDIO_FLOW_NODE_TYPE
->
+export type StudioFlowNodeInstance =
+  Node<
+    StudioFlowNodeData,
+    typeof STUDIO_FLOW_NODE_TYPE
+  >
 
-/**
- * 기존 StudioNodeCard를 React Flow Custom Node로 변환합니다.
- */
 export function StudioFlowNode({
   data,
   selected,
@@ -72,31 +46,32 @@ export function StudioFlowNode({
     handlesConnectable = true,
   } = data
 
-  /**
-   * 기본 연결점 표시 규칙입니다.
+  /*
+   * 와이어프레임에서는 모든 노드에
+   * 좌우 연결점이 시각적으로 표시됩니다.
    *
-   * INPUT:
-   * 들어오는 연결점 없음
+   * 실제 연결 가능 여부는 StudioNodeCard에서
+   * Stage에 따라 별도로 제한합니다.
    *
-   * OUTPUT:
-   * 나가는 연결점 없음
+   * INPUT 왼쪽:
+   * 표시되지만 연결 불가
    *
-   * 나머지 단계:
-   * 좌우 연결점 모두 표시
+   * OUTPUT 오른쪽:
+   * 표시되지만 연결 불가
    */
   const shouldShowTargetHandle =
-    showTargetHandle ??
-    node.stage !== 'INPUT'
+    showTargetHandle ?? true
 
   const shouldShowSourceHandle =
-    showSourceHandle ??
-    node.stage !== 'OUTPUT'
+    showSourceHandle ?? true
 
   return (
     <StudioNodeCard
       node={node}
       selected={selected}
-      footerLabel={footerLabel}
+      footerLabel={
+        footerLabel
+      }
       showTargetHandle={
         shouldShowTargetHandle
       }
@@ -104,12 +79,18 @@ export function StudioFlowNode({
         shouldShowSourceHandle
       }
       interactiveHandles
-      targetHandleId={targetHandleId}
-      sourceHandleId={sourceHandleId}
+      targetHandleId={
+        targetHandleId
+      }
+      sourceHandleId={
+        sourceHandleId
+      }
       handlesConnectable={
         handlesConnectable
       }
-      data-flow-node-id={node.id}
+      data-flow-node-id={
+        node.id
+      }
       data-flow-node-stage={
         node.stage
       }
@@ -126,9 +107,6 @@ export function StudioFlowNode({
   )
 }
 
-/**
- * React Flow의 nodeTypes 속성에 전달할 노드 타입 목록입니다.
- */
 export const studioNodeTypes = {
   [STUDIO_FLOW_NODE_TYPE]:
     StudioFlowNode,

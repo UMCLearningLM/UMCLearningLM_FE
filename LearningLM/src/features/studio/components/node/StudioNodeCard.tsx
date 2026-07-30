@@ -33,28 +33,9 @@ interface StudioNodeCardProps
   showTargetHandle?: boolean
   showSourceHandle?: boolean
   footerLabel?: string
-
-  /**
-   * 실제 React Flow Handle을 사용할지 결정합니다.
-   *
-   * 일반 카드와 테스트 페이지에서는 false를 유지하고,
-   * StudioFlowNode에서만 true를 전달합니다.
-   */
   interactiveHandles?: boolean
-
-  /**
-   * 왼쪽 target Handle ID입니다.
-   */
   targetHandleId?: string
-
-  /**
-   * 오른쪽 source Handle ID입니다.
-   */
   sourceHandleId?: string
-
-  /**
-   * 해당 노드의 Handle 연결 가능 여부입니다.
-   */
   handlesConnectable?: boolean
 }
 
@@ -79,13 +60,29 @@ export function StudioNodeCard({
     nodeState === 'disabled' ||
     nodeState === 'pending'
 
-  const canConnect =
+  const nodeCanConnect =
     handlesConnectable &&
     !isDisabled
 
+  /*
+   * INPUT의 왼쪽 원과 OUTPUT의 오른쪽 원은
+   * 와이어프레임상 표시하지만 실제 연결은 막습니다.
+   */
+  const targetCanConnect =
+    nodeCanConnect &&
+    node.stage !== 'INPUT'
+
+  const sourceCanConnect =
+    nodeCanConnect &&
+    node.stage !== 'OUTPUT'
+
   return (
     <article
-      tabIndex={onClick ? 0 : undefined}
+      tabIndex={
+        onClick
+          ? 0
+          : undefined
+      }
       onClick={onClick}
       onKeyDown={(event) => {
         if (!onClick) {
@@ -93,7 +90,8 @@ export function StudioNodeCard({
         }
 
         if (
-          event.key === 'Enter' ||
+          event.key ===
+            'Enter' ||
           event.key === ' '
         ) {
           event.preventDefault()
@@ -104,7 +102,7 @@ export function StudioNodeCard({
         }
       }}
       className={[
-        'relative w-[340px] rounded-2xl border p-5 transition',
+        'relative w-[340px] overflow-visible rounded-[18px] border-[1.5px] p-5 transition',
         onClick
           ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'
           : '',
@@ -116,6 +114,9 @@ export function StudioNodeCard({
       ]
         .filter(Boolean)
         .join(' ')}
+      data-node-state={
+        nodeState
+      }
       {...props}
     >
       {showTargetHandle && (
@@ -126,8 +127,12 @@ export function StudioNodeCard({
           interactive={
             interactiveHandles
           }
-          handleId={targetHandleId}
-          isConnectable={canConnect}
+          handleId={
+            targetHandleId
+          }
+          isConnectable={
+            targetCanConnect
+          }
         />
       )}
 
@@ -139,25 +144,33 @@ export function StudioNodeCard({
           interactive={
             interactiveHandles
           }
-          handleId={sourceHandleId}
-          isConnectable={canConnect}
+          handleId={
+            sourceHandleId
+          }
+          isConnectable={
+            sourceCanConnect
+          }
         />
       )}
 
-      <div className="space-y-5">
+      <div className="flex flex-col gap-5">
         <StudioNodeHeader
           node={node}
           selected={selected}
         />
 
         <div className="space-y-2">
-          {node.slots.map((slot) => (
-            <StudioNodeSlotRow
-              key={slot.id}
-              slot={slot}
-              stage={node.stage}
-            />
-          ))}
+          {node.slots.map(
+            (slot) => (
+              <StudioNodeSlotRow
+                key={slot.id}
+                slot={slot}
+                stage={
+                  node.stage
+                }
+              />
+            ),
+          )}
         </div>
 
         <StudioNodeFooter
