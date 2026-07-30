@@ -5,6 +5,17 @@ export { StudioNodeHeader } from './StudioNodeHeader'
 export { StudioNodeSlotRow } from './StudioNodeSlotRow'
 
 export {
+  STUDIO_FLOW_NODE_TYPE,
+  StudioFlowNode,
+  studioNodeTypes,
+} from './StudioFlowNode'
+
+export type {
+  StudioFlowNodeData,
+  StudioFlowNodeInstance,
+} from './StudioFlowNode'
+
+export {
   getNodeStateClassName,
   nodeStateClassMap,
   nodeStatusVariantMap,

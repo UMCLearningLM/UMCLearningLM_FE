@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 {/* npm install react-icons */ }
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Check } from "lucide-react";
 {/*npm install axios */ }
 
@@ -17,20 +16,14 @@ export function Login() {
     const [emailFormErr, setEmailFormErr] = useState(false);
     const [pwCheckState, setPwCheckState] = useState<"basic" | "incorrect" | "success">("basic");
     const [pwNumFail, setPwNumFail] = useState<"basic" | "incorrect" | "success">("basic");
-    const [pwFormErr, setPwFormErr] = useState(false);
     const [ckBox, setCkBox] = useState(false);
-    const [noAgree, setNoAgree] = useState(false);
-    const [mem, setMem] = useState(false);
+    const [, setNoAgree] = useState(false);
+    const [, setMem] = useState(false);
 
 
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
-    }
-    const validatePw = (pw: string) => {
-        if (0 < pw.length && pw.length < 8) {
-            setPwFormErr(true);
-        } else { setPwFormErr(false) }
     }
 
     useEffect(() => {
