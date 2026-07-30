@@ -1,4 +1,4 @@
-import { Footer } from "../components/layout/Footer";
+
 import { Header } from "../components/layout/Header";
 
 export function Studio_create_review1() {

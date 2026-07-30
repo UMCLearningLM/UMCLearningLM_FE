@@ -1,7 +1,6 @@
-import { Box, Check, CircleCheckBig } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 //.\gradlew bootRun 스프링부트 서버 키는 방법
 
 export function Register() {
@@ -279,11 +278,26 @@ export function Register() {
     }
 
     //----------------비밀번호 확인-----------------
-    const validatePw = (pw: string) => {
-        // const pwRegex = /^[A-Za-z0-9]+$/;
-        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
-        return pwRegex.test(email);
+    const validatePw = (
+        value: string,
+    ) => {
+        const pwRegex =
+            /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+
+        return pwRegex.test(value);
     }
+    useEffect(() => {
+        if (pw.length === 0) {
+            setPwForm("basic");
+            return;
+        }
+
+        setPwForm(
+            validatePw(pw)
+                ? "formOk"
+                : "formErr",
+        );
+    }, [pw]);
     //비밀번호 확인
 
     useEffect(() => {
@@ -334,7 +348,10 @@ export function Register() {
         //비밀번호
 
         //8자 이하 또는 비밀번호 형식이 맞지 않은 경우
-        if (0 < pw.length && pw.length < 8 || validatePw(pw)) {
+        if (
+            pw.length > 0 &&
+            !validatePw(pw)
+        ) {
             setPwNull("lengNo");
             // setPwOk("notSame");
         } else {
