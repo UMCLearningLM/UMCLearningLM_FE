@@ -1,12 +1,16 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom'
-import { HomePage } from '../pages/home/HomePage'
-import { OfficialTutorialPage } from '../pages/tutorial/OfficialTutorialPage'
-import { TutorialDetailPage } from '../pages/tutorial/TutorialDetailPage'
+import {
+  Navigate,
+  createBrowserRouter,
+} from 'react-router-dom'
 
-import MyStoragePage from '../pages/storage/MyStoragePage'
+import { HomePage } from '../pages/home/HomePage'
 import { PublicLibraryPage } from '../pages/library/PublicLibraryPage'
 import LibraryDetailPage from '../pages/library/LibraryDetailPage'
+import MyStoragePage from '../pages/storage/MyStoragePage'
 import WorkflowDetailPage from '../pages/storage/WorkflowDetailPage'
+import { Stdio_create1 } from '../pages/Stdio_create1'
+import { OfficialTutorialPage } from '../pages/tutorial/OfficialTutorialPage'
+import { TutorialDetailPage } from '../pages/tutorial/TutorialDetailPage'
 import { StudioNodeCardTestPage } from '../pages/dev/StudioNodeCardTestPage'
 
 export const router = createBrowserRouter([
@@ -23,16 +27,29 @@ export const router = createBrowserRouter([
     element: <TutorialDetailPage />,
   },
   {
+    path: '/studio',
+    element: (
+      <Navigate
+        to="/studio/create"
+        replace
+      />
+    ),
+  },
+  {
+    path: '/studio/create',
+    element: <Stdio_create1 />,
+  },
+  {
     path: '/my-storage',
-    element: <MyStoragePage />
+    element: <MyStoragePage />,
   },
   {
     path: '/public-library',
-    element: <PublicLibraryPage />
+    element: <PublicLibraryPage />,
   },
   {
     path: '/public-library/:libraryId',
-    element: <LibraryDetailPage />
+    element: <LibraryDetailPage />,
   },
   {
     path: '/my-storage/workflows/:workflowId',
@@ -44,7 +61,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <Navigate to="/" replace />,
+    element: (
+      <Navigate
+        to="/"
+        replace
+      />
+    ),
   },
-
 ])
