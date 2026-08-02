@@ -1,12 +1,10 @@
-import { InputTestPage } from './pages/dev/InputTestPage'
-import { BlockCommonComponentTestPage } from './pages/dev/BlockCommonComponentTestPage'
+
+import { RouterProvider } from 'react-router-dom'
+import { router } from './routes/router'
 
 function App() {
-  if (window.location.pathname === '/block-common-components') {
-    return <BlockCommonComponentTestPage />
-  }
-
-  return <InputTestPage />
+  return <RouterProvider router={router} />
 }
 
 export default App
+
