@@ -19,64 +19,124 @@ export const studioStageMeta: Record<
   INPUT: {
     label: '입력',
     code: 'INPUT',
-    nodeNumberClassName: 'bg-slate-600 text-white',
-    stageTextClassName: 'text-slate-500',
-    slotMarkClassName: 'bg-slate-500',
-    footerClassName: 'text-slate-600',
-    handleClassName: 'border-slate-500 bg-white',
+    nodeNumberClassName:
+      'bg-[#4A5E8A] text-white',
+    stageTextClassName:
+      'text-[#4A5E8A]',
+    slotMarkClassName:
+      'bg-[#4A5E8A]',
+    footerClassName:
+      'text-[#4A5E8A]',
+    handleClassName:
+      'border-[#4A5E8A] bg-white',
   },
+
   CONTEXT: {
     label: '컨텍스트',
     code: 'CONTEXT',
-    nodeNumberClassName: 'bg-cyan-700 text-white',
-    stageTextClassName: 'text-cyan-700',
-    slotMarkClassName: 'bg-cyan-700',
-    footerClassName: 'text-cyan-700',
-    handleClassName: 'border-cyan-700 bg-white',
+    nodeNumberClassName:
+      'bg-[#2F8190] text-white',
+    stageTextClassName:
+      'text-[#2F8190]',
+    slotMarkClassName:
+      'bg-[#2F8190]',
+    footerClassName:
+      'text-[#2F8190]',
+    handleClassName:
+      'border-[#2F8190] bg-white',
   },
+
   PROCESS: {
     label: '프로세스',
     code: 'PROCESS',
-    nodeNumberClassName: 'bg-indigo-500 text-white',
-    stageTextClassName: 'text-indigo-500',
-    slotMarkClassName: 'bg-indigo-500',
-    footerClassName: 'text-indigo-500',
-    handleClassName: 'border-indigo-500 bg-white',
+    nodeNumberClassName:
+      'bg-[#6366F1] text-white',
+    stageTextClassName:
+      'text-[#6366F1]',
+    slotMarkClassName:
+      'bg-[#6366F1]',
+    footerClassName:
+      'text-[#6366F1]',
+    handleClassName:
+      'border-[#6366F1] bg-white',
   },
+
   REVIEW: {
     label: '검토',
     code: 'REVIEW',
-    nodeNumberClassName: 'bg-amber-600 text-white',
-    stageTextClassName: 'text-amber-700',
-    slotMarkClassName: 'bg-amber-600',
-    footerClassName: 'text-amber-700',
-    handleClassName: 'border-amber-600 bg-white',
+    nodeNumberClassName:
+      'bg-[#B07A2E] text-white',
+    stageTextClassName:
+      'text-[#B07A2E]',
+    slotMarkClassName:
+      'bg-[#B07A2E]',
+    footerClassName:
+      'text-[#B07A2E]',
+    handleClassName:
+      'border-[#B07A2E] bg-white',
   },
+
   OUTPUT: {
     label: '결과',
     code: 'OUTPUT',
-    nodeNumberClassName: 'bg-emerald-700 text-white',
-    stageTextClassName: 'text-emerald-700',
-    slotMarkClassName: 'bg-emerald-700',
-    footerClassName: 'text-emerald-700',
-    handleClassName: 'border-emerald-700 bg-white',
+    nodeNumberClassName:
+      'bg-[#3C7A52] text-white',
+    stageTextClassName:
+      'text-[#3C7A52]',
+    slotMarkClassName:
+      'bg-[#3C7A52]',
+    footerClassName:
+      'text-[#3C7A52]',
+    handleClassName:
+      'border-[#3C7A52] bg-white',
   },
 }
 
-export const nodeStateClassMap: Record<StudioNodeState, string> = {
-  default: 'border-slate-200 bg-white shadow-sm',
-  selected: 'border-indigo-400 bg-white shadow-md ring-2 ring-indigo-100',
-  complete: 'border-slate-200 bg-white shadow-sm',
-  warning: 'border-amber-300 bg-white shadow-sm ring-1 ring-amber-100',
-  missing: 'border-amber-300 bg-white shadow-sm ring-1 ring-amber-100',
-  error: 'border-rose-400 bg-white shadow-sm ring-1 ring-rose-100',
-  pending: 'border-dashed border-slate-300 bg-white/70 shadow-sm',
-  disabled: 'border-dashed border-slate-300 bg-white/50 opacity-60 shadow-none',
+/*
+ * 와이어프레임에서는 검증 실패 여부와 관계없이
+ * 노드 외곽선은 기본 회색을 유지합니다.
+ *
+ * 필수 충족 상태는 헤더의 "필수 n/n"으로 표시하고,
+ * 상세 오류는 우측 검증 패널에서 표시합니다.
+ */
+export const nodeStateClassMap: Record<
+  StudioNodeState,
+  string
+> = {
+  default:
+    'border-[#E4E4E7] bg-white shadow-sm',
+
+  selected:
+    'border-[#6366F1] bg-white shadow-md ring-2 ring-[#E0E1FF]',
+
+  complete:
+    'border-[#E4E4E7] bg-white shadow-sm',
+
+  warning:
+    'border-[#E4E4E7] bg-white shadow-sm',
+
+  missing:
+    'border-[#E4E4E7] bg-white shadow-sm',
+
+  error:
+    'border-[#E4E4E7] bg-white shadow-sm',
+
+  pending:
+    'border-dashed border-[#D4D4DB] bg-white/80 shadow-sm',
+
+  disabled:
+    'border-dashed border-[#D4D4DB] bg-white/50 opacity-60 shadow-none',
 }
 
 export const nodeStatusVariantMap: Record<
   StudioNodeState,
-  'success' | 'warning' | 'danger' | 'missing' | 'pending' | 'info' | 'muted'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'missing'
+  | 'pending'
+  | 'info'
+  | 'muted'
 > = {
   default: 'info',
   selected: 'info',
@@ -88,19 +148,37 @@ export const nodeStatusVariantMap: Record<
   disabled: 'muted',
 }
 
-export const slotStateClassMap: Record<StudioSlotState, string> = {
-  default: 'border-slate-200 bg-white text-slate-700',
-  filled: 'border-slate-200 bg-white text-slate-700',
-  empty: 'border-slate-200 bg-white text-slate-400',
-  warning: 'border-amber-200 bg-amber-50 text-amber-700',
-  missing: 'border-amber-200 bg-amber-50 text-amber-700',
-  error: 'border-rose-200 bg-rose-50 text-rose-700',
+/*
+ * 슬롯도 검증 상태에 따라 붉거나 주황색으로 바꾸지 않습니다.
+ * 모든 슬롯은 와이어프레임의 회색 테두리를 유지합니다.
+ */
+export const slotStateClassMap: Record<
+  StudioSlotState,
+  string
+> = {
+  default:
+    'border-[#E4E4E7] bg-white',
+
+  filled:
+    'border-[#E4E4E7] bg-white',
+
+  empty:
+    'border-[#E4E4E7] bg-white',
+
+  warning:
+    'border-[#E4E4E7] bg-white',
+
+  missing:
+    'border-[#E4E4E7] bg-white',
+
+  error:
+    'border-[#E4E4E7] bg-white',
 }
 
 export function getNodeStateClassName(
   state: StudioNodeState = 'default',
   selected = false,
-) {
+): string {
   if (selected) {
     return nodeStateClassMap.selected
   }

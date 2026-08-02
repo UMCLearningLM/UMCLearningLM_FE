@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { FcGoogle } from "react-icons/fc";
 {/* npm install react-icons */ }
 import { useNavigate } from "react-router-dom"
 
@@ -13,7 +12,6 @@ export function PwFind() {
     const [pw, setPw] = useState("");
     const [pwCheck, setPwCheck] = useState("");
     const [pwNull, setPwNull] = useState<"basic" | "false" | "true">("basic");
-    const [pwForm, setPwForm] = useState<"basic" | "err">("basic");
 
     //비밀번호 인증
     const [pwOk, setPwOk] = useState(false);
@@ -45,33 +43,33 @@ export function PwFind() {
     //비밀번호 확인
     //validatePw(pw) == false  -> 유효
     //               == true   -> 유효하지 않음
-    const validatePw = (pw: string) => {
-        // const pwRegex = /^[A-Za-z0-9]+$/;
-        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
-        return pwRegex.test(email);
+    const validatePw = (
+    value: string,
+) => {
+    const pwRegex =
+        /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+
+    return pwRegex.test(value);
+}
+
+useEffect(() => {
+    const hasBothPasswords =
+        pw.length > 0 &&
+        pwCheck.length > 0;
+
+    if (!hasBothPasswords) {
+        setPwNull("true");
+        setPwOk(false);
+        return;
     }
-    useEffect(() => {
-        if (pw != "" && pwCheck != "") {
-            setPwNull("false");
-            setPwOk(pw === pwCheck);
-        } else {
-            setPwNull("true");
-        }
-    }, [pw, pwCheck, pwOk]);
-    useEffect(() => {
-        if (0 < pw.length) {
-            setPwForm("basic");
-        } else {
-            setPwForm("err");
-        }
-    }, [email]);
-    useEffect(() => {
-        if (!validatePw(pw) && (pw.length >= 8) && (pwCheck.length >= 8)) {
-            setPwOk(true);
-        } else {
-            setPwOk(false);
-        }
-    }, [validatePw(pw), pw, pwCheck]);
+
+    setPwNull("false");
+
+    setPwOk(
+        pw === pwCheck &&
+        validatePw(pw),
+    );
+}, [pw, pwCheck]);
 
     const pwChangeFun = () => {
 
@@ -146,14 +144,16 @@ export function PwFind() {
                                             setPw(e.target.value)
                                         }}
                                         placeholder="********"
-                                        className={`hover:border-[#666666] h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${(pw != pwCheck) || (validatePw(pw) && pwNull == "basic") ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                                        className={`hover:border-[#666666] h-[54px] flex items-center rounded-[8px] my-[11px] pl-[20px] border-2 ${(pw != pwCheck) || (!validatePw(pw) && pwNull == "basic")
+                                            ? "border-[#F8A3A3]"
+                                            : "border-[#E4E4E7]"}`} />
                                     <p className="text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
                                     {((pw.length > 0 && pw.length < 8) && pwNull == "basic") && (
                                         <p className="text-[#EF8888] font-bold mt-[11px]">
                                             비밀번호는 영문·숫자 포함 8자 이상 작성해주세요.
                                         </p>
                                     )}
-                                    {(validatePw(pw) && (pw.length > 0 && pwCheck.length > 0)) && (
+                                    {(!validatePw(pw) && (pw.length > 0 && pwCheck.length > 0)) && (
                                         <p className="text-[#EF8888] font-bold mt-[11px]">
                                             비밀번호는 영문·숫자만 포함할 수 있습니다
                                         </p>
