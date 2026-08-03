@@ -36,6 +36,11 @@ import {
 } from '../../components/ui/Badge'
 
 import {
+  getTutorialLevelBadgeVariant,
+  isTutorialLevel,
+} from '../../features/tutorial/utils/tutorialLevelStyle'
+
+import {
   Card,
   CardBody,
   CardFooter,
@@ -116,8 +121,6 @@ const tutorials = [
     description:
       '검색, 요약, 정리 블록으로 리서치 흐름을 완성합니다.',
     level: '입문',
-    levelVariant:
-      'green' as const,
     tags: [
       '자료조사',
       '요약',
@@ -132,8 +135,6 @@ const tutorials = [
     description:
       '긴 회의록을 핵심 항목으로 정리하는 흐름.',
     level: '기초',
-    levelVariant:
-      'blue' as const,
     tags: [
       '문서 요약',
     ],
@@ -147,8 +148,6 @@ const tutorials = [
     description:
       '주제 입력부터 초안 생성까지.',
     level: '기초',
-    levelVariant:
-      'blue' as const,
     tags: [
       '글쓰기',
     ],
@@ -167,8 +166,6 @@ const workflows = [
       '여러 출처를 표로 정리하는 공개 흐름.',
     category: '자료조사',
     level: '기초',
-    levelVariant:
-      'blue' as const,
     saves: 128,
     copies: 64,
     comments: 14,
@@ -183,8 +180,6 @@ const workflows = [
     category:
       '결과물 검토',
     level: '입문',
-    levelVariant:
-      'green' as const,
     saves: 96,
     copies: 41,
     comments: 11,
@@ -199,8 +194,6 @@ const workflows = [
     category:
       '반복 작업 정리',
     level: '응용',
-    levelVariant:
-      'pink' as const,
     saves: 210,
     copies: 132,
     comments: 23,
@@ -376,7 +369,7 @@ export function HomePage() {
 
               <div className="flex-1">
                 <div className="mb-2 flex items-center gap-2">
-                  <Badge variant="green">
+                  <Badge variant="levelBeginner">
                     입문
                   </Badge>
 
@@ -484,7 +477,9 @@ export function HomePage() {
 
                       <Badge
                         variant={
-                          tutorial.levelVariant
+                          getTutorialLevelBadgeVariant(
+                            tutorial.level,
+                          )
                         }
                       >
                         {
@@ -602,7 +597,9 @@ export function HomePage() {
 
                       <Badge
                         variant={
-                          workflow.levelVariant
+                          getTutorialLevelBadgeVariant(
+                            workflow.level,
+                          )
                         }
                       >
                         {
@@ -718,9 +715,12 @@ export function HomePage() {
                                 badge
                               }
                               variant={
-                                badge ===
-                                '입문'
-                                  ? 'green'
+                                isTutorialLevel(
+                                  badge,
+                                )
+                                  ? getTutorialLevelBadgeVariant(
+                                      badge,
+                                    )
                                   : 'blue'
                               }
                             >
