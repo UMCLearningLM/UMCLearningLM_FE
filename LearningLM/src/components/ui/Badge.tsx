@@ -42,7 +42,7 @@ const variantClass: Record<BadgeVariant, string> = {
     'border border-[#A9BDD4] bg-[#ECEEFF] text-[#A9BDD4]',
 
   levelAdvanced:
-    'border border-[#EF8888] bg-white text-[#FFE1E1]',
+    'border border-[#EF8888] bg-[#FFE1E1] text-[#EF8888]',
 }
 
 const sizeClass: Record<BadgeSize, string> = {
