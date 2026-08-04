@@ -54,8 +54,8 @@ export function RV_006() {
                             <span
                                 onClick={() => setUseDuplicateRemoval((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useDuplicateRemoval
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useDuplicateRemoval && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -116,7 +116,7 @@ export function RV_006() {
                                 step={0.5}
                                 value={removalIntensity}
                                 onChange={(e) => setRemovalIntensity(parseFloat(e.target.value))}
-                                className="w-full h-2 rounded-full appearance-none accent-indigo-500 cursor-pointer"
+                                className="w-full h-2 rounded-full appearance-none accent-[#6366F1] cursor-pointer"
                                 style={{
                                     background: `linear-gradient(
                                       to right,
@@ -144,7 +144,7 @@ export function RV_006() {
                         <div>
                             <span className="text-[15.5px] font-bold text-[#52525B]">유사 내용 통합</span>
                             <p className="mt-[4px] text-[14px] text-[#666] font-bold">비슷한 내용은 하나로 합침</p>
-                            <p className="text-[10px] text-indigo-400">기본 ON</p>
+                            <p className="text-[10px] text-[#6366F1]">기본 ON</p>
                         </div>
                         <div className="flex flex-col">
                             <span className="absolute mt-[4px] ml-[30px] text-[10px] text-[#5FAA81]">선택</span>

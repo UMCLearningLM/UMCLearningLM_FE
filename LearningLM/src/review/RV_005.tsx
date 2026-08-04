@@ -70,8 +70,8 @@ export function RV_005() {
                             <span
                                 onClick={() => setUseEvidenceCheck((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useEvidenceCheck
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useEvidenceCheck && <Check size={13} className="text-white" strokeWidth={3} />}

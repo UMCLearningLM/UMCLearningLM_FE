@@ -64,8 +64,8 @@ export function RV_001() {
                             <span
                                 onClick={() => setUseOmissionCheck((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useOmissionCheck
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useOmissionCheck && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -86,7 +86,7 @@ export function RV_001() {
                     </div>
 
                     {useOmissionCheck && isRequired && (
-                        <p className="mt-[9px] text-[13.5px] text-[#C0473C] font-medium">
+                        <p className="mt-[9px] text-[13.5px] text-[#C0473C]">
                             * 필수 작성 항목입니다
                         </p>
                     )}
@@ -104,7 +104,7 @@ export function RV_001() {
                                     onClick={() => setConfirmTarget(t)}
                                     className={`cursor-pointer h-[37px] rounded-md px-4 flex items-center justify-center text-[13.5px] font-bold transition-colors ${confirmTarget === t
                                         ? "bg-[#6366F1] text-white"
-                                        : "bg-white text-[#666] border-[2px] border-[#E4E4E7] hover:border-slate-300"
+                                        : "text-[#666] border-[2px] border-[#E4E4E7] hover:border-slate-300"
                                         }`}
                                 >
                                     {t}

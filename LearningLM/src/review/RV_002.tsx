@@ -80,8 +80,8 @@ export function RV_002() {
                             <span
                                 onClick={() => setUseFormatCheck((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useFormatCheck
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useFormatCheck && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -203,17 +203,16 @@ export function RV_002() {
                                         type="button"
                                         onClick={() => setErrorHandling(key)}
                                         className={`h-[77px] flex items-center gap-3 rounded-[12px] border-[2px] px-4 py-3 text-left transition-colors ${active
-                                            ? "border-indigo-500"
+                                            ? "border-[#6366F1]"
                                             : isEmpty
                                                 ? "border-[#EF8888]"
-                                                : "border-slate-200 hover:border-slate-300"
+                                                : "border-[#E4E4E7] hover:border-slate-300"
                                             }`}
                                     >
                                         <span
-                                            className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center border transition-colors ${active ? "border-indigo-500" : "border-slate-300"
+                                            className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${active ? "bg-[#6366F1]" : "border-slate-300"
                                                 }`}
                                         >
-                                            {active && <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />}
                                         </span>
                                         <span className="leading-[25.5px]">
                                             <span className="block text-[17.5px] font-bold text-[#27272A]">{key}</span>

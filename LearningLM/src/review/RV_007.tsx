@@ -72,8 +72,8 @@ export function RV_007() {
                             <span
                                 onClick={() => setUseToneAdjustment((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useToneAdjustment
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useToneAdjustment && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -222,7 +222,7 @@ export function RV_007() {
                                 step={0.5}
                                 value={meaningPreservation}
                                 onChange={(e) => setMeaningPreservation(parseFloat(e.target.value))}
-                                className="w-full h-2 rounded-full appearance-none accent-indigo-500 cursor-pointer"
+                                className="w-full h-2 rounded-full appearance-none accent-[#6366F1] cursor-pointer"
                                 style={{
                                     background: `linear-gradient(
                                       to right,
