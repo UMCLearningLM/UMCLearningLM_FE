@@ -30,7 +30,7 @@ export function PageHeader(props: { title: string, subTitle: string, content: st
                     <div className="w-[31px] h-[31px] bg-[#4A5E8A] rounded-[8px]" />
 
                     <img src={props.imgState} alt="flag" className="w-[22px] h-[22px] absolute ml-[4px]" />
-                    <p className="mt-[4px] ml-[6px] text-[20px] font-bold tracking-tighter">{props.title}</p>
+                    <p className="mt-[4px] ml-[6px] text-[21px] font-bold tracking-tighter">{props.title}</p>
                     <p className="text-[#9A9AA3] text-[10px] mt-[15px]">{props.subTitle}</p>
                 </div>
                 <p className={`h-[27px] mt-[8px] flex items-center justify-center ${props.pageState == "CORE" ? "w-[54px] bg-[#6366F1] text-white" : "w-[130px] bg-[#DFF2DF] border-[2px] border-[#5FAA81] text-[#5FAA81]"} text-[14px] font-bold rounded-[8px]`}>{props.pageState}</p>
