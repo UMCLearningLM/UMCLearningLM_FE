@@ -50,7 +50,7 @@ export function CTX_004() {
     return (
         <div className="min-h-[848px] w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[26px] pb-6">
+                <div className="px-[25px] pt-[27px] pb-6">
                     <PageHeader
                         title="참고 범위 정하기"
                         subTitle="CTX-004 · CONTEXT"
@@ -118,18 +118,18 @@ export function CTX_004() {
                                         key={mode}
                                         type="button"
                                         onClick={() => setRangeMode(mode)}
-                                        className={`flex flex-col items-center justify-center gap-2 rounded-lg py-3 border-[2px] transition-colors ${active
+                                        className={`h-[92px] flex flex-col items-center justify-center gap-1.5 rounded-lg py-3 border-[2px] transition-colors ${active
                                             ? "border-[#6366F1]"
                                             : "border-[#E4E4E7] bg-white hover:border-slate-300"
                                             }`}
                                     >
                                         <span
-                                            className={`w-9 h-9 rounded-lg flex items-center justify-center ${active ? "bg-indigo-500" : "bg-white border-[2px]"
+                                            className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center ${active ? "bg-indigo-500" : "bg-white border-[2px]"
                                                 }`}
                                         >
                                             <Icon size={16} className={active ? "text-white" : "text-[#52525B]"} />
                                         </span>
-                                        <span className={`text-[12.5px] font-bold ${active ? "text-[#6366F1]" : "text-slate-600"}`}>
+                                        <span className={`text-[13px] font-bold ${active ? "text-[#6366F1]" : "text-slate-600"}`}>
                                             {mode}
                                         </span>
                                     </button>
@@ -139,7 +139,7 @@ export function CTX_004() {
                     </div>
 
                     {/* 대상 문서 */}
-                    <div className="mt-6.5">
+                    <div className="mt-7">
                         <div className="flex items-center justify-between">
                             <span className="text-[15px] font-bold text-[#52525B]">
                                 대상 문서{" "}
@@ -147,22 +147,22 @@ export function CTX_004() {
                                     &quot;{rangeMode}&quot; 선택됨
                                 </span>
                             </span>
-                            <span className="mt-[2px] text-[10px] text-[#A68C66] font-bold">조건부</span>
+                            <span className="text-[10px] text-[#A68C66] font-bold">조건부</span>
                         </div>
                         <div
                             className={`mt-[22px] rounded-lg border ${isDocModeActive ? "border-[#E4E4E7]" : "border-[#E4E4E7] opacity-50 pointer-events-none"
                                 }`}
                         >
-                            <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#E4E4E7]">
                                 <Search size={15} className="text-[#9A9AA3]" />
                                 <input
                                     value={docQuery}
                                     onChange={(e) => setDocQuery(e.target.value)}
                                     placeholder="문서 검색..."
-                                    className="flex-1 text-[14px] text-[#52525B] placeholder:text-[#9A9AA3] outline-none"
+                                    className="flex-1 text-[15px] text-[#52525B] placeholder:text-[15px] placeholder:text-[#9A9AA3] outline-none"
                                 />
                             </div>
-                            <div className="px-4 py-7 text-center text-[14px] text-[#9A9AA3]">
+                            <div className="px-4 py-7 text-center text-[15px] text-[#9A9AA3]">
                                 {selectedDocs.length === 0
                                     ? "문서를 검색해 복수 선택하세요"
                                     : selectedDocs.join(", ")}
@@ -171,10 +171,10 @@ export function CTX_004() {
                     </div>
 
                     {/* 포함·제외 키워드 */}
-                    <div className="mt-7">
+                    <div className="mt-[25px]">
                         <div className="flex items-center justify-between">
                             <span className="text-[15px] font-bold text-[#52525B]">포함·제외 키워드</span>
-                            <span className="mt-[7px] text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="mt-[6px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
                         <div className="mt-5 h-[80px] rounded-lg border-[2px] border-[#E4E4E7] px-4 pt-[10px]">
                             {keywords.length > 0 && (
@@ -205,12 +205,12 @@ export function CTX_004() {
                     </div>
 
                     {/* 문맥 확장 */}
-                    <div className="mt-7">
+                    <div className="mt-[27px]">
                         <div className="flex items-center justify-between">
                             <span className="text-[14.5px] font-bold text-[#52525B]">문맥 확장</span>
                             <span className="text-[10px] text-[#5FAA81]">선택</span>
                         </div>
-                        <div className="w-full h-[42px] mt-[11px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px] ">
+                        <div className="w-full h-[42px] mt-[10px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px] ">
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center rounded-l-[8px]">해당 부분</p>
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center border-l-[2px] border-r-[2px] border-[#E4E4E7]">앞뒤 포함</p>
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center rounded-r-[8px]">전체</p>
@@ -219,7 +219,7 @@ export function CTX_004() {
                 </div>
 
                 {/* Footer */}
-                <div className="ml-[34px] mt-[-24px]">
+                <div className="ml-[34px] mt-[-23px]">
                     <BottomBar context="대상 문서 미선택" btnText="적용" />
                 </div>
             </div>

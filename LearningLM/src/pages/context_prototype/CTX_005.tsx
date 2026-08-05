@@ -48,7 +48,7 @@ export function CTX_005() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[26px] pb-6">
+                <div className="px-[25px] pt-[27px] pb-6">
                     <PageHeader
                         title="역할 부여하기"
                         subTitle="CTX-005 · CONTEXT"
@@ -104,16 +104,16 @@ export function CTX_005() {
 
 
                     {/* 역할 */}
-                    <div className="mt-4">
+                    <div className="mt-[16px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-[14px] font-bold text-[#52525B]">
+                            <span className="text-[15.5px] font-bold text-[#52525B]">
                                 역할<span className="text-[#C0473C]">*</span>
                             </span>
-                            <span className="text-[11px] font-semibold text-white bg-indigo-500 rounded-[8px] px-2 py-1">
+                            <span className="h-[24px] mt-[-1px] text-[11px] font-bold text-white bg-[#6366F1] rounded-[8px] px-2 flex items-center justify-center">
                                 튜토리얼 추천
                             </span>
                         </div>
-                        <div className="mt-1.5 grid grid-cols-4 gap-2">
+                        <div className="mt-[6px] grid grid-cols-4 gap-2 gap-y-[7px]">
                             {ROLES.map(({ label, icon: Icon }) => {
                                 const active = role === label;
                                 return (
@@ -121,18 +121,18 @@ export function CTX_005() {
                                         key={label}
                                         type="button"
                                         onClick={() => setRole(label)}
-                                        className={`cursor-pointer flex flex-col items-center justify-center gap-2 rounded-xl py-3 border-[2px] transition-colors ${active
+                                        className={`h-[92px] cursor-pointer flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 border-[2px] transition-colors ${active
                                             ? "border-[#6466F1]"
                                             : "border-[#E4E4E7] bg-white hover:border-slate-300"
                                             }`}
                                     >
                                         <span
-                                            className={`w-9 h-9 rounded-lg flex items-center justify-center ${active ? "bg-[#6366F1]" : "bg-white border-[2px] border-[#E4E4E7]"
+                                            className={`w-[31px] h-[31px] rounded-[8px] flex items-center justify-center ${active ? "bg-[#6366F1]" : "bg-white border-[2px] border-[#E4E4E7]"
                                                 }`}
                                         >
                                             <Icon size={16} className={active ? "text-white" : "text-slate-500"} />
                                         </span>
-                                        <span className={`text-[12.5px] font-medium ${active ? "text-indigo-600" : "text-slate-600"}`}>
+                                        <span className="text-[13px] font-bold text-[#666]">
                                             {label}
                                         </span>
                                     </button>
@@ -142,20 +142,20 @@ export function CTX_005() {
                     </div>
 
                     {/* 역할 관점 */}
-                    <div className="mt-7.5">
+                    <div className="mt-[28px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-[15px] font-bold text-[#52525B]">역할 관점</span>
-                            <span className="text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="text-[15.5px] font-bold text-[#52525B]">역할 관점</span>
+                            <span className="mt-[6px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
-                        <div className="mt-3 flex gap-2">
+                        <div className="mt-[13px] flex gap-2">
                             {PERSPECTIVES.map((p) => (
                                 <div
                                     key={p}
                                     // type="button"
                                     onClick={() => setPerspective(p)}
-                                    className={`cursor-pointer flex-1 rounded-md py-[7.5px] flex items-center justify-center text-[13.5px] font-bold transition-colors ${perspective === p
+                                    className={`h-[37px] cursor-pointer flex-1 rounded-[8px] flex items-center justify-center text-[13.5px] font-bold transition-colors ${perspective === p
                                         ? "bg-[#6366F1] text-white"
-                                        : "bg-white text-[#666] font-bold border border-[#E4E4E7] hover:border-slate-300"
+                                        : "bg-white text-[#666] font-bold border-[2px] border-[#E4E4E7] hover:border-slate-300"
                                         }`}
                                 >
                                     {p}
@@ -165,12 +165,12 @@ export function CTX_005() {
                     </div>
 
                     {/* 전문성 */}
-                    <div className="mt-7">
+                    <div className="mt-[28px]">
                         <div className="flex items-center justify-between">
                             <span className="text-[15px] font-bold text-[#52525B]">전문성</span>
-                            <span className="text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="mt-[6px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
-                        <div className="w-full h-[42px] mt-[11px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px] ">
+                        <div className="w-full h-[42px] mt-[9.5px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px] ">
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center rounded-l-[8px]">기본</p>
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center border-l-[2px] border-r-[2px] border-[#E4E4E7]">실무</p>
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center rounded-r-[8px]">전문</p>
@@ -178,10 +178,10 @@ export function CTX_005() {
                     </div>
 
                     {/* 행동 원칙 */}
-                    <div className="mt-7.5">
+                    <div className="mt-[29px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-[14px] font-bold text-[#52525B]">행동 원칙</span>
-                            <span className="text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="text-[15px] font-bold text-[#52525B]">행동 원칙</span>
+                            <span className="mt-[6px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
                         <textarea
                             value={behaviorPrinciple}
@@ -194,7 +194,7 @@ export function CTX_005() {
                 </div>
 
                 {/* Footer */}
-                <div className="ml-[45px] mt-[-24px]">
+                <div className="ml-[45px] mt-[-28px]">
                     <BottomBar context="기본값으로 저장 가능" btnText="적용" />
                 </div>
             </div>

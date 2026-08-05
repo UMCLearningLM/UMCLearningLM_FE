@@ -80,13 +80,13 @@ export function CTX_002() {
                                 // setCkBox(!ckBox);
                             }}
                         />
-                        <div className={`w-[18px] h-[18px] flex items-center justify-center text-center border-2 rounded border-[#6366F1] 
+                        <div className={`w-[17px] h-[17px] flex items-center justify-center text-center border-2 rounded-[2px] border-[#6366F1] 
                             ${checked ? "bg-[#6366F1]" : "border-[#6366F1]"
                             }`}
                         >
                             {checked && <Check size={18} className="text-white stroke-[3]" />}
                         </div>
-                        <p className="ml-[8px] text-[15px] font-bold">스킬 구성</p>
+                        <p className="ml-[8px] text-[16px] font-bold">스킬 구성</p>
                     </label>
                     <div className="w-[62px] flex items-center">
                         <p className="text-[10px] text-[#6366F1] font-bold">필수</p>
@@ -94,53 +94,56 @@ export function CTX_002() {
                     </div>
                 </div>
                 <p className="mt-[8px] text-[#C0473C] text-[13px]">* 필수 작성 항목입니다.</p>
-                <p className="mt-[13px] text-[15px] text-[#52525B] font-bold">업로드 파일<span className="text-[#C0473C]">*</span></p>
-                <div className="w-full h-[58px] mt-[12px] px-[16px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px]">
+                <p className="mt-[16px] text-[15.5px] text-[#52525B] font-bold">업로드 파일<span className="text-[#C0473C]">*</span></p>
+                <div className="w-full h-[60px] mt-[11px] px-[16px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px]">
                     <div className="w-[21px] h-[21px] bg-[#6366F1] rounded-[50px]" />
                     <div className="ml-[14px] flex-1 leading-[17px]">
                         <p className="text-[#666] text-[13px] font-bold">업로드 파일</p>
                         <p className="text-[#9A9AA3] text-[11px]">← INPUT · IN-004 파일 업로드 받기</p>
                     </div>
-                    <div className="w-[68px] h-[34px] bg-[#6366F1] flex items-center justify-center rounded-[8px] text-[13px] text-white font-bold">연결됨</div>
+                    <div className="w-[70px] h-[37px] bg-[#6366F1] flex items-center justify-center rounded-[8px] text-[13px] text-white font-bold">연결됨</div>
                 </div>
 
-                <p className="mt-[28px] text-[#52525B] font-bold">읽기 범위<span className="text-[#C0473C]">*</span></p>
-                {read.map((item) => ((
-                    <div className="w-full h-[76px] mt-[10px] pl-[28px] flex items-center justify-center border-[2px] border-[#E4E4E7] rounded-[8px]">
+                <p className="mt-[29px] text-[15.5px] text-[#52525B] font-bold">읽기 범위<span className="text-[#C0473C]">*</span></p>
+                <div className="flex flex-col gap-y-[3px]">
+                    {read.map((item) => ((
+                        <div className={`w-full h-[77px] mt-[11px] pl-[28px] flex items-center justify-center border-[2px] rounded-[8px]
+                        ${checked ? "border-[2px] border-[#6366F1]" : "border-[#E4E4E7]"}`}>
 
-                        <div className="w-full flex items-center">
-                            <label className="w-[25px] cursor-pointer agreement flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    className="hidden"
-                                    onChange={(e) => setChecked(e.target.checked)}
-                                    onClick={() => {
-                                        // setCkBox(!ckBox);
-                                    }}
-                                />
-                                <div className={`w-[18px] h-[18px] flex items-center justify-center text-center border-[2px] rounded-[50px] border-[#6366F1] 
-                            ${checked ? "bg-[#6366F1]" : "border-[#E4E4E7]"
-                                    }`}
-                                >
+                            <div className="w-full flex items-center">
+                                <label className="w-[25px] cursor-pointer agreement flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        className="hidden"
+                                        onChange={(e) => setChecked(e.target.checked)}
+                                        onClick={() => {
+                                            // setCkBox(!ckBox);
+                                        }}
+                                    />
+                                    <div className={`w-[20px] h-[20px] flex items-center justify-center text-center border-[1.5px] rounded-[50px]
+                            ${checked ? "border-[#6366F1] bg-[#6366F1]" : "bg-white border-[#E4E4E7]"
+                                        }`}
+                                    >
+                                    </div>
+                                </label>
+                                <div key={item.id} className="flex flex-col items-start gap-[3px]">
+                                    <p className="text-[17px] font-bold">{item.title}</p>
+                                    <p className="text-[14px] text-[#9A9AA3]">{item.context}</p>
                                 </div>
-                            </label>
-                            <div key={item.id} className="flex flex-col items-start gap-[3px]">
-                                <p className="text-[17px] font-bold">{item.title}</p>
-                                <p className="text-[14px] text-[#9A9AA3]">{item.context}</p>
                             </div>
                         </div>
-                    </div>
 
-                )))}
+                    )))}
+                </div>
 
 
-                <div className="mt-[29px] w-full flex items-center justify-between">
+                <div className="mt-[28px] w-full flex items-center justify-between">
                     <div className="flex items-center gap-[4px]">
                         <p className="text-[#52525B] text-[15px] font-bold">페이지·키워드</p>
                         <p className="mt-[4px] text-[#6366F1] text-[10px]">"키워드 주변" 선택됨"</p>
                     </div>
-                    <p className="mt-[6px] text-[11px] font-bold text-[#A68C66]">조건부</p>
+                    <p className="text-[10.5px] font-bold text-[#A68C66]">조건부</p>
                 </div>
                 <textarea
                     placeholder="키워드를 입력해 추가해주세요."
@@ -148,12 +151,12 @@ export function CTX_002() {
                     appearance-none w-full h-[80px] mt-[20px] pt-[10px] px-[20px] border-[2px] border-[#E4E4E7] rounded-[12px] text-[15px]" />
                 <div className="flex items-center justify-between mt-[23px] mb-[13px]">
                     <p className="text-[#52525B] font-bold">표·이미지·부록</p>
-                    <p className="mt-[6px] text-[10px] font-bold text-[#5FAA81]">선택</p>
+                    <p className="mt-[6px] text-[10px] text-[#5FAA81]">선택</p>
                 </div>
                 {toggle.map((item) => (
-                    <div key={item.id} className="mb-[14px] w-full flex items-center justify-between">
-                        <div className="mt-[2px] leading-[18px]">
-                            <p className="text-[#666] text-[15px] font-bold">{item.title}</p>
+                    <div key={item.id} className="mb-[12px] w-full flex items-center justify-between">
+                        <div className="mt-[3px] leading-[18px]">
+                            <p className="text-[#666] text-[14px] font-bold">{item.title}</p>
                             <p className="text-[10px] text-[#6366F1]">{item.context}</p>
                         </div>
                         <div>
@@ -193,7 +196,9 @@ export function CTX_002() {
                         </div>
                     </div>
                 ))}
-                <BottomBar context="키워드 미입력 — 범위를 지정하세요" btnText="검증" />
+                <div className="mt-[-2px]">
+                    <BottomBar context="키워드 미입력 — 범위를 지정하세요" btnText="검증" />
+                </div>
             </div>
 
         </div >

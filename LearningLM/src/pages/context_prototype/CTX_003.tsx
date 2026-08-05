@@ -65,8 +65,8 @@ export function CTX_003() {
                             <span
                                 onClick={() => setUseDirectInput((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useDirectInput
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useDirectInput && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -103,9 +103,9 @@ export function CTX_003() {
                             onChange={(e) => setContent(e.target.value)}
                             placeholder="참고할 내용을 직접 입력하세요"
                             rows={4}
-                            className={`mt-[20px] w-[440px] h-[80px] border-[2px] rounded-[12px] px-5 py-[10px] text-[13px] text-slate-700 placeholder:text-[15px] placeholder:text-[#9A9AA3] outline-none resize-none transition-colors border ${showValidationWarning
+                            className={`mt-[21px] w-[440px] h-[80px] border-[2px] rounded-[12px] px-5 py-[10px] text-[13px] text-[#9A9AA3] placeholder:text-[15px] placeholder:text-[#9A9AA3] outline-none resize-none transition-colors border ${showValidationWarning
                                 ? "border-[#EF8888] focus:border-rose-400"
-                                : "border-slate-200 focus:border-indigo-400"
+                                : "border-[#E4E4E7] focus:border-indigo-400"
                                 }`}
                         />
                     </div>
@@ -116,15 +116,15 @@ export function CTX_003() {
                             <span className="text-[15.5px] font-bold text-[#52525B]">내용 구분</span>
                             <span className="mt-[6px] text-[10.5px] text-[#5FAA81]">선택</span>
                         </div>
-                        <div className="w-[300px] h-[36px] flex gap-[8px] mt-3 font-bold text-[13.5px]">
+                        <div className="w-[300px] h-[37px] flex gap-[8px] mt-[10px] font-bold text-[13.5px]">
                             {CATEGORIES.map((c) => (
                                 <button
                                     key={c}
                                     type="button"
                                     onClick={() => setCategory(c)}
                                     className={`cursor-pointer flex-1 h-full flex items-center justify-center rounded-md transition-colors ${category === c
-                                        ? "bg-indigo-500 text-white"
-                                        : "bg-white text-slate-700 border border-slate-200 hover:border-slate-300"
+                                        ? "bg-[#6366F1] text-white"
+                                        : "text-[#666] border-[2px] border-[#E4E4E7] hover:border-slate-300"
                                         }`}
                                 >
                                     {c}
@@ -135,27 +135,39 @@ export function CTX_003() {
 
 
                     {/* 우선 적용 */}
-                    <div className="mt-[12px] font-bold text-[#52525B]">
-                        <ToggleRow
-                            title="우선 적용"
-                            description="다른 문서보다 우선 참고"
-                            checked={priority}
-                            onChange={setPriority}
-                            className="font-bold"
-                        />
+                    <div className="mt-[14px] font-bold text-[#52525B]">
+                        <div className="mt-[28px]">
+                            <p className="absolute mt-[5px] text-[15px]">우선 적용</p>
+                            <p className="absolute mt-[39px] text-[#666] text-[14px]">다른 문서보다 우선 참고</p>
+                        </div>
+                        <div className="mt-[-5px]">
+                            <ToggleRow
+                                title=""
+                                description=""
+                                checked={priority}
+                                onChange={setPriority}
+                            />
+                        </div>
 
 
                         {/* 원문 유지 */}
-                        <ToggleRow
-                            title="원문 유지"
-                            description="입력 표현을 그대로 보존"
-                            subLabel="기본 ON"
-                            checked={keepOriginal}
-                            onChange={setKeepOriginal}
-                        />
+                        <div className="mt-[10px]">
+                            <p className="absolute mt-[5px] text-[15px]">원문 유지</p>
+                            <p className="absolute mt-[33px] text-[14px] text-[#666]">입력 표현을 그대로 보존</p>
+                            <p className="absolute mt-[53px] font-normal text-[#6366F1] text-[10px]">기본 ON</p>
+                        </div>
+                        <div className="mt-[0px]">
+                            <ToggleRow
+                                title=""
+                                description=""
+                                subLabel=""
+                                checked={keepOriginal}
+                                onChange={setKeepOriginal}
+                            />
+                        </div>
                     </div>
                 </div>
-                <div className="ml-[44px]">
+                <div className="ml-[44px] mt-[-35px]">
                     <BottomBar
                         context="참고 내용 미입력"
                         btnText="검증" />

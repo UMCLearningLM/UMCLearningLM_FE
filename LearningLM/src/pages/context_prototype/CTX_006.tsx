@@ -32,7 +32,7 @@ export function CTX_006() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 pt-5 pb-6">
+                <div className="px-[25px] pt-[26px] pb-6">
                     <PageHeader
                         title="배경 설명 추가하기"
                         subTitle="CTX-006 · CONTEXT"
@@ -50,7 +50,7 @@ export function CTX_006() {
                         imgState={flag}
                     />
                 </div>
-                <div className="w-[498px] h-[1.5px] mt-[-10px] ml-[-24px] bg-[#E4E4E7]" />
+                <div className="w-[498px] h-[1.5px] mt-[-16px] ml-[-24px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-8px] pb-6">
                     {/* Checkbox row */}
                     <div className="pt-6 flex items-center justify-between">
@@ -58,14 +58,14 @@ export function CTX_006() {
                             <span
                                 onClick={() => setUseBackgroundInput((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useBackgroundInput
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useBackgroundInput && <Check size={13} className="text-white" strokeWidth={3} />}
                             </span>
                             <span className="text-[15px] font-bold text-[#27272A]">
-                                역할 부여하기
+                                배경 설명 추가하기
                             </span>
                         </label>
                         <div className="flex items-center gap-[6px]">
@@ -88,13 +88,13 @@ export function CTX_006() {
 
 
                     {/* 배경 설명 */}
-                    <div className="mt-3.5">
-                        <span className="text-[15px] font-bold text-slate-800">
+                    <div className="mt-[13px]">
+                        <span className="text-[15px] font-bold text-[#52525B]">
                             배경 설명<span className="text-[#C0473C]">*</span>
                         </span>
 
                         {showValidationWarning && (
-                            <p className="mt-4.5 flex items-center gap-1 text-[13px] text-[#EF8888] font-bold">
+                            <p className="mt-4.5 flex items-center gap-1 text-[13.5px] text-[#EF8888] font-bold">
                                 <AlertTriangle size={14} />
                                 참고할 배경을 입력해주세요.
                             </p>
@@ -105,26 +105,26 @@ export function CTX_006() {
                             onChange={(e) => setBackgroundText(e.target.value)}
                             placeholder="참고할 내용을 직접 입력하세요"
                             rows={4}
-                            className={`mt-2 w-full h-[80px] border-[2px] rounded-[12px] px-[22px] pt-[10px] text-[15.5px] text-slate-700 placeholder:text-[#9A9AA3] placeholder:text-[15.5px] outline-none resize-none transition-colors ${showValidationWarning
+                            className={`mt-[7px] w-full h-[80px] border-[2px] rounded-[12px] px-[22px] pt-[10px] text-[15.5px] text-[#666] placeholder:text-[#9A9AA3] placeholder:text-[15.5px] outline-none resize-none transition-colors ${showValidationWarning
                                 ? "border-[#EF8888] focus:border-rose-400"
-                                : "border-slate-200 focus:border-indigo-400"
+                                : "border-[#E4E4E7] focus:border-indigo-400"
                                 }`}
                         />
                     </div>
 
                     {/* 현재 단계 */}
-                    <div className="mt-5.5">
+                    <div className="mt-[23px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-[15px] font-bold text-slate-800">현재 단계</span>
-                            <span className="text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="text-[15px] font-bold text-[#52525B]">현재 단계</span>
+                            <span className="mt-[7px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
-                        <div className="mt-3.5 flex flex-wrap gap-2">
+                        <div className="mt-[12px] flex flex-wrap gap-[6px] gap-y-[12px]">
                             {STAGES.map((s) => (
                                 <div
                                     key={s}
                                     // type="button"
                                     onClick={() => setStage(s)}
-                                    className={`rounded-md px-4 py-1.5 flex items-center justify-center text-[14px] font-bold transition-colors ${stage === s
+                                    className={`h-[37px] rounded-md px-4 flex items-center justify-center text-[14px] font-bold transition-colors ${stage === s
                                         ? "bg-[#6366F1] text-white"
                                         : "bg-white text-slate-600 border-[2px] border-[#E4E4E7] hover:border-slate-300"
                                         }`}
@@ -136,10 +136,10 @@ export function CTX_006() {
                     </div>
 
                     {/* 결정·미정 사항 */}
-                    <div className="mt-8">
+                    <div className="mt-[28px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-[15.5px] font-bold text-slate-800">결정·미정 사항</span>
-                            <span className="text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="text-[15.5px] font-bold text-[#52525B]">결정·미정 사항</span>
+                            <span className="mt-[6px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
                         <div className="mt-5 grid grid-cols-2 gap-3">
                             <textarea
@@ -147,25 +147,25 @@ export function CTX_006() {
                                 onChange={(e) => setDecidedItems(e.target.value)}
                                 placeholder="결정된 사항 입력"
                                 rows={2}
-                                className="w-full rounded-xl px-4 py-3.5 text-[14px] text-slate-700 placeholder:text-[#9A9AA3] placeholder:text-[15px] outline-none resize-none transition-colors border-[2px] border-[#E4E4E7] focus:border-indigo-400"
+                                className="h-[80px] rounded-xl px-4 pt-[10px] text-[14px] text-[#666] placeholder:text-[#9A9AA3] placeholder:text-[15px] outline-none resize-none transition-colors border-[2px] border-[#E4E4E7] focus:border-indigo-400"
                             />
                             <textarea
                                 value={undecidedItems}
                                 onChange={(e) => setUndecidedItems(e.target.value)}
                                 placeholder="미정 사항 입력"
                                 rows={2}
-                                className="w-full rounded-xl px-4 py-3.5 text-[14px] text-slate-700 placeholder:text-[#9A9AA3] placeholder:text-[15px] outline-none resize-none transition-colors border-[2px] border-[#E4E4E7] focus:border-indigo-400"
+                                className="h-[80px] rounded-xl px-4 pt-[10px] text-[14px] text-[#666] placeholder:text-[#9A9AA3] placeholder:text-[15px] outline-none resize-none transition-colors border-[2px] border-[#E4E4E7] focus:border-indigo-400"
                             />
                         </div>
                     </div>
 
                     {/* 중요도 */}
-                    <div className="mt-6.5">
+                    <div className="mt-[28px]">
                         <div className="flex items-center justify-between">
                             <span className="text-[16.5px] font-bold text-slate-800">중요도</span>
-                            <span className="text-[10px] text-[#5FAA81]">선택</span>
+                            <span className="mt-[8px] text-[10px] text-[#5FAA81]">선택</span>
                         </div>
-                        <div className="w-full h-[42px] mt-[11px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px] ">
+                        <div className="h-[42px] mt-[8px] flex items-center border-[2px] border-[#E4E4E7] rounded-[8px] ">
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center rounded-l-[8px]">참고</p>
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center border-l-[2px] border-r-[2px] border-[#E4E4E7]">중요</p>
                             <p className="cursor-pointer hover:bg-[#6366F1] hover:text-white hover:font-bold w-[135px] h-full flex items-center justify-center rounded-r-[8px]">반드시</p>

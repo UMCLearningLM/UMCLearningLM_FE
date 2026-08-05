@@ -47,7 +47,7 @@ export function CTX_009() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[26px] pb-6">
+                <div className="px-[19px] pt-[26px] pb-6">
                     <PageHeader
                         title="참고 제외 내용 정하기"
                         subTitle="CTX-009 · CONTEXT"
@@ -66,15 +66,15 @@ export function CTX_009() {
                     />
                 </div>
                 <div className="w-[498px] h-[1.5px] mt-[-16px] bg-[#E4E4E7]" />
-                <div className="px-[50px] mt-[-8px] pb-6">
+                <div className="px-[50px] mt-[-7px] pb-6">
                     {/* Checkbox row */}
                     <div className="pt-6 flex items-center justify-between">
                         <label className="flex items-center gap-2.5 cursor-pointer select-none">
                             <span
                                 onClick={() => setUseExclusionSetting((v) => !v)}
                                 className={`w-[16px] h-[16px] rounded-[2px] flex items-center justify-center border transition-colors ${useExclusionSetting
-                                    ? "bg-indigo-500 border-indigo-500"
-                                    : "bg-white border-slate-300"
+                                    ? "bg-[#6366F1] border-[#6366F1]"
+                                    : "border-[#E4E4E7]"
                                     }`}
                             >
                                 {useExclusionSetting && <Check size={13} className="text-white" strokeWidth={3} />}
@@ -114,20 +114,20 @@ export function CTX_009() {
                                         key={key}
                                         type="button"
                                         onClick={() => toggleExclusionType(key)}
-                                        className={`h-[78px] flex items-center gap-3 rounded-lg border-[2px] px-4 text-left transition-colors ${active
+                                        className={`h-[77px] flex items-center gap-3 rounded-lg border-[2px] px-4 text-left transition-colors ${active
                                             ? "border-[#6366F1]"
                                             : "border-[#E4E4E7] hover:border-slate-300"
                                             }`}
                                     >
                                         <span
-                                            className={`w-4.5 h-4.5 shrink-0 rounded-[2px] border-[2px] flex items-center justify-center border transition-colors ${active
-                                                ? "bg-[indigo-500] border-indigo-500"
-                                                : "bg-white border-[#6366F1]"
+                                            className={`w-4 h-4 shrink-0 rounded-[2px] border-[2px] flex items-center justify-center border transition-colors ${active
+                                                ? "bg-[#6366F1] border-[#6366F1]"
+                                                : "border-[#6366F1]"
                                                 }`}
                                         >
                                             {active && <Check size={13} className="text-white" strokeWidth={3} />}
                                         </span>
-                                        <span className="flex flex-col gap-[4px]">
+                                        <span className="flex flex-col gap-[3px]">
                                             <span className="block text-[17px] font-bold text-[#27272A]">{key}</span>
                                             <span className="block text-[12.5px] text-slate-400">{desc}</span>
                                         </span>
@@ -138,15 +138,15 @@ export function CTX_009() {
                     </div>
 
                     {/* 제외 대상 */}
-                    <div className="mt-6.5">
+                    <div className="mt-[28px]">
                         <div className="flex items-center justify-between">
                             <span className="text-[15px] font-bold text-[#52525]">
                                 제외 대상{" "}
-                                <span className="text-[10px] font-normal text-[#6366F1]">
+                                <span className="text-[10px] text-[#6366F1]">
                                     &quot;{isKeywordModeActive ? "키워드" : exclusionTypes[0] ?? "미선택"}&quot; 선택됨
                                 </span>
                             </span>
-                            <span className="mt-[2px] text-[10px] text-[#A68C66] font-bold">조건부</span>
+                            <span className="text-[10.5px] text-[#A68C66] font-bold">조건부</span>
                         </div>
                         <textarea
                             value={exclusionKeyword}
@@ -154,18 +154,18 @@ export function CTX_009() {
                             placeholder="제외할 키워드 입력"
                             rows={2}
                             disabled={!isKeywordModeActive}
-                            className={`mt-5 w-full h-[80px] border-[2px] rounded-[12px] px-5 py-[10px] text-[14px] text-slate-700 placeholder:text-[#9A9AA3] placeholder:text-[15px] outline-none resize-none transition-colors ${!isKeywordModeActive
+                            className={`mt-5 w-full h-[80px] border-[2px] rounded-[12px] px-5 py-[10px] text-[14px] text-[#666] placeholder:text-[#9A9AA3] placeholder:text-[15px] outline-none resize-none transition-colors ${!isKeywordModeActive
                                 ? "border-slate-100 bg-slate-50 opacity-50"
                                 : showValidationWarning
                                     ? "border-[#EF8888] focus:border-rose-400"
-                                    : "border-slate-200 focus:border-indigo-400"
+                                    : "border-[#E4E4E7] focus:border-indigo-400"
                                 }`}
                         />
                     </div>
 
                     {/* 충돌 처리 */}
-                    <div className="mt-5.5">
-                        <span className="text-[15px] font-bold text-slate-800">
+                    <div className="mt-[22px]">
+                        <span className="text-[15px] font-bold text-[#52525B]">
                             충돌 처리<span className="text-[#C0473C]">*</span>
                         </span>
                         <div className="mt-3 flex flex-col gap-3.5">
@@ -176,18 +176,17 @@ export function CTX_009() {
                                         key={key}
                                         type="button"
                                         onClick={() => setConflictHandling(key)}
-                                        className={`flex items-center gap-3 rounded-xl border-[2px] px-4 py-3 text-left transition-colors ${active
-                                            ? "border-indigo-500"
+                                        className={`h-[76px] flex items-center gap-3 rounded-xl border-[2px] px-4 pt-[2px] text-left transition-colors ${active
+                                            ? "border-[#6366F1]"
                                             : "border-[#E4E4E7] hover:border-slate-300"
                                             }`}
                                     >
                                         <span
-                                            className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center border transition-colors ${active ? "border-indigo-500" : "border-slate-300"
+                                            className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center border transition-colors ${active ? "bg-[#6366F1] border-[#6366F1]" : "border-[#E4E4E7]"
                                                 }`}
                                         >
-                                            {active && <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />}
                                         </span>
-                                        <span className="leading-[24px]">
+                                        <span className="leading-[26px]">
                                             <span className="block text-[17.5px] font-bold text-[#27272A]">{key}</span>
                                             <span className="block text-[12.5px] text-[#9A9AA3]">{desc}</span>
                                         </span>
@@ -198,13 +197,13 @@ export function CTX_009() {
                     </div>
 
                     {/* 제외 내용 언급 */}
-                    <div className="mt-[29px] flex items-center justify-between">
+                    <div className="mt-[28px] flex items-center justify-between">
                         <div>
                             <span className="text-[15px] font-bold text-[#52525B]">제외 내용 언급</span>
-                            <p className="mt-1.5 text-[13px] text-[#666] font-bold">결과에 제외 사실 표시</p>
-                            <p className="mt-0 text-[11.5px] text-indigo-400">기본 OFF</p>
+                            <p className="mt-[5px] text-[13px] text-[#666] font-bold">결과에 제외 사실 표시</p>
+                            <p className="mt-[0px] text-[10px] text-[#6366F1]">기본 OFF</p>
                         </div>
-                        <div className="mt-[2px] flex flex-col gap-[6px]">
+                        <div className="mt-[3px] flex flex-col gap-[6px]">
                             <span className="mt-[0px] text-[10px] text-[#5FAA81]">선택</span>
                             <button
                                 type="button"
