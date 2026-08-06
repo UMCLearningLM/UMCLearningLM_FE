@@ -1,8 +1,8 @@
 import {useState} from "react";
 export default function Default() {
   const [sectionType, setSectionType] = useState("core");
-  const [role, setRole] = useState("planner");
-  const [promptType, setPromptType] = useState("practical");
+  const [documentType, setDocumentType] = useState("document1");
+  const [promptType, setPromptType] = useState("basic");
   const [save, setSave] = useState(true);
   const [form, setForm] = useState("form1");
   const [title, setTitle] = useState("");
@@ -77,21 +77,21 @@ export default function Default() {
             *
           </span>
         </div>
-        {/* 기획자 */}
+
         <div
-          onClick={() => setRole("planner")}
+          onClick={() => setDocumentType("document2")}
           className={`absolute w-[186.49px] h-[91.69px] top-[290.25px] left-[38.25px] border border-[1.5px] rounded-[12px] ${
-            role === "planner" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            documentType === "document2" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[304.5px] left-[113.48px] flex items-center justify-center rounded-[8px] ${
-            role === "planner" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            documentType === "document2" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[307.05px] left-[120.97px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "planner" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              documentType === "document2" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             📝
@@ -103,19 +103,19 @@ export default function Default() {
 
         {/* 개발자 */}
         <div
-          onClick={() => setRole("developer")}
+          onClick={() => setDocumentType("document1")}
           className={`absolute w-[186.49px] h-[91.69px] top-[290.25px] left-[236.74px] border border-[1.5px] rounded-[12px] ${
-            role === "developer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+             documentType=== "document1" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[304.5px] left-[311.98px] flex items-center justify-center  rounded-[8px] ${
-            role === "developer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            documentType === "document1" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[307.05px] left-[319.48px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "developer" ? "text-[#27272A]" : "text-[#27272A]"
+              documentType === "document1" ? "text-[#27272A]" : "text-[#27272A]"
             }`}
           >
             ⚙
@@ -126,19 +126,19 @@ export default function Default() {
         </div>
 
         <div
-          onClick={() => setRole("designer")}
+          onClick={() => setDocumentType("document3")}
           className={`absolute w-[186.52px] h-[91.69px] top-[290.25px] left-[435.23px] border border-[1.5px] rounded-[12px] ${
-            role === "designer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            documentType === "document3" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[304.5px] left-[510.49px] flex items-center justify-center  rounded-[8px] ${
-            role === "designer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            documentType === "document3" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[307.05px] left-[517.98px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "designer" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              documentType === "document3" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             📋
@@ -149,19 +149,19 @@ export default function Default() {
         </div>
 
         <div
-          onClick={() => setRole("tutor")}
+          onClick={() => setDocumentType("document4")}
           className={`absolute w-[186.49px] h-[91.69px] top-[393.94px] left-[38.25px] border border-[1.5px] rounded-[12px] ${
-            role === "tutor" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            documentType === "document4" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[408.19px] left-[113.48px] flex items-center justify-center rounded-[8px] ${
-            role === "tutor" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            documentType === "document4" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[410.74px] left-[120.97px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "tutor" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              documentType === "document4" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             📊
@@ -172,19 +172,19 @@ export default function Default() {
         </div>
 
         <div
-          onClick={() => setRole("analyst")}
+          onClick={() => setDocumentType("document5")}
           className={`absolute w-[186.49px] h-[91.69px] top-[393.94px] left-[236.74px] border border-[1.5px] rounded-[12px] ${
-            role === "analyst" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            documentType === "document5" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[408.19px] left-[311.98px] flex items-center justify-center rounded-[8px] ${
-            role === "analyst" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            documentType === "document5" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[410.74px] left-[319.48px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "analyst" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              documentType === "document5" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             🗒
@@ -195,19 +195,19 @@ export default function Default() {
         </div>
 
         <div
-          onClick={() => setRole("writer")}
+          onClick={() => setDocumentType("document6")}
           className={`absolute w-[186.52px] h-[91.69px] top-[393.94px] left-[435.23px] border border-[1.5px] rounded-[12px] ${
-            role === "writer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            documentType === "document6" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[408.19px] left-[510.49px] flex items-center justify-center rounded-[8px] ${
-            role === "writer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            documentType === "document6" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[410.74px] left-[517.98px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "writer" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              documentType === "document6" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             📮
@@ -366,16 +366,16 @@ export default function Default() {
 
         <div className="absolute w-[583.5px] h-[48.38px] top-[1202.63px] left-[38.25px] border border-[1.5px] border-[#E4E4E7] rounded-[12px]"></div>
         <div
-          onClick={() => setPromptType("basic")}
+          onClick={() => setPromptType("type")}
           className={`absolute w-[192px] h-[46.88px] top-[1202.63px] left-[40.25px] flex items-center justify-center cursor-pointer rounded-tl-[12px] rounded-bl-[12px] ${
-            promptType === "basic" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+            promptType === "type" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
           }`}
         ></div>
 
         <div
-          onClick={() => setPromptType("basic")}
+          onClick={() => setPromptType("type")}
           className={`absolute w-[32px] h-[21px] top-[1213.8px] left-[119.48px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-            promptType === "basic"
+            promptType === "type"
               ? "text-[#FFFFFF]"
               : "text-[#52525B]"
           }`}
@@ -386,16 +386,16 @@ export default function Default() {
         <div className="absolute z-10 w-[0px] h-[46.88px] top-[1203.38px] left-[232.73px] border-[1.5px] border-[#E4E4E7]"></div>
 
         <div
-          onClick={() => setPromptType("practical")}
+          onClick={() => setPromptType("basic")}
           className={`absolute w-[194.51px] h-[46.88px] top-[1203.38px] left-[231.98px] flex items-center justify-center cursor-pointer ${
-            promptType === "practical" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+            promptType === "basic" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
           }`}
         ></div>
 
         <div
-          onClick={() => setPromptType("practical")}
+          onClick={() => setPromptType("basic")}
           className={`absolute w-[32px] h-[21px] top-[1213.8px] left-[313.99px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-            promptType === "practical"
+            promptType === "basic"
               ? "text-[#FFFFFF]"
               : "text-[#52525B]"
           }`}
@@ -407,16 +407,16 @@ export default function Default() {
 
         {/* 전문 */}
         <div
-          onClick={() => setPromptType("expert")}
+          onClick={() => setPromptType("detail")}
           className={`absolute w-[191.49px] h-[46.88px] top-[1203px] left-[428.26px] flex items-center justify-center cursor-pointer rounded-tr-[12px] rounded-br-[12px] ${
-            promptType === "expert" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+            promptType === "detail" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
           }`}
         ></div>
 
         <div
-          onClick={() => setPromptType("expert")}
+          onClick={() => setPromptType("detail")}
           className={`absolute w-[32px] h-[21px] top-[1213.8px] left-[508.5px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-            promptType === "expert"
+            promptType === "detail"
               ? "text-[#FFFFFF]"
               : "text-[#52525B]"
           }`}

@@ -159,18 +159,18 @@ export default function Review() {
           </div>
 
         <div
-        onClick={() => setLength("error")}
+        onClick={() => setLength("one")}
         className={`absolute w-[86.32px] h-[48.38px] top-[641.16px] left-[38.25px] border border-[1.5px] rounded-[12px] cursor-pointer ${
-          length === "error"
+          length === "one"
             ? "bg-[#6366F1] border-[#6366F1]"
             : "border-[#E4E4E7] bg-[#FFFFFF]"
         }`}
       ></div>
 
       <div
-        onClick={() => setLength("error")}
+        onClick={() => setLength("one")}
         className={`absolute whitespace-nowrap w-[52px] h-[21px] top-[652.33px] left-[57px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer ${
-          length === "error"
+          length === "one"
             ? "text-[#FFFFFF]"
             : "text-[#52525B]"
         }`}
@@ -180,7 +180,7 @@ export default function Review() {
 
 
       <div
-        onClick={() => setLength("step")}
+        onClick={() => setLength("short")}
         className={`absolute w-[67.34px] h-[48.38px] top-[641.16px] left-[135.07px] border border-[1.5px] rounded-[12px] cursor-pointer ${
           length === "step"
             ? "bg-[#6366F1] border-[#6366F1]"
@@ -189,7 +189,7 @@ export default function Review() {
       ></div>
 
       <div
-        onClick={() => setLength("step")}
+        onClick={() => setLength("short")}
         className={`absolute w-[32px] h-[21px] top-[652.33px] left-[153.82px] font-inter font-bold text-[17.25px] leading-none cursor-pointer ${
           length === "step"
             ? "text-[#FFFFFF]"
@@ -201,7 +201,7 @@ export default function Review() {
 
 
       <div
-        onClick={() => setLength("all")}
+        onClick={() => setLength("normal")}
         className={`absolute w-[67.34px] h-[48.38px] top-[641.16px] left-[212.7px] border border-[1.5px] rounded-[12px] cursor-pointer ${
           length === "all"
             ? "bg-[#6366F1] border-[#6366F1]"
@@ -210,7 +210,7 @@ export default function Review() {
       ></div>
 
       <div
-        onClick={() => setLength("all")}
+        onClick={() => setLength("normal")}
         className={`absolute w-[32px] h-[21px] top-[652.33px] left-[231.66px] font-inter font-bold text-[17.25px] leading-none cursor-pointer ${
           length === "all"
             ? "text-[#FFFFFF]"

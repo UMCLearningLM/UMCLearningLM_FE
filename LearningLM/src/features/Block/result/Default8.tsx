@@ -8,7 +8,7 @@ export default function Default8() {
   const [sectionType, setSectionType] = useState("all"); // 목차 방식 선택 상태
   const [verify, setVerify] = useState(false); // 검증 버튼 상태
 
-  const [role, setRole] = useState(""); // 역할 선택 상태
+  const [purpose, setPurpose] = useState(""); // 역할 선택 상태
 
   return (
     <div className="relative w-[660px] h-[1307.63px] bg-[#FFFFFF] text-[#27272A] font-inter">
@@ -100,19 +100,19 @@ export default function Default8() {
               사용 목적 <span className="w-[10px] h-[21px] top-[494.93px] left-[110.11px] font-inter font-bold text-[17.25px] leading-none text-[#C0473C]">*</span>
             </div>
             <div
-          onClick={() => setRole("developer")}
+          onClick={() => setPurpose("data")}
           className={`absolute w-[186.49px] h-[91.69px] top-[530.63px] left-[38.25px] border border-[1.5px] rounded-[12px] ${
-            role === "developer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            purpose === "data" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[544.88px] left-[113.48px] flex items-center justify-center  rounded-[8px] ${
-            role === "developer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            purpose === "data" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[547.43px] left-[120.97px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "developer" ? "text-[#27272A]" : "text-[#27272A]"
+              purpose === "data" ? "text-[#27272A]" : "text-[#27272A]"
             }`}
           >
             📚
@@ -123,19 +123,19 @@ export default function Default8() {
         </div>
 
         <div
-          onClick={() => setRole("designer")}
+          onClick={() => setPurpose("summary")}
           className={`absolute w-[186.49px] h-[91.69px] top-[530.63px] left-[236.74px] border border-[1.5px] rounded-[12px] ${
-            role === "designer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            purpose === "summary" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[544.88px] left-[311.98px] flex items-center justify-center  rounded-[8px] ${
-            role === "designer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            purpose === "summary" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[547.43px] left-[319.46px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "designer" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              purpose === "summary" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             📝
@@ -146,19 +146,19 @@ export default function Default8() {
         </div>
 
         <div
-          onClick={() => setRole("tutor")}
+          onClick={() => setPurpose("write")}
           className={`absolute w-[186.52px] h-[91.69px] top-[530.63px] left-[435.23px] border border-[1.5px] rounded-[12px] ${
-            role === "tutor" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            purpose === "write" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[544.88px] left-[510.49px] flex items-center justify-center rounded-[8px] ${
-            role === "tutor" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            purpose === "write" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[547.43px] left-[517.98px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "tutor" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              purpose === "write" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             ✍️
@@ -169,19 +169,19 @@ export default function Default8() {
         </div>
 
         <div
-          onClick={() => setRole("analyst")}
+          onClick={() => setPurpose("roop")}
           className={`absolute w-[186.49px] h-[91.69px] top-[633.56px] left-[37.5px] border border-[1.5px] rounded-[12px] ${
-            role === "analyst" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            purpose === "roop" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[648.56px] left-[113.48px] flex items-center justify-center rounded-[8px] ${
-            role === "analyst" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            purpose === "roop" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[651.11px] left-[120.97px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "analyst" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              purpose === "roop" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             🔁
@@ -192,19 +192,19 @@ export default function Default8() {
         </div>
 
         <div
-          onClick={() => setRole("writer")}
+          onClick={() => setPurpose("review")}
           className={`absolute w-[186.49px] h-[91.69px] top-[634.31px] left-[236.74px] border border-[1.5px] rounded-[12px] ${
-            role === "writer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            purpose === "review" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[648.56px] left-[311.98px] flex items-center justify-center rounded-[8px] ${
-            role === "writer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            purpose === "review" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[651.11px] left-[319.46px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "writer" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              purpose === "review" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             🔎
@@ -214,19 +214,19 @@ export default function Default8() {
           검토
         </div>
         <div
-          onClick={() => setRole("Ai")}
+          onClick={() => setPurpose("Ai")}
           className={`absolute w-[186.52px] h-[91.69px] top-[634.31px] left-[435.23px] border border-[1.5px] rounded-[12px] ${
-            role === "Ai" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            purpose === "Ai" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[648.56px] left-[510.49px] flex items-center justify-center rounded-[8px] ${
-            role === "Ai" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            purpose === "Ai" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={` w-[21px] h-[21px] top-[651.11px] left-[517.98px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "Ai" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              purpose === "Ai" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             🤖
@@ -245,16 +245,16 @@ export default function Default8() {
         <div className="absolute w-[583.5px] h-[48.38px] top-[777.38px] left-[38.25px] border border-[#E4E4E7] rounded-[12px] border-[1.5px]"></div>
 
           <div
-            onClick={() => setSectionType("all")}
+            onClick={() => setSectionType("type1")}
             className={`absolute w-[192.98px] h-[46.88px] top-[778.13px] left-[39px] flex items-center justify-center cursor-pointer rounded-tl-[12px] rounded-bl-[12px] ${
-              sectionType === "all" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+              sectionType === "type1" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
             }`}
           ></div>
 
           <div
-            onClick={() => setSectionType("all")}
+            onClick={() => setSectionType("type1")}
             className={`absolute w-[32px] h-[21px] top-[788.55px] left-[119.48px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-              sectionType === "all"
+              sectionType === "type1"
                 ? "text-[#FFFFFF]"
                 : "text-[#52525B]"
             }`}
@@ -265,16 +265,16 @@ export default function Default8() {
           <div className="absolute  z-10 w-[0px] h-[46.88px] top-[778.13px] left-[232.73px] border-[1.5px] border-[#E4E4E7]"></div>
 
           <div
-            onClick={() => setSectionType("core")}
+            onClick={() => setSectionType("type2")}
             className={`absolute w-[190.52px] h-[46.88px] top-[778.13px] left-[235.99px] flex items-center justify-center cursor-pointer ${
-              sectionType === "core" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+              sectionType === "type2" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
             }`}
           ></div>
 
           <div
-            onClick={() => setSectionType("core")}
+            onClick={() => setSectionType("type2")}
             className={`absolute w-[32px] h-[21px] top-[788.55px] left-[313.99px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-              sectionType === "core"
+              sectionType === "type2"
                 ? "text-[#FFFFFF]"
                 : "text-[#52525B]"
             }`}
@@ -285,16 +285,16 @@ export default function Default8() {
           <div className="absolute z-10 w-[0px] h-[46.88px] top-[778.13px] left-[427.24px] border-[1.5px] border-[#E4E4E7]"></div>
 
           <div
-            onClick={() => setSectionType("section")}
+            onClick={() => setSectionType("type3")}
             className={`absolute w-[194.51px] h-[46.88px] top-[778.13px] left-[426.49px] flex items-center justify-center cursor-pointer rounded-tr-[12px] rounded-br-[12px] ${
-              sectionType === "section" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+              sectionType === "type3" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
             }`}
           ></div>
 
           <div
-            onClick={() => setSectionType("section")}
+            onClick={() => setSectionType("type3")}
             className={`absolute w-[32px] h-[21px] top-[788.55px] left-[508.5px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-              sectionType === "section"
+              sectionType === "type3"
                 ? "text-[#FFFFFF]"
                 : "text-[#52525B]"
             }`}

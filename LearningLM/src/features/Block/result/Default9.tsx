@@ -7,7 +7,7 @@ export default function Default9() {
   const [checked3, setChecked3] = useState(false);
   const [checked4, setChecked4] = useState(false);
   const [checked5, setChecked5] = useState(false);
-  const [sentence, setSentence] = useState("normal");
+  const [sentence, setSentence] = useState("blank");
   const [title, setTitle] = useState(true);
   const [keyword, setKeyword] = useState(true);
   return (
@@ -328,18 +328,18 @@ export default function Default9() {
 
 
           <div
-            onClick={() => setSentence("short")}
+            onClick={() => setSentence("two")}
             className={`absolute w-[80.23px] h-[48.38px] top-[733.03px] left-[129.52px] border border-[1.5px] rounded-[12px] cursor-pointer ${
-              sentence === "short"
+              sentence === "two"
                 ? "bg-[#6366F1] border-[#6366F1]"
                 : "border-[#E4E4E7] bg-[#FFFFFF]"
             }`}
           ></div>
 
           <div
-            onClick={() => setSentence("short")}
+            onClick={() => setSentence("two")}
             className={`absolute w-[46px] h-[21px] top-[744.21px] left-[148.27px] font-inter font-bold text-[17.25px] leading-none cursor-pointer ${
-              sentence === "short"
+              sentence === "two"
                 ? "text-[#FFFFFF]"
                 : "text-[#52525B]"
             }`}
@@ -349,18 +349,18 @@ export default function Default9() {
 
 
           <div
-            onClick={() => setSentence("normal")}
+            onClick={() => setSentence("blank")}
             className={`absolute w-[67.34px] h-[48.38px] top-[733.03px] left-[220.24px] border border-[1.5px] rounded-[12px] cursor-pointer ${
-              sentence === "normal"
+              sentence === "blank"
                 ? "bg-[#6366F1] border-[#6366F1]"
                 : "border-[#E4E4E7] bg-[#FFFFFF]"
             }`}
           ></div>
 
           <div
-            onClick={() => setSentence("normal")}
+            onClick={() => setSentence("blank")}
             className={`absolute w-[32px] h-[21px] top-[744.21px] left-[238.99px] font-inter font-bold text-[17.25px] leading-none cursor-pointer ${
-              sentence === "normal"
+              sentence === "blank"
                 ? "text-[#FFFFFF]"
                 : "text-[#52525B]"
             }`}
