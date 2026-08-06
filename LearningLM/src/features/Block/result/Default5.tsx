@@ -3,7 +3,7 @@ import { useState } from "react";
 
 export default function Default5() {
   const [title, setTitle] = useState("");
-  const [promptType, setPromptType] = useState("basic");
+  const [promptType, setPromptType] = useState("one");
   const [save, setSave] = useState(false);
 
   return (
@@ -167,16 +167,16 @@ export default function Default5() {
 
         <div className="absolute w-[583.5px] h-[48.38px] top-[650.63px] left-[38.25px] border border-[1.5px] border-[#E4E4E7] rounded-[12px]"></div>
         <div
-          onClick={() => setPromptType("basic")}
+          onClick={() => setPromptType("one")}
           className={`absolute w-[192px] h-[46.88px] top-[651.38px] left-[40.25px] flex items-center justify-center cursor-pointer rounded-tl-[12px] rounded-bl-[12px] ${
-            promptType === "basic" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+            promptType === "one" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
           }`}
         ></div>
 
         <div
-          onClick={() => setPromptType("basic")}
+          onClick={() => setPromptType("one")}
           className={`absolute whitespace-nowrap w-[36px] h-[21px] top-[661.8px] left-[117.49px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-            promptType === "basic"
+            promptType === "one"
               ? "text-[#FFFFFF]"
               : "text-[#52525B]"
           }`}
@@ -187,14 +187,14 @@ export default function Default5() {
         <div className="absolute z-10 w-[0px] h-[46.88px] top-[651.38px] left-[232.73px] border-[1.5px] border-[#E4E4E7]"></div>
 
         <div
-          onClick={() => setPromptType("practical")}
+          onClick={() => setPromptType("short")}
           className={`absolute w-[194.51px] h-[46.88px] top-[651.38px] left-[231.98px] flex items-center justify-center cursor-pointer ${
             promptType === "practical" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
           }`}
         ></div>
 
         <div
-          onClick={() => setPromptType("practical")}
+          onClick={() => setPromptType("short")}
           className={`absolute w-[32px] h-[21px] top-[661.8px] left-[313.99px] font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
             promptType === "practical"
               ? "text-[#FFFFFF]"

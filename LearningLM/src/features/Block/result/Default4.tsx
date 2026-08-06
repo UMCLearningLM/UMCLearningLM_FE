@@ -1,7 +1,7 @@
 import {useState} from "react";
 export default function Default4() {
-  const [sectionType, setSectionType] = useState("core");
-  const [role, setRole] = useState("planner");
+  const [sectionType, setSectionType] = useState("all");
+  const [flow, setFlow] = useState("flow1");
   const [save, setSave] = useState(true);
   const [form, setForm] = useState("form1");
   const [title, setTitle] = useState("");
@@ -126,19 +126,19 @@ export default function Default4() {
         </div>
 
         <div
-          onClick={() => setRole("planner")}
+          onClick={() => setFlow("flow1")}
           className={`absolute w-[186.49px] h-[91.69px] top-[749.34px] left-[38.25px] border border-[1.5px] rounded-[12px] ${
-            role === "planner" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            flow === "flow1" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[763.59px] left-[113.48px] flex items-center justify-center rounded-[8px] ${
-            role === "planner" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            flow === "flow1" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[766.14px] left-[120.97px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "planner" ? "text-[#FFFFFF]" : "text-[#27272A]"
+              flow === "flow1" ? "text-[#FFFFFF]" : "text-[#27272A]"
             }`}
           >
             📁
@@ -149,19 +149,19 @@ export default function Default4() {
         </div>
 
         <div
-          onClick={() => setRole("developer")}
+          onClick={() => setFlow("setFlow")}
           className={`absolute w-[186.49px] h-[91.69px] top-[749.34px] left-[236.74px] border border-[1.5px] rounded-[12px] ${
-            role === "developer" ? "border-[#6366F1]" : "border-[#E4E4E7]"
+            flow === "flow2" ? "border-[#6366F1]" : "border-[#E4E4E7]"
           }`}
         ></div>
         <div
           className={`absolute w-[36px] h-[36px] top-[763.59px] left-[311.98px] flex items-center justify-center  rounded-[8px] ${
-            role === "developer" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
+            flow === "flow2" ? "bg-[#6366F1]" : "bg-[#F0F0F3]"
           }`}
         >
           <div
             className={`w-[21px] h-[21px] top-[766.14px] left-[319.46px] font-inter font-normal text-[21px] leading-none flex items-center justify-center text-center ${
-              role === "developer" ? "text-[#27272A]" : "text-[#27272A]"
+              flow === "flow2" ? "text-[#27272A]" : "text-[#27272A]"
             }`}
           >
             🎓
@@ -224,16 +224,16 @@ export default function Default4() {
           <div className="absolute  z-10 w-[0px] h-[46.88px] top-[1147.41px] left-[330px] border-[1.5px] border-[#E4E4E7]"></div>
 
           <div
-            onClick={() => setSectionType("core")}
+            onClick={() => setSectionType("new")}
             className={`absolute w-[291.75px] h-[46.88px] top-[1147.41px] left-[329.25px] flex items-center justify-center cursor-pointer ${
-              sectionType === "core" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
+              sectionType === "new" ? "bg-[#6366F1]" : "bg-[#FFFFFF]"
             }`}
           ></div>
 
           <div
-            onClick={() => setSectionType("core")}
+            onClick={() => setSectionType("new")}
             className={`absolute whitespace-nowrap w-[52px] h-[21px] top-[1157.83px] left-[449.88px]  font-inter font-bold text-[17.25px] leading-none flex items-center justify-center cursor-pointer z-20 ${
-              sectionType === "core"
+              sectionType === "new"
                 ? "text-[#FFFFFF]"
                 : "text-[#52525B]"
             }`}
