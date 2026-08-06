@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ArrowLeft, Blocks, Clock } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Footer } from '../../components/layout/Footer'
@@ -5,7 +6,10 @@ import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
-import { getTutorialById, type TutorialBlock } from '../../features/tutorial/data/tutorials'
+import {
+  getTutorialById,
+  type TutorialBlock,
+} from '../../features/tutorial/data/tutorials'
 
 const levelClassMap = {
   입문: 'bg-emerald-50 text-emerald-600',
@@ -40,9 +44,10 @@ function FlowStep({
       ].join(' ')}
     >
       <span
-        className={['h-2.5 w-2.5 rounded-sm', blockColorClassMap[color]].join(
-          ' ',
-        )}
+        className={[
+          'h-2.5 w-2.5 rounded-sm',
+          blockColorClassMap[color],
+        ].join(' ')}
       />
       {label}
     </span>
@@ -55,11 +60,14 @@ function BlockCard({ block }: { block: TutorialBlock }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <span
-            className={['h-3 w-3 rounded-sm', blockColorClassMap[block.color]].join(
-              ' ',
-            )}
+            className={[
+              'h-3 w-3 rounded-sm',
+              blockColorClassMap[block.color],
+            ].join(' ')}
           />
-          <h3 className="text-xl font-black text-slate-950">{block.title}</h3>
+          <h3 className="text-xl font-black text-slate-950">
+            {block.title}
+          </h3>
         </div>
 
         <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-500">
@@ -72,7 +80,9 @@ function BlockCard({ block }: { block: TutorialBlock }) {
       </p>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-400">
-        <span className="mr-2 text-slate-300">왜 필요?</span>
+        <span className="mr-2 text-slate-300">
+          왜 필요?
+        </span>
         {block.why}
       </div>
     </Card>
@@ -82,6 +92,8 @@ function BlockCard({ block }: { block: TutorialBlock }) {
 export function TutorialDetailPage() {
   const params = useParams()
   const navigate = useNavigate()
+  const [isSaved, setIsSaved] = useState(false)
+
   const tutorialId = Number(params.tutorialId)
   const tutorial = getTutorialById(tutorialId)
 
@@ -110,6 +122,26 @@ export function TutorialDetailPage() {
         <Footer />
       </div>
     )
+  }
+
+  const handleStartTutorial = () => {
+    navigate(
+      `/studio/create?mode=guided&tutorialId=${tutorial.id}`,
+      {
+        state: {
+          mode: 'guided',
+          tutorialId: tutorial.id,
+        },
+      },
+    )
+  }
+
+  const handleToggleSave = () => {
+    /*
+     * API 연동 전에는 화면 상태만 변경합니다.
+     * 이후 저장 API가 연결되면 이 함수 내부를 mutation으로 교체하면 됩니다.
+     */
+    setIsSaved((previous) => !previous)
   }
 
   return (
@@ -157,9 +189,22 @@ export function TutorialDetailPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg">튜토리얼 시작하기</Button>
-              <Button variant="secondary" size="lg">
-                튜토리얼 저장
+              <Button
+                size="lg"
+                onClick={handleStartTutorial}
+              >
+                튜토리얼 시작하기
+              </Button>
+
+              <Button
+                variant="secondary"
+                size="lg"
+                aria-pressed={isSaved}
+                onClick={handleToggleSave}
+              >
+                {isSaved
+                  ? '튜토리얼 저장됨'
+                  : '튜토리얼 저장'}
               </Button>
             </div>
           </section>
@@ -183,14 +228,18 @@ export function TutorialDetailPage() {
             </div>
 
             <div className="mt-6 border-t border-slate-200 pt-5 text-sm font-semibold text-slate-400">
-              <span className="mr-3">필요 개념</span>
+              <span className="mr-3">
+                필요 개념
+              </span>
               {tutorial.requiredConcepts.join(' · ')}
             </div>
           </Card>
 
           <Card className="px-6 py-6">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-black text-slate-400">블록 흐름</p>
+              <p className="text-sm font-black text-slate-400">
+                블록 흐름
+              </p>
               <span className="rounded-lg border border-dashed border-slate-200 bg-white px-5 py-2 text-sm font-black text-slate-600">
                 Preset
               </span>
@@ -198,10 +247,18 @@ export function TutorialDetailPage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {tutorial.flowSteps.map((step, index) => (
-                <div key={step.id} className="flex items-center gap-3">
-                  <FlowStep label={step.label} color={step.color} />
+                <div
+                  key={step.id}
+                  className="flex items-center gap-3"
+                >
+                  <FlowStep
+                    label={step.label}
+                    color={step.color}
+                  />
                   {index < tutorial.flowSteps.length - 1 && (
-                    <span className="text-xl font-black text-slate-300">→</span>
+                    <span className="text-xl font-black text-slate-300">
+                      →
+                    </span>
                   )}
                 </div>
               ))}
@@ -215,14 +272,19 @@ export function TutorialDetailPage() {
 
             <div className="grid gap-5 md:grid-cols-2">
               {tutorial.blocks.map((block) => (
-                <BlockCard key={block.id} block={block} />
+                <BlockCard
+                  key={block.id}
+                  block={block}
+                />
               ))}
             </div>
           </section>
 
           <section className="grid gap-5 md:grid-cols-2">
             <Card className="px-6 py-5">
-              <p className="text-sm font-black text-slate-400">예시 입력</p>
+              <p className="text-sm font-black text-slate-400">
+                예시 입력
+              </p>
 
               <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-500">
                 “{tutorial.exampleInput}”
@@ -231,7 +293,9 @@ export function TutorialDetailPage() {
 
             <Card className="px-6 py-5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-black text-slate-400">예시 결과</p>
+                <p className="text-sm font-black text-slate-400">
+                  예시 결과
+                </p>
                 <span className="text-sm font-black text-slate-300">
                   예시 결과
                 </span>
@@ -249,7 +313,9 @@ export function TutorialDetailPage() {
               </div>
 
               <div className="mt-6 flex items-center justify-between">
-                <p className="text-sm font-black text-slate-400">결과 출처</p>
+                <p className="text-sm font-black text-slate-400">
+                  결과 출처
+                </p>
                 <span className="rounded-lg border border-dashed border-slate-200 bg-white px-5 py-2 text-sm font-black text-slate-600">
                   {tutorial.resultSource}
                 </span>
