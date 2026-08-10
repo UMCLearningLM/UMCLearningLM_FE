@@ -22,6 +22,7 @@ import { PwFind } from '../pages/PwFind'
 import GoogleLoginLoading from '../pages/auth/GoogleLogin'
 import GoogleLoginSuccess from '../pages/auth/GoogleLoginSuccess'
 import GoogleLoginError from '../pages/auth/GoogleLoginError'
+import { Studio1 } from '../pages/Studio1'
 
 /**
  * /studio로 들어온 query string과 location.state를 잃지 않고
@@ -111,7 +112,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/studio',
-    element: <StudioRedirect />,
+    element: <Studio1 />,
   },
   {
     path: '/studio/create',
