@@ -17,26 +17,20 @@ const navItems = [
     path: '/',
   },
   {
-    label:
-      '공식 튜토리얼',
-    path:
-      '/official-tutorials',
+    label: '공식 튜토리얼',
+    path: '/official-tutorials',
   },
   {
     label: '스튜디오',
-    path:
-      '/studio/create',
+    path: '/studio',
   },
   {
-    label:
-      '공개 라이브러리',
-    path:
-      '/public-library',
+    label: '공개 라이브러리',
+    path: '/public-library',
   },
   {
     label: '내 저장소',
-    path:
-      '/my-storage',
+    path: '/my-storage',
   },
 ]
 
@@ -52,8 +46,7 @@ export function Header() {
   ) => {
     if (path === '/') {
       return (
-        location.pathname ===
-        '/'
+        location.pathname === '/'
       )
     }
 
