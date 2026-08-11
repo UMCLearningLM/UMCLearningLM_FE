@@ -76,6 +76,7 @@ export function SavedTutorialCard({
             <Button
               size="sm"
               onClick={() => onContinue(tutorial.id)}
+              className="cursor-pointer"
             >
               이어하기
             </Button>
@@ -84,6 +85,7 @@ export function SavedTutorialCard({
               variant="secondary"
               size="sm"
               onClick={() => onRemove(tutorial.id)}
+              className="cursor-pointer"
             >
               저장 해제
             </Button>

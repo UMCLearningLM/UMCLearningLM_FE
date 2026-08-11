@@ -103,33 +103,25 @@ export function Login() {
         }
     };
 
-    const googleLogin = async () => {
-        try {
-            // GET /api/auth/google → result.authorizationUrl 반환
-            const { data } = await api.get("/auth/google");
+    const googleLogin = () => {
+        navigate("/auth/google/loading");
+        // const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        // const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 
-            const authorizationUrl = data.result?.authorizationUrl;
+        // console.log("clientId:", clientId);
+        // console.log("redirectUri:", redirectUri);
 
-            if (!authorizationUrl) {
-                throw new Error("Google 인증 URL을 받지 못했습니다.");
-            }
+        // const googleAuthUrl =
+        //     `https://accounts.google.com/o/oauth2/v2/auth` +
+        //     `?client_id=${encodeURIComponent(clientId)}` +
+        //     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        //     `&response_type=code` +
+        //     `&scope=${encodeURIComponent("openid email profile")}`;
 
-            // 예: "/api/auth/oauth2/authorization/google"
-            // api의 baseURL 서버 주소를 유지한 채 해당 URL로 이동
-            const backendOrigin = new URL(
-                api.defaults.baseURL ?? window.location.origin,
-                window.location.origin
-            ).origin;
+        // console.log(googleAuthUrl);
 
-            window.location.assign(
-                new URL(authorizationUrl, backendOrigin).toString()
-            );
-        } catch (error) {
-            console.error("Google 로그인 시작 실패:", error);
-            alert("Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.");
-        }
+        // window.location.href = googleAuthUrl;
     };
-
 
     return (
         <>

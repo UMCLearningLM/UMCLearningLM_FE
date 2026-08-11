@@ -61,7 +61,7 @@ export function Header() {
         <div className="flex items-center gap-8">
           <button
             type="button"
-            className="flex items-center gap-3"
+            className="cursor-pointer flex items-center gap-3"
             onClick={() => {
               navigate('/')
             }}
@@ -96,7 +96,7 @@ export function Header() {
                       )
                     }}
                     className={[
-                      'text-sm font-semibold transition',
+                      'cursor-pointer text-sm font-semibold transition',
                       active
                         ? 'text-indigo-500'
                         : 'text-slate-500 hover:text-indigo-500',
@@ -123,7 +123,7 @@ export function Header() {
                 size={16}
               />
             }
-            className="hidden md:inline-flex"
+            className="cursor-pointer hidden md:inline-flex"
             onClick={() => {
               navigate(
                 '/official-tutorials',
@@ -135,7 +135,7 @@ export function Header() {
 
           <button
             type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600 transition hover:bg-slate-200"
+            className="cursor-pointer flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600 transition hover:bg-slate-200"
             aria-label="내 저장소로 이동"
             onClick={() => {
               navigate(

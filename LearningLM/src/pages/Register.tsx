@@ -29,6 +29,7 @@ export function Register() {
     // 이메일 인증 완료 후 받은 임시 토큰
     const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
 
+
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
@@ -139,7 +140,16 @@ export function Register() {
             )
             console.log("이메일 인증 성공");
             console.log("응답 data: ", res.data);
-            const temporaryToken = res.data.result.temporaryAccessToken;
+            const temporaryToken = res.data?.result?.temporaryAccessToken;
+
+            console.log("verify 응답 전체:", res.data);
+            console.log("임시 토큰 존재:", Boolean(temporaryToken));
+
+            if (!temporaryToken) {
+                console.error("이메일 인증 응답:", res.data);
+                throw new Error("이메일 인증 토큰을 받지 못했습니다.");
+            }
+
             setTemporaryAccessToken(temporaryToken);
             setIsSendCode(false);
             setVerifiedStatus("succ");
@@ -317,15 +327,16 @@ export function Register() {
 
     //----------------회원가입 확인-----------------
     const memberOk = async () => {
-        if (verifiedStatus !== "succ") {
+        if (verifiedStatus !== "succ" || !temporaryAccessToken.trim()) {
             setVerifiedStatus("emailcertificationNo");
+            console.error("이메일 인증 토큰 없음:", temporaryAccessToken);
             return;
         }
 
         if (!validatePw(pw)) {
             setPwForm("formErr");
             setPwNull("lengNo");
-            return; // 중요: 잘못된 비밀번호를 서버로 보내지 않음
+            return;
         }
 
         if (pw !== pwCheck) {
@@ -343,8 +354,12 @@ export function Register() {
             setMem(true);
             return;
         }
-
+        console.log(
+            "signup에 보낼 이메일 인증 토큰 존재:",
+            Boolean(temporaryAccessToken.trim()),
+        );
         try {
+            const emailVerificationToken = temporaryAccessToken.trim();
             const res = await axios.post(
                 "http://3.35.22.232:8080/api/auth/signup",
                 {
@@ -355,7 +370,7 @@ export function Register() {
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${temporaryAccessToken}`,
+                        "X-Email-Verification-Token": emailVerificationToken,
                     },
                 }
             );
@@ -363,7 +378,6 @@ export function Register() {
             const { accessToken, refreshToken } = res.data.result;
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
-
             navigate("/home");
         } catch (error: any) {
             console.error("회원가입 실패:", error.response?.data ?? error);

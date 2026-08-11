@@ -16,16 +16,16 @@ export function Footer() {
         </div>
 
         <nav className="flex gap-5 text-xs font-semibold text-slate-400">
-          <button type="button" className="hover:text-indigo-500">
+          <button type="button" className="cursor-pointer hover:text-indigo-500">
             소개
           </button>
-          <button type="button" className="hover:text-indigo-500">
+          <button type="button" className="cursor-pointer hover:text-indigo-500">
             이용약관
           </button>
-          <button type="button" className="hover:text-indigo-500">
+          <button type="button" className="cursor-pointer hover:text-indigo-500">
             개인정보
           </button>
-          <button type="button" className="hover:text-indigo-500">
+          <button type="button" className="cursor-pointer hover:text-indigo-500">
             문의
           </button>
         </nav>
