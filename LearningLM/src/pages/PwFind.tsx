@@ -23,7 +23,7 @@ export function PwFind() {
 
     //회원가입 버튼 클릭시
     const [verifiedStatus, setVerifiedStatus] = useState<
-        "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("none");
+        "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("sendCode");
 
 
 
@@ -164,24 +164,26 @@ export function PwFind() {
                     <>
                         <input type="text"
                             onChange={(e) => setCode(e.target.value)}
-                            placeholder="인증번호 6자리를 입력해주세요." className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#E4E4E7]" />
-                        <div className="flex justify-center items-center">
-                            <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
-                                <span className="cursor-pointer text-[#6366F1] ml-[12px]"
-                                    onClick={() => {
-                                        console.log("이메일 재전송")
-                                        sendEmail()
-                                    }
-                                    }
-                                >인증번호 재전송</span>
-                            </p>
-                            <span className="font-bold text-[#EF8888] ml-[98px]"
+                            placeholder="인증번호 6자리를 입력해주세요." className="hover:border-[#666666] placeholder:text-[#666666] h-[51px] flex items-center pl-[20px] mt-[12px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-[14.5px] text-[#666666] mt-[11px] my-[15px]">인증번호를 받지 못하셨나요?
+                                    <span className="cursor-pointer text-[#6366F1] ml-[12px]"
+                                        onClick={() => {
+                                            console.log("이메일 재전송")
+                                            sendEmail()
+                                        }
+                                        }
+                                    >인증번호 재전송</span>
+                                </p>
+                            </div>
+                            <span className="font-bold text-[#EF8888] text-[16px] mt-[-4px]"
                             >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
                             </span>
                         </div>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[112px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
+                        <div className="hover:bg-[#3A3DC2] text-white cursor-pointer w-[112px] h-[49px] bg-[#6366F1] flex items-center justify-center mt-[-3px] mb-[42px] text-[16px] font-bold rounded-[12px]"
                             onClick={verifyCode}
-                        >인증 완료</button>
+                        >인증 완료</div>
                     </>
                 )
             case "fail":
@@ -305,13 +307,13 @@ export function PwFind() {
                     <p className="mt-[10px] tracking-tighter text-[15px] text-[#52525B]">AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼</p>
                 </div>
                 {/*white box */}
-                <div className="bg-white w-[600px] min-h-[531px] flex flex-col items-center px-[10px] pt-[39px] pb-[50px] rounded-[12px]
+                <div className="bg-white w-[600px] min-h-[531px] flex flex-col items-center px-[10px] pt-[42px] pb-[50px] rounded-[12px]
                 border-[1px] border-[#E4E4E7]">
                     {/* title */}
                     {emailState != "success" ?
                         (<>
-                            <p className="w-[519px] text-[28px] font-bold text-[#27272A] tracking-tighter">비밀번호 찾기</p>
-                            <p className="w-[519px] mt-[3px] text-[14px] text-[#52525B] tracking-tighter">이메일을 입력해주세요.</p>
+                            <p className="w-[519px] text-[27px] font-bold text-[#27272A] tracking-tighter">비밀번호 찾기</p>
+                            <p className="w-[519px] mt-[2px] text-[15px] text-[#52525B] tracking-tighter">이메일을 입력해주세요.</p>
                             {/*main content */}
                             {/*email */}
                             {/* <div className="flex flex-col mt-[38px] w-[519px]">
@@ -336,22 +338,19 @@ export function PwFind() {
                                 {emailState == "notEnroll" && (
                                     <p className="font-bold text-[#EF8888] mt-[15px]">등록되지 않은 이메일입니다. 다시 입력해주세요.</p>
                                 )}
-
                             </div> */}
-                            <div className="flex flex-col mt-[47px] w-[519px]">
-                                <p className="font-bold text-[#52525B]">이메일</p>
+                            <div className="flex flex-col mt-[38px] w-[519px]">
+                                <p className="font-bold text-[15px] text-[#52525B] tracking-tighter">이메일</p>
                                 <input type="email" value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="you@example.com" className={`hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-
+                                    placeholder="you@example.com" className={`hover:border-[#666666] placeholder:text-[#666666] h-[51px] flex items-center pl-[20px] mt-[7px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
                                 {renderVerifyCode()}
                             </div>
-                            <button className="cursor-pointer 
-                        hover:bg-[#3A3DC2] text-white w-[519px] h-[57px] bg-[#6366F1] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+                            <button className="cursor-pointer hover:bg-[#3A3DC2] text-white w-[519px] h-[52px] bg-[#6366F1] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                                 onClick={() => {
                                     emailFind();
                                 }}>
-                                <span className=" text-[24px] font-bold ">다음</span>
+                                <span className=" text-[19.5px] font-bold ">다음</span>
                             </button>
                         </>) :
                         (
@@ -382,7 +381,6 @@ export function PwFind() {
                                             비밀번호는 영문·숫자만 포함할 수 있습니다
                                         </p>
                                     )}
-
                                 </div>
                                 <div className="w-[519px] flex flex-col mt-[20px]">
                                     <p className="text-[#52525B] font-bold">비밀번호 확인</p>
@@ -412,9 +410,8 @@ export function PwFind() {
                                 </button>
                             </>
                         )}
-
                     <div>
-                        <p className=" mt-[71px]">계정이 없으신가요? {" "}
+                        <p className="mt-[71px]">계정이 없으신가요? {" "}
                             <button onClick={() => { navigate("/") }}>
                                 <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">회원가입</span>
                             </button>
@@ -429,7 +426,6 @@ export function PwFind() {
                     <p>개인정보처리방침</p>
                 </div>
             </div >
-
         </>
     )
 }
