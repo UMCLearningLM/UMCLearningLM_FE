@@ -36,6 +36,11 @@ import {
 } from '../types/studioBlock'
 
 import type {
+  StudioBlockConfig,
+  StudioSlotState,
+} from '../types/studioNode'
+
+import type {
   StudioConnectionValidationPolicy,
 } from '../validation/validateStudioConnection'
 
@@ -51,7 +56,8 @@ import type {
   StudioWorkflowValidationResult,
 } from '../types/studioValidation'
 
-export type StudioEditorEdge = Edge
+export type StudioEditorEdge =
+  Edge
 
 export interface UseStudioEditorOptions {
   /**
@@ -87,23 +93,53 @@ export interface UseStudioEditorOptions {
   ) => void
 }
 
+/**
+ * 기존 단순 문자열 Inspector 값을 수정할 때 사용합니다.
+ *
+ * 기존 Studio 기능과의 호환을 위해 유지합니다.
+ */
 export interface UpdateStudioSlotValueOptions {
   nodeId: string
   slotId: string
   value: string
 }
 
-const DEFAULT_SNAP_GRID: SnapGrid = [
-  20,
-  20,
-]
-
-const DEFAULT_CONNECTION_POLICY: StudioConnectionValidationPolicy = {
-  enforceStageOrder: true,
-  requireAdjacentStages: false,
-  preventCycles: true,
-  rejectDuplicateConnections: true,
+/**
+ * Block Inspector의 구조화된 설정값을 수정할 때 사용합니다.
+ *
+ * patch:
+ * 기존 config 전체를 교체하지 않고
+ * 전달받은 필드만 얕은 병합합니다.
+ *
+ * summaryValue:
+ * Node와 접힌 Inspector 카드 등에 표시할
+ * 짧은 요약 문자열입니다.
+ *
+ * state:
+ * Block 내부 Validation 결과 등을
+ * 명시적으로 전달할 때 사용합니다.
+ */
+export interface UpdateStudioBlockConfigOptions {
+  nodeId: string
+  slotId: string
+  patch: StudioBlockConfig
+  summaryValue?: string
+  state?: StudioSlotState
 }
+
+const DEFAULT_SNAP_GRID:
+  SnapGrid = [
+    20,
+    20,
+  ]
+
+const DEFAULT_CONNECTION_POLICY:
+  StudioConnectionValidationPolicy = {
+    enforceStageOrder: true,
+    requireAdjacentStages: false,
+    preventCycles: true,
+    rejectDuplicateConnections: true,
+  }
 
 /**
  * 검증으로 추가된 노드 상태를 기본 상태로 되돌립니다.
@@ -180,7 +216,8 @@ export function useStudioEditor({
     setSelectedNodeId,
   ] = useState<string | null>(
     initialNodes.find(
-      (node) => node.selected,
+      (node) =>
+        node.selected,
     )?.id ??
       initialNodes[0]?.id ??
       null,
@@ -204,17 +241,26 @@ export function useStudioEditor({
       (
         message: string,
       ) => {
-        setLastMessage(message)
-        onMessage?.(message)
+        setLastMessage(
+          message,
+        )
+
+        onMessage?.(
+          message,
+        )
       },
-      [onMessage],
+      [
+        onMessage,
+      ],
     )
 
   /**
    * 선택된 노드가 삭제됐을 경우 선택 상태를 정리합니다.
    */
   useEffect(() => {
-    if (!selectedNodeId) {
+    if (
+      !selectedNodeId
+    ) {
       return
     }
 
@@ -225,12 +271,15 @@ export function useStudioEditor({
           selectedNodeId,
       )
 
-    if (selectedNodeExists) {
+    if (
+      selectedNodeExists
+    ) {
       return
     }
 
     setSelectedNodeId(
-      nodes[0]?.id ?? null,
+      nodes[0]?.id ??
+        null,
     )
   }, [
     nodes,
@@ -244,7 +293,8 @@ export function useStudioEditor({
           (node) =>
             node.id ===
             selectedNodeId,
-        ) ?? null,
+        ) ??
+        null,
       [
         nodes,
         selectedNodeId,
@@ -257,7 +307,9 @@ export function useStudioEditor({
         ...DEFAULT_CONNECTION_POLICY,
         ...connectionPolicy,
       }),
-      [connectionPolicy],
+      [
+        connectionPolicy,
+      ],
     )
 
   /**
@@ -296,7 +348,9 @@ export function useStudioEditor({
           options,
         )
       },
-      [reactFlowInstance],
+      [
+        reactFlowInstance,
+      ],
     )
 
   /**
@@ -304,15 +358,21 @@ export function useStudioEditor({
    */
   const clearValidation =
     useCallback(() => {
-      setValidationResult(null)
+      setValidationResult(
+        null,
+      )
 
       setNodes(
-        (currentNodes) =>
+        (
+          currentNodes,
+        ) =>
           currentNodes.map(
             clearNodeValidationState,
           ),
       )
-    }, [setNodes])
+    }, [
+      setNodes,
+    ])
 
   /**
    * 팔레트 블록의 Drag 데이터를 구성합니다.
@@ -328,7 +388,9 @@ export function useStudioEditor({
             blockId,
           )
 
-        if (!block) {
+        if (
+          !block
+        ) {
           event.preventDefault()
 
           publishMessage(
@@ -353,8 +415,9 @@ export function useStudioEditor({
 
         const payload:
           StudioBlockDragPayload = {
-          blockId: block.id,
-        }
+            blockId:
+              block.id,
+          }
 
         event.dataTransfer.effectAllowed =
           'copy'
@@ -371,7 +434,9 @@ export function useStudioEditor({
           block.id,
         )
       },
-      [publishMessage],
+      [
+        publishMessage,
+      ],
     )
 
   /**
@@ -380,88 +445,102 @@ export function useStudioEditor({
   const {
     onDragOver,
     onDrop,
-  } = useStudioBlockDrop({
-    nodes,
-    setNodes,
-    screenToFlowPosition,
-    disabled:
-      reactFlowInstance === null,
-    snapToGrid,
-    snapGrid,
+  } =
+    useStudioBlockDrop({
+      nodes,
+      setNodes,
+      screenToFlowPosition,
 
-    onDropComplete: ({
-      block,
-      result,
-    }) => {
-      setValidationResult(null)
+      disabled:
+        reactFlowInstance ===
+        null,
 
-      if (
-        result.nodeId
-      ) {
-        setSelectedNodeId(
-          result.nodeId,
+      snapToGrid,
+      snapGrid,
+
+      onDropComplete: ({
+        block,
+        result,
+      }) => {
+        setValidationResult(
+          null,
         )
 
-        setNodes(
-          result.nodes.map(
-            (node) => ({
-              ...clearNodeValidationState(
+        if (
+          result.nodeId
+        ) {
+          setSelectedNodeId(
+            result.nodeId,
+          )
+
+          setNodes(
+            result.nodes.map(
+              (
                 node,
-              ),
-              selected:
-                node.id ===
-                result.nodeId,
-            }),
-          ),
+              ) => ({
+                ...clearNodeValidationState(
+                  node,
+                ),
+
+                selected:
+                  node.id ===
+                  result.nodeId,
+              }),
+            ),
+          )
+        }
+
+        switch (
+          result.reason
+        ) {
+          case 'created':
+            publishMessage(
+              `${block.title} 블록으로 새 노드를 만들었습니다.`,
+            )
+            break
+
+          case 'added':
+            publishMessage(
+              `${block.title} 블록을 기존 노드에 추가했습니다.`,
+            )
+            break
+
+          case 'duplicate':
+            publishMessage(
+              `${block.title} 블록은 이미 배치되어 있습니다.`,
+            )
+            break
+
+          case 'unavailable':
+            publishMessage(
+              `${block.title} 블록은 현재 사용할 수 없습니다.`,
+            )
+            break
+        }
+      },
+
+      onDropRejected: ({
+        message,
+      }) => {
+        publishMessage(
+          message,
         )
-      }
-
-      switch (
-        result.reason
-      ) {
-        case 'created':
-          publishMessage(
-            `${block.title} 블록으로 새 노드를 만들었습니다.`,
-          )
-          break
-
-        case 'added':
-          publishMessage(
-            `${block.title} 블록을 기존 노드에 추가했습니다.`,
-          )
-          break
-
-        case 'duplicate':
-          publishMessage(
-            `${block.title} 블록은 이미 배치되어 있습니다.`,
-          )
-          break
-
-        case 'unavailable':
-          publishMessage(
-            `${block.title} 블록은 현재 사용할 수 없습니다.`,
-          )
-          break
-      }
-    },
-
-    onDropRejected: ({
-      message,
-    }) => {
-      publishMessage(message)
-    },
-  })
+      },
+    })
 
   /**
    * 노드 연결 가능 여부를 React Flow에 전달합니다.
    */
   const isValidConnection =
     useCallback<IsValidConnection>(
-      (connection) =>
+      (
+        connection,
+      ) =>
         validateStudioConnection({
           connection,
           nodes,
           edges,
+
           policy:
             resolvedConnectionPolicy,
         }).valid,
@@ -481,13 +560,17 @@ export function useStudioEditor({
         connection: Connection,
       ) => {
         setEdges(
-          (currentEdges) => {
+          (
+            currentEdges,
+          ) => {
             const validation =
               validateStudioConnection({
                 connection,
                 nodes,
+
                 edges:
                   currentEdges,
+
                 policy:
                   resolvedConnectionPolicy,
               })
@@ -521,7 +604,9 @@ export function useStudioEditor({
         )
 
         setNodes(
-          (currentNodes) =>
+          (
+            currentNodes,
+          ) =>
             currentNodes.map(
               clearNodeValidationState,
             ),
@@ -549,10 +634,15 @@ export function useStudioEditor({
         )
 
         setNodes(
-          (currentNodes) =>
+          (
+            currentNodes,
+          ) =>
             currentNodes.map(
-              (node) => ({
+              (
+                node,
+              ) => ({
                 ...node,
+
                 selected:
                   node.id ===
                   nodeId,
@@ -560,7 +650,9 @@ export function useStudioEditor({
             ),
         )
       },
-      [setNodes],
+      [
+        setNodes,
+      ],
     )
 
   /**
@@ -568,24 +660,36 @@ export function useStudioEditor({
    */
   const clearSelection =
     useCallback(() => {
-      setSelectedNodeId(null)
+      setSelectedNodeId(
+        null,
+      )
 
       setNodes(
-        (currentNodes) =>
+        (
+          currentNodes,
+        ) =>
           currentNodes.map(
-            (node) => ({
+            (
+              node,
+            ) => ({
               ...node,
-              selected: false,
+              selected:
+                false,
             }),
           ),
       )
 
       setEdges(
-        (currentEdges) =>
+        (
+          currentEdges,
+        ) =>
           currentEdges.map(
-            (edge) => ({
+            (
+              edge,
+            ) => ({
               ...edge,
-              selected: false,
+              selected:
+                false,
             }),
           ),
       )
@@ -605,11 +709,15 @@ export function useStudioEditor({
         new Set(
           nodes
             .filter(
-              (node) =>
+              (
+                node,
+              ) =>
                 node.selected,
             )
             .map(
-              (node) =>
+              (
+                node,
+              ) =>
                 node.id,
             ),
         )
@@ -618,18 +726,24 @@ export function useStudioEditor({
         new Set(
           edges
             .filter(
-              (edge) =>
+              (
+                edge,
+              ) =>
                 edge.selected,
             )
             .map(
-              (edge) =>
+              (
+                edge,
+              ) =>
                 edge.id,
             ),
         )
 
       if (
-        selectedNodeIds.size === 0 &&
-        selectedEdgeIds.size === 0
+        selectedNodeIds.size ===
+          0 &&
+        selectedEdgeIds.size ===
+          0
       ) {
         publishMessage(
           '삭제할 노드 또는 연결을 선택하세요.',
@@ -639,9 +753,13 @@ export function useStudioEditor({
       }
 
       setNodes(
-        (currentNodes) =>
+        (
+          currentNodes,
+        ) =>
           currentNodes.filter(
-            (node) =>
+            (
+              node,
+            ) =>
               !selectedNodeIds.has(
                 node.id,
               ),
@@ -649,9 +767,13 @@ export function useStudioEditor({
       )
 
       setEdges(
-        (currentEdges) =>
+        (
+          currentEdges,
+        ) =>
           currentEdges.filter(
-            (edge) =>
+            (
+              edge,
+            ) =>
               !selectedEdgeIds.has(
                 edge.id,
               ) &&
@@ -664,7 +786,9 @@ export function useStudioEditor({
           ),
       )
 
-      setValidationResult(null)
+      setValidationResult(
+        null,
+      )
 
       publishMessage(
         '선택한 노드 또는 연결을 삭제했습니다.',
@@ -678,7 +802,11 @@ export function useStudioEditor({
     ])
 
   /**
-   * 인스펙터에서 슬롯 값을 수정할 때 사용합니다.
+   * 기존 단순 Inspector에서 슬롯 값을 수정할 때 사용합니다.
+   *
+   * 문자열 value를 변경하고,
+   * 문자열이 있으면 filled,
+   * 비어 있으면 empty 상태로 변경합니다.
    */
   const updateSlotValue =
     useCallback(
@@ -691,9 +819,13 @@ export function useStudioEditor({
           value.trim()
 
         setNodes(
-          (currentNodes) =>
+          (
+            currentNodes,
+          ) =>
             currentNodes.map(
-              (node) => {
+              (
+                node,
+              ) => {
                 if (
                   node.id !==
                   nodeId
@@ -705,18 +837,25 @@ export function useStudioEditor({
                   ...clearNodeValidationState(
                     node,
                   ),
+
                   data: {
                     ...node.data,
+
                     node: {
                       ...node.data.node,
+
                       slots:
                         node.data.node.slots.map(
-                          (slot) =>
+                          (
+                            slot,
+                          ) =>
                             slot.id ===
                             slotId
                               ? {
                                   ...slot,
+
                                   value,
+
                                   state:
                                     normalizedValue
                                       ? 'filled'
@@ -731,9 +870,156 @@ export function useStudioEditor({
             ),
         )
 
-        setValidationResult(null)
+        setValidationResult(
+          null,
+        )
       },
-      [setNodes],
+      [
+        setNodes,
+      ],
+    )
+
+  /**
+   * 상세 Block Inspector의 구조화된 config를 수정합니다.
+   *
+   * 기존 config를 유지하면서 patch에 들어온 필드만
+   * 얕은 병합합니다.
+   *
+   * 예:
+   *
+   * 기존:
+   * {
+   *   targetTone: 'professional',
+   *   sentenceLength: 'normal',
+   * }
+   *
+   * patch:
+   * {
+   *   sentenceLength: 'short',
+   * }
+   *
+   * 결과:
+   * {
+   *   targetTone: 'professional',
+   *   sentenceLength: 'short',
+   * }
+   *
+   * summaryValue가 전달되면 기존 slot.value도 함께 갱신합니다.
+   *
+   * state가 직접 전달되지 않았지만 summaryValue가 전달된 경우:
+   *
+   * 빈 문자열     -> empty
+   * 값이 있는 문자열 -> filled
+   *
+   * summaryValue도 state도 전달하지 않은 경우에는
+   * 기존 Slot 상태를 그대로 유지합니다.
+   *
+   * 실제 Block 내부 필수값 Validation은
+   * 이후 Block별 Validator 단계에서 연결합니다.
+   */
+  const updateBlockConfig =
+    useCallback(
+      ({
+        nodeId,
+        slotId,
+        patch,
+        summaryValue,
+        state,
+      }: UpdateStudioBlockConfigOptions) => {
+        setNodes(
+          (
+            currentNodes,
+          ) =>
+            currentNodes.map(
+              (
+                node,
+              ) => {
+                if (
+                  node.id !==
+                  nodeId
+                ) {
+                  return node
+                }
+
+                return {
+                  ...clearNodeValidationState(
+                    node,
+                  ),
+
+                  data: {
+                    ...node.data,
+
+                    node: {
+                      ...node.data.node,
+
+                      slots:
+                        node.data.node.slots.map(
+                          (
+                            slot,
+                          ) => {
+                            if (
+                              slot.id !==
+                              slotId
+                            ) {
+                              return slot
+                            }
+
+                            const nextState:
+                              StudioSlotState | undefined =
+                              state ??
+                              (
+                                summaryValue !==
+                                undefined
+                                  ? summaryValue.trim()
+                                    ? 'filled'
+                                    : 'empty'
+                                  : slot.state
+                              )
+
+                            return {
+                              ...slot,
+
+                              config: {
+                                ...(
+                                  slot.config ??
+                                  {}
+                                ),
+
+                                ...patch,
+                              },
+
+                              ...(summaryValue !==
+                              undefined
+                                ? {
+                                    value:
+                                      summaryValue,
+                                  }
+                                : {}),
+
+                              state:
+                                nextState,
+                            }
+                          },
+                        ),
+                    },
+                  },
+                }
+              },
+            ),
+        )
+
+        /*
+         * Inspector 설정이 변경됐으므로
+         * 이전 Workflow Validation 결과는 더 이상
+         * 현재 데이터와 일치한다고 볼 수 없습니다.
+         */
+        setValidationResult(
+          null,
+        )
+      },
+      [
+        setNodes,
+      ],
     )
 
   /**
@@ -744,6 +1030,7 @@ export function useStudioEditor({
       const result =
         validateStudioWorkflow({
           nodes,
+
           includeRecommended:
             true,
         })
@@ -753,14 +1040,21 @@ export function useStudioEditor({
       )
 
       setNodes(
-        (currentNodes) =>
+        (
+          currentNodes,
+        ) =>
           currentNodes.map(
-            (node) => ({
+            (
+              node,
+            ) => ({
               ...node,
+
               data: {
                 ...node.data,
+
                 node: {
                   ...node.data.node,
+
                   state:
                     result.nodeStates[
                       node.id
@@ -772,9 +1066,12 @@ export function useStudioEditor({
           ),
       )
 
-      if (result.valid) {
+      if (
+        result.valid
+      ) {
         publishMessage(
-          result.warningCount > 0
+          result.warningCount >
+            0
             ? `검증을 통과했습니다. 경고 ${result.warningCount}건이 있습니다.`
             : '검증을 통과했습니다.',
         )
@@ -796,10 +1093,21 @@ export function useStudioEditor({
    */
   const resetEditor =
     useCallback(() => {
-      setNodes([])
-      setEdges([])
-      setSelectedNodeId(null)
-      setValidationResult(null)
+      setNodes(
+        [],
+      )
+
+      setEdges(
+        [],
+      )
+
+      setSelectedNodeId(
+        null,
+      )
+
+      setValidationResult(
+        null,
+      )
 
       publishMessage(
         'Studio 캔버스를 초기화했습니다.',
@@ -825,7 +1133,9 @@ export function useStudioEditor({
         padding: 0.2,
         duration: 300,
       })
-    }, [reactFlowInstance])
+    }, [
+      reactFlowInstance,
+    ])
 
   return {
     nodes,
@@ -856,7 +1166,11 @@ export function useStudioEditor({
     validateWorkflow,
     clearValidation,
 
+    /*
+     * Inspector 상태 변경 API
+     */
     updateSlotValue,
+    updateBlockConfig,
 
     deleteSelectedElements,
     resetEditor,
