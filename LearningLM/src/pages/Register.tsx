@@ -29,6 +29,7 @@ export function Register() {
     // 이메일 인증 완료 후 받은 임시 토큰
     const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
 
+
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
@@ -139,7 +140,16 @@ export function Register() {
             )
             console.log("이메일 인증 성공");
             console.log("응답 data: ", res.data);
-            const temporaryToken = res.data.result.temporaryAccessToken;
+            const temporaryToken = res.data?.result?.temporaryAccessToken;
+
+            console.log("verify 응답 전체:", res.data);
+            console.log("임시 토큰 존재:", Boolean(temporaryToken));
+
+            if (!temporaryToken) {
+                console.error("이메일 인증 응답:", res.data);
+                throw new Error("이메일 인증 토큰을 받지 못했습니다.");
+            }
+
             setTemporaryAccessToken(temporaryToken);
             setIsSendCode(false);
             setVerifiedStatus("succ");
@@ -317,78 +327,60 @@ export function Register() {
 
     //----------------회원가입 확인-----------------
     const memberOk = async () => {
-        console.log("pwOk: ", pwOk);
-        console.log("pwNull: ", pwNull);
-        console.log("pwForm: ", pwForm);
-
-        if (verifiedStatus !== "succ") {
+        if (verifiedStatus !== "succ" || !temporaryAccessToken.trim()) {
             setVerifiedStatus("emailcertificationNo");
-            setEmailCheck("false");
+            console.error("이메일 인증 토큰 없음:", temporaryAccessToken);
+            return;
         }
 
-        if (
-            pw.length > 0 &&
-            !validatePw(pw)
-        ) {
+        if (!validatePw(pw)) {
+            setPwForm("formErr");
             setPwNull("lengNo");
-        } else {
-            setPwNull("basic");
+            return;
         }
 
-        if (pwOk === "basic") {
-            setPwNull("lengNo");
+        if (pw !== pwCheck) {
+            setPwOk("notSame");
+            return;
         }
 
-        if (!name) {
+        if (!name.trim()) {
             setNameNull(true);
+            return;
         }
 
         if (!ckBox) {
-            setMem(true);
             setNoAgree(true);
+            setMem(true);
+            return;
         }
-        // 모든 조건 통과
-        if (verifiedStatus === "succ" &&
-            pwOk === "same" &&
-            name &&
-            ckBox
-        ) {
-            console.log("pw =", pw);
-            console.log("길이 =", pw.length);
-            console.log("프론트 검증 =", validatePw(pw));
-            try {
-                const res = await axios.post(
-                    "http://3.35.22.232:8080/api/auth/signup",
-                    {
-                        email: email,
-                        password: pw,
-                        nickname: name,
-                        termsAgreed: ckBox,
+        console.log(
+            "signup에 보낼 이메일 인증 토큰 존재:",
+            Boolean(temporaryAccessToken.trim()),
+        );
+        try {
+            const emailVerificationToken = temporaryAccessToken.trim();
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/signup",
+                {
+                    email,
+                    password: pw,
+                    nickname: name.trim(),
+                    termsAgreed: true,
+                },
+                {
+                    headers: {
+                        "X-Email-Verification-Token": emailVerificationToken,
                     },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${temporaryAccessToken}`,
-                        },
-                    }
-                );
+                }
+            );
 
-                console.log("회원가입 성공");
-                console.log(res.data);
-
-                // 회원가입 성공 후 받은 토큰
-                const accessToken = res.data.result.accessToken;
-                const refreshToken = res.data.result.refreshToken;
-
-                // 토큰 저장
-                localStorage.setItem("accessToken", accessToken);
-                localStorage.setItem("refreshToken", refreshToken);
-
-                navigate("/home");
-
-            } catch (error) {
-                console.log("회원가입 실패");
-                console.log(error);
-            }
+            const { accessToken, refreshToken } = res.data.result;
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
+            navigate("/home");
+        } catch (error: any) {
+            console.error("회원가입 실패:", error.response?.data ?? error);
         }
     };
     useEffect(() => {
