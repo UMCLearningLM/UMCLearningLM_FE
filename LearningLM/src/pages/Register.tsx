@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 //.\gradlew bootRun 스프링부트 서버 키는 방법
 
 export function Register() {
@@ -24,6 +25,10 @@ export function Register() {
     const [pwForm, setPwForm] = useState<"basic" | "formErr" | "formOk">("basic");
     //인증번호
     const [code, setCode] = useState("");
+
+    // 이메일 인증 완료 후 받은 임시 토큰
+    const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
+
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
@@ -69,50 +74,40 @@ export function Register() {
             // setVerifiedStatus("fail");
         }
     }, [emailFormErr, emailCheck]);
+
+
     const sendEmail = async () => {
-        console.log("인증번호 전송 버튼 클릭");
-        console.log("emailFormErr: ", emailFormErr);
-        console.log("emailCheck: ", emailCheck);
-        console.log("verifiedStatus: ", verifiedStatus);
+        // console.log("인증번호 전송 버튼 클릭");
+
         //이메일 형식이 유효하지 않을 때
         if (!validateEmail(email)) {
             setEmailFormErr(true);
-        } else {
-            setEmailFormErr(false);
+            return;
         }
+        setEmailFormErr(false);
 
-        if (email == "ssemilife@gmail.com") {
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/email/request",
+                {
+                    verificationType: "NON_LOGIN",
+                    purpose: "SIGNUP",
+                    email: email,
+                }
+            );
+            console.log("인증번호 전송 성공");
+            console.log("응답 status:", res.status);
+            console.log("응답 data:", JSON.stringify(res.data, null, 2));
             setEmailCheck("true");
-        } else {
+            setIsSendCode(true);
+            setVerifiedStatus("sendCode");
+            setCount(180);
+        }
+        catch (error) {
+            console.log("인증번호 전송 실패");
+            console.log(error);
             setEmailCheck("false");
         }
-
-
-        setCount(180);
-        // try {
-        //     const res = await axios.post("/auth/email/request", {
-        //         verificationType: "NON_LOGIN",
-        //         purpose: "SIGNUP",
-        //         email: "sally1954@naver.com"
-        //     });
-        //     console.log("인증번호 전송 성공");
-        //     console.log(res.data);
-
-        // } catch (error) {
-        //     console.log("인증번호 전송 실패");
-        //     // console.log(error);
-        // }
-
-        // if (res.status === 200) {
-        //     console.log("180으로 초기화");
-        //     setCount(180);
-        //     // setIsSendCode(true);
-        //     setVerifiedStatus("sendCode");
-
-        //     alert("인증번호 발송 완료");
-        // } else if (res.status === 401) {
-        //     alert("이미 존재하는 이메일입니다.");
-        // }
     }
     useEffect(() => {
         if (!isSendCode) return;
@@ -132,45 +127,34 @@ export function Register() {
 
     const verifyCode = async () => {
         //이메일&&인증번호 백엔드 전송
-        if (code === "123456") {
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/email/verify",
+                {
+                    verificationType: "NON_LOGIN",
+                    purpose: "SIGNUP",
+                    email: email,
+                    code: code,
+                }
+            )
+            console.log("이메일 인증 성공");
+            console.log("응답 data: ", res.data);
+            const temporaryToken = res.data.result.temporaryAccessToken;
+            setTemporaryAccessToken(temporaryToken);
             setIsSendCode(false);
             setVerifiedStatus("succ");
-            // alert("인증 완료");
-        } else {
+        } catch (error) {
+            console.log("이메일 인증 성공");
+            console.log(error);
+
             setVerifiedStatus("fail");
-            // alert("인증번호 올바르지 않음");
         }
-
-        // try {
-        //     const res = await axios.post("/auth/signup", {
-        //         email: "sally1954@naver.com",
-        //         password: "12345678",
-        //         nickname: "sam",
-        //         termsAgreed: !noAgree,
-        //     });
-        //     console.log("회원가입 성공");
-        //     console.log(res.data);
-
-        // } catch (error) {
-        //     console.log("회원가입 실패");
-        //     console.log(error); {
-        //         emailFormErr && (
-        //             <>
-        //                 <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
-        //             </>
-        //         )
-        //     }
-        // }
 
     }
     //회원가입 클릭 시 이메일 인증 여부에 따른 상태값
 
     const renderVerifyCode = () => {
-        // console.log("renderVerifyCode 실행");
-        // console.log("emailFormErr: ", emailFormErr);
-        // console.log("emailCheck: ", emailCheck);
-        // console.log("verifiedStatus: ", verifiedStatus);
-        // console.log(verifiedStatus);
+
         switch (verifiedStatus) {
             case "none":
                 return (
@@ -205,7 +189,6 @@ export function Register() {
                                     onClick={() => {
                                         console.log("이메일 재전송")
                                         sendEmail()
-                                        setIsSendCode(true)
                                     }
                                     }
                                 >인증번호 재전송</span>
@@ -253,7 +236,7 @@ export function Register() {
                             onClick={() => {
                                 sendEmail();
                                 //api 완성되면 제거 ((; 테스트용 생성))
-                                setIsSendCode(true)
+                                // setIsSendCode(true)
                             }}
                         >
                             인증번호 전송</button>
@@ -278,14 +261,11 @@ export function Register() {
     }
 
     //----------------비밀번호 확인-----------------
-    const validatePw = (
-        value: string,
-    ) => {
-        const pwRegex =
-            /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+    const validatePw = (value: string) => {
+        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
 
         return pwRegex.test(value);
-    }
+    };
     useEffect(() => {
         if (pw.length === 0) {
             setPwForm("basic");
@@ -301,7 +281,7 @@ export function Register() {
     //비밀번호 확인
 
     useEffect(() => {
-        console.log("pw: ", pw);
+        console.log("pw:", pw);
         console.log("pwCheck: ", pwCheck);
         console.log("validatePw: ", validatePw(pw));
         if (pw != "") {
@@ -336,55 +316,64 @@ export function Register() {
     }, [ckBox]);
 
     //----------------회원가입 확인-----------------
-    const memberOk = () => {
-        console.log("pwOk: ", pwOk);
-        console.log("pwNull: ", pwNull);
-        console.log("pwForm: ", pwForm);
-        // console.log(verifiedStatus);
-        if (verifiedStatus != "succ") {
+    const memberOk = async () => {
+        if (verifiedStatus !== "succ") {
             setVerifiedStatus("emailcertificationNo");
-            setEmailCheck("false");
-        }
-        //비밀번호
-
-        //8자 이하 또는 비밀번호 형식이 맞지 않은 경우
-        if (
-            pw.length > 0 &&
-            !validatePw(pw)
-        ) {
-            setPwNull("lengNo");
-            // setPwOk("notSame");
-        } else {
-            setPwNull("basic");
+            return;
         }
 
-        if (pwOk == "basic") {
+        if (!validatePw(pw)) {
+            setPwForm("formErr");
             setPwNull("lengNo");
+            return; // 중요: 잘못된 비밀번호를 서버로 보내지 않음
         }
-        //닉네임
-        if (!name) {
+
+        if (pw !== pwCheck) {
+            setPwOk("notSame");
+            return;
+        }
+
+        if (!name.trim()) {
             setNameNull(true);
+            return;
         }
-        //동의박스
+
         if (!ckBox) {
-            setMem(true);
             setNoAgree(true);
+            setMem(true);
+            return;
         }
-        //모두 확인된 경우 회원가입 실행
-        if (verifiedStatus == "succ" && pwOk == "same" && name && ckBox) {
-            //api로 회원정보 등록 코드
-            {/** 
-                
-                */ }
-            //
-            navigate("/home")
+
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/signup",
+                {
+                    email,
+                    password: pw,
+                    nickname: name.trim(),
+                    termsAgreed: true,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${temporaryAccessToken}`,
+                    },
+                }
+            );
+
+            const { accessToken, refreshToken } = res.data.result;
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
+
+            navigate("/home");
+        } catch (error: any) {
+            console.error("회원가입 실패:", error.response?.data ?? error);
         }
-    }
+    };
     useEffect(() => {
         if ((pw == "" || pwCheck == "") && pwNull != "lengNo")
             setPwNull("null");
     }, [pwNull]);
-    console.log("pwNull", pwNull);
+    // console.log("pwNull", pwNull);
 
     return (
         <>
@@ -508,11 +497,11 @@ export function Register() {
                     <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[57px] mt-[20px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                         onClick={() => {
                             memberOk();
-                        }}><span className="text-[24px] font-bold ">회원가입</span></button>
+                        }}><span className="cursor-pointer text-[24px] font-bold ">회원가입</span></button>
 
                     <p className="text-[#52525B] mt-[71px]">이미 계정이 있으신가요? {" "}
                         <button onClick={() => {
-                            navigate("/")
+                            navigate("/login")
                         }}>
                             <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">로그인</span>
                         </button>
