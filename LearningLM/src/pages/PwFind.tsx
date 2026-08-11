@@ -44,32 +44,32 @@ export function PwFind() {
     //validatePw(pw) == false  -> 유효
     //               == true   -> 유효하지 않음
     const validatePw = (
-    value: string,
-) => {
-    const pwRegex =
-        /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+        value: string,
+    ) => {
+        const pwRegex =
+            /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
 
-    return pwRegex.test(value);
-}
-
-useEffect(() => {
-    const hasBothPasswords =
-        pw.length > 0 &&
-        pwCheck.length > 0;
-
-    if (!hasBothPasswords) {
-        setPwNull("true");
-        setPwOk(false);
-        return;
+        return pwRegex.test(value);
     }
 
-    setPwNull("false");
+    useEffect(() => {
+        const hasBothPasswords =
+            pw.length > 0 &&
+            pwCheck.length > 0;
 
-    setPwOk(
-        pw === pwCheck &&
-        validatePw(pw),
-    );
-}, [pw, pwCheck]);
+        if (!hasBothPasswords) {
+            setPwNull("true");
+            setPwOk(false);
+            return;
+        }
+
+        setPwNull("false");
+
+        setPwOk(
+            pw === pwCheck &&
+            validatePw(pw),
+        );
+    }, [pw, pwCheck]);
 
     const pwChangeFun = () => {
 
@@ -191,11 +191,15 @@ useEffect(() => {
 
                     <div>
                         <p className=" mt-[71px]">계정이 없으신가요? {" "}
-                            <button onClick={() => { navigate("/") }}>
+                            <button onClick={() => { navigate("/register") }}>
                                 <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">회원가입</span>
                             </button>
                         </p>
-                        <p className="mt-[14px]">이미 계정이 있으신가요? <span className="text-[#6366F1] font-bold mt-[20px]">로그인</span></p>
+                        <p className="mt-[14px]">이미 계정이 있으신가요? {" "}
+                            <button onClick={() => { navigate("/login") }}>
+                                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">로그인</span>
+                            </button>
+                        </p>
                     </div>
                 </div>
                 {/*white box 끝 */}
