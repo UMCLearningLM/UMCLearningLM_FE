@@ -71,6 +71,23 @@ import {
   SummaryInspector,
 } from './process/ProcessCoreInspectors'
 
+import {
+  CallSkillInspector,
+  ChecklistTransformInspector,
+  ClassifyItemsInspector,
+  CompareInspector,
+  DecomposeFunctionsInspector,
+  DraftInspector,
+  FindExceptionsInspector,
+  LinkPolicyInspector,
+  OrderInspector,
+  PromptComposeInspector,
+  PromptFillBlanksInspector,
+  QuestionListInspector,
+  SummaryPromptLayoutInspector,
+  TableTransformInspector,
+} from './process/ProcessDetailedInspectors'
+
 
 export interface StudioInspectorConfigUpdateOptions {
   summaryValue?: string
@@ -203,6 +220,48 @@ const studioBlockInspectorRegistry:
     'process-summary':
       SummaryInspector,
     
+    'process-classify-items':
+      ClassifyItemsInspector,
+
+    'process-compare':
+      CompareInspector,
+
+    'process-order':
+      OrderInspector,
+
+    'process-decompose-functions':
+      DecomposeFunctionsInspector,
+
+    'process-link-policy':
+      LinkPolicyInspector,
+
+    'process-find-exceptions':
+      FindExceptionsInspector,
+
+    'process-draft':
+      DraftInspector,
+
+    'process-table':
+      TableTransformInspector,
+
+    'process-checklist':
+      ChecklistTransformInspector,
+
+    'process-question-list':
+      QuestionListInspector,
+
+    'process-call-skill':
+      CallSkillInspector,
+
+    'process-prompt-compose':
+      PromptComposeInspector,
+
+    'process-prompt-fill-blanks':
+      PromptFillBlanksInspector,
+
+    'process-summary-prompt-layout':
+      SummaryPromptLayoutInspector,
+
       /*
      * REVIEW
      */
