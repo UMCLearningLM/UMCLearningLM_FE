@@ -12,6 +12,7 @@ import { Stdio_create1 } from '../pages/Stdio_create1'
 import { OfficialTutorialPage } from '../pages/tutorial/OfficialTutorialPage'
 import { TutorialDetailPage } from '../pages/tutorial/TutorialDetailPage'
 import { StudioNodeCardTestPage } from '../pages/dev/StudioNodeCardTestPage'
+import { ProcessTestPage } from '../pages/dev/ProcessTestPage'
 
 export const router = createBrowserRouter([
   {
@@ -58,6 +59,10 @@ export const router = createBrowserRouter([
   {
     path: '/studionodecardtestpage',
     element: <StudioNodeCardTestPage />,
+  },
+  {
+    path: '/process-test',
+    element: <ProcessTestPage />,
   },
   {
     path: '*',
