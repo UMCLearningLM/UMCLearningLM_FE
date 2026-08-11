@@ -1,17 +1,31 @@
-import { Blocks, Clock } from 'lucide-react'
-import type { Tutorial } from '../data/tutorials'
-import { Button } from '../../../components/ui/Button'
-import { Card } from '../../../components/ui/Card'
+import {
+  Blocks,
+  Clock,
+} from 'lucide-react'
+
+import type {
+  Tutorial,
+} from '../data/tutorials'
+
+import {
+  Button,
+} from '../../../components/ui/Button'
+
+import {
+  Badge,
+} from '../../../components/ui/Badge'
+
+import {
+  Card,
+} from '../../../components/ui/Card'
+
+import {
+  getTutorialLevelBadgeVariant,
+} from '../utils/tutorialLevelStyle'
 
 interface TutorialCardProps {
   tutorial: Tutorial
   onStart?: (tutorialId: number) => void
-}
-
-const levelClassMap: Record<Tutorial['level'], string> = {
-  입문: 'border-emerald-200 bg-emerald-50 text-emerald-600',
-  기초: 'border-blue-200 bg-blue-50 text-blue-600',
-  응용: 'border-rose-200 bg-rose-50 text-rose-600',
 }
 
 function WireframeThumbnail() {
@@ -40,14 +54,17 @@ export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <span
-            className={[
-              'inline-flex items-center rounded-lg border px-3 py-1 text-xs font-bold',
-              levelClassMap[tutorial.level],
-            ].join(' ')}
+          <Badge
+            variant={
+              getTutorialLevelBadgeVariant(
+                tutorial.level,
+              )
+            }
+            size="sm"
+            className="px-3"
           >
             {tutorial.level}
-          </span>
+          </Badge>
 
           {tutorial.categories.slice(0, 2).map((category) => (
             <span

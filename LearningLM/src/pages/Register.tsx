@@ -1,7 +1,6 @@
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 //.\gradlew bootRun 스프링부트 서버 키는 방법
 
 export function Register() {
@@ -261,11 +260,22 @@ export function Register() {
     }
 
     //----------------비밀번호 확인-----------------
+<<<<<<< HEAD
     const validatePw = (value: string) => {
         const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
 
         return pwRegex.test(value);
     };
+=======
+    const validatePw = (
+        value: string,
+    ) => {
+        const pwRegex =
+            /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+
+        return pwRegex.test(value);
+    }
+>>>>>>> 8a46c956bc11cc56708382337b53aaefdf5885cd
     useEffect(() => {
         if (pw.length === 0) {
             setPwForm("basic");
@@ -326,6 +336,10 @@ export function Register() {
             setEmailCheck("false");
         }
 
+<<<<<<< HEAD
+=======
+        //8자 이하 또는 비밀번호 형식이 맞지 않은 경우
+>>>>>>> 8a46c956bc11cc56708382337b53aaefdf5885cd
         if (
             pw.length > 0 &&
             !validatePw(pw)
