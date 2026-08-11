@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 {/* npm install react-icons */ }
+import axios from "axios";
 import { useNavigate } from "react-router-dom"
 
 export function PwFind() {
@@ -16,19 +17,43 @@ export function PwFind() {
     //비밀번호 인증
     const [pwOk, setPwOk] = useState(false);
 
-    const emailFind = () => {
-        if (email == "ssemilife@gmail.com" && emailForm) {
+    const emailFind = async () => {
+        // if (email == "ssemilife@gmail.com" && emailForm) {
+        //     console.log("이메일 찾기 성공");
+        //     setEmailState("success");
+        //     console.log(emailState);
+        //     console.log(emailForm);
+        // } else {
+        //     console.log("이메일 찾기 실패");
+        //     setEmailState("notEnroll");
+        //     console.log(emailState);
+        //     console.log(emailForm);
+        //     // setPwState(false);
+        // }
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/email/request",
+                {
+                    verificationType: "NON_LOGIN",
+                    purpose: "SIGNUP",
+                    email: email,
+                }
+            );
             console.log("이메일 찾기 성공");
             setEmailState("success");
             console.log(emailState);
             console.log(emailForm);
-        } else {
+
+            console.log("응답 status:", res.status);
+            console.log("응답 data:", JSON.stringify(res.data, null, 2));
+        }
+        catch (error) {
             console.log("이메일 찾기 실패");
             setEmailState("notEnroll");
             console.log(emailState);
             console.log(emailForm);
-            // setPwState(false);
         }
+
     }
     useEffect(() => {
         if (0 < email.length) {
@@ -44,32 +69,32 @@ export function PwFind() {
     //validatePw(pw) == false  -> 유효
     //               == true   -> 유효하지 않음
     const validatePw = (
-    value: string,
-) => {
-    const pwRegex =
-        /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+        value: string,
+    ) => {
+        const pwRegex =
+            /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
 
-    return pwRegex.test(value);
-}
-
-useEffect(() => {
-    const hasBothPasswords =
-        pw.length > 0 &&
-        pwCheck.length > 0;
-
-    if (!hasBothPasswords) {
-        setPwNull("true");
-        setPwOk(false);
-        return;
+        return pwRegex.test(value);
     }
 
-    setPwNull("false");
+    useEffect(() => {
+        const hasBothPasswords =
+            pw.length > 0 &&
+            pwCheck.length > 0;
 
-    setPwOk(
-        pw === pwCheck &&
-        validatePw(pw),
-    );
-}, [pw, pwCheck]);
+        if (!hasBothPasswords) {
+            setPwNull("true");
+            setPwOk(false);
+            return;
+        }
+
+        setPwNull("false");
+
+        setPwOk(
+            pw === pwCheck &&
+            validatePw(pw),
+        );
+    }, [pw, pwCheck]);
 
     const pwChangeFun = () => {
 
