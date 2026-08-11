@@ -317,78 +317,56 @@ export function Register() {
 
     //----------------회원가입 확인-----------------
     const memberOk = async () => {
-        console.log("pwOk: ", pwOk);
-        console.log("pwNull: ", pwNull);
-        console.log("pwForm: ", pwForm);
-
         if (verifiedStatus !== "succ") {
             setVerifiedStatus("emailcertificationNo");
-            setEmailCheck("false");
+            return;
         }
 
-        if (
-            pw.length > 0 &&
-            !validatePw(pw)
-        ) {
+        if (!validatePw(pw)) {
+            setPwForm("formErr");
             setPwNull("lengNo");
-        } else {
-            setPwNull("basic");
+            return; // 중요: 잘못된 비밀번호를 서버로 보내지 않음
         }
 
-        if (pwOk === "basic") {
-            setPwNull("lengNo");
+        if (pw !== pwCheck) {
+            setPwOk("notSame");
+            return;
         }
 
-        if (!name) {
+        if (!name.trim()) {
             setNameNull(true);
+            return;
         }
 
         if (!ckBox) {
-            setMem(true);
             setNoAgree(true);
+            setMem(true);
+            return;
         }
-        // 모든 조건 통과
-        if (verifiedStatus === "succ" &&
-            pwOk === "same" &&
-            name &&
-            ckBox
-        ) {
-            console.log("pw =", pw);
-            console.log("길이 =", pw.length);
-            console.log("프론트 검증 =", validatePw(pw));
-            try {
-                const res = await axios.post(
-                    "http://3.35.22.232:8080/api/auth/signup",
-                    {
-                        email: email,
-                        password: pw,
-                        nickname: name,
-                        termsAgreed: ckBox,
+
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/signup",
+                {
+                    email,
+                    password: pw,
+                    nickname: name.trim(),
+                    termsAgreed: true,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${temporaryAccessToken}`,
                     },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${temporaryAccessToken}`,
-                        },
-                    }
-                );
+                }
+            );
 
-                console.log("회원가입 성공");
-                console.log(res.data);
+            const { accessToken, refreshToken } = res.data.result;
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
 
-                // 회원가입 성공 후 받은 토큰
-                const accessToken = res.data.result.accessToken;
-                const refreshToken = res.data.result.refreshToken;
-
-                // 토큰 저장
-                localStorage.setItem("accessToken", accessToken);
-                localStorage.setItem("refreshToken", refreshToken);
-
-                navigate("/home");
-
-            } catch (error) {
-                console.log("회원가입 실패");
-                console.log(error);
-            }
+            navigate("/home");
+        } catch (error: any) {
+            console.error("회원가입 실패:", error.response?.data ?? error);
         }
     };
     useEffect(() => {
