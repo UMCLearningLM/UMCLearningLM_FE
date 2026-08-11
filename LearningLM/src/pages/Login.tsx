@@ -103,7 +103,32 @@ export function Login() {
         }
     };
 
+    const googleLogin = async () => {
+        try {
+            // GET /api/auth/google → result.authorizationUrl 반환
+            const { data } = await api.get("/auth/google");
 
+            const authorizationUrl = data.result?.authorizationUrl;
+
+            if (!authorizationUrl) {
+                throw new Error("Google 인증 URL을 받지 못했습니다.");
+            }
+
+            // 예: "/api/auth/oauth2/authorization/google"
+            // api의 baseURL 서버 주소를 유지한 채 해당 URL로 이동
+            const backendOrigin = new URL(
+                api.defaults.baseURL ?? window.location.origin,
+                window.location.origin
+            ).origin;
+
+            window.location.assign(
+                new URL(authorizationUrl, backendOrigin).toString()
+            );
+        } catch (error) {
+            console.error("Google 로그인 시작 실패:", error);
+            alert("Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        }
+    };
 
 
     return (
@@ -215,7 +240,8 @@ export function Login() {
                         </span>
                         <div className="flex-1 h-px bg-[#E4E4E7]" />
                     </div>
-                    <button className="w-[522px] h-[56px] mt-[28px] flex items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7]">
+                    <button className="cursor-pointer w-[522px] h-[56px] mt-[28px] flex items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7]"
+                        onClick={googleLogin}>
                         <FcGoogle size={32} />
                         <span className="cursor-pointer text-[18px] font-bold text-[#27272A] tracking-tighter">
                             Google 계정으로 계속하기
@@ -235,7 +261,7 @@ export function Login() {
                     </div>
                 </div>
                 {/*white box 끝 */}
-                <div className="flex flex-row mt-[32px] text-[16px] text-[#9A9AA3] gap-[38px]">
+                <div className="flex flex-row mt-[32px] mb-[86px] text-[16px] text-[#9A9AA3] gap-[38px]">
                     <p>©2026LearningLM</p>
                     <p>이용약관</p>
                     <p>개인정보처리방침</p>
