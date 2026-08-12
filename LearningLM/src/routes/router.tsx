@@ -29,6 +29,7 @@ import { PwFind } from '../pages/PwFind'
 import GoogleLoginLoading from '../pages/auth/GoogleLogin'
 import GoogleLoginSuccess from '../pages/auth/GoogleLoginSuccess'
 import GoogleLoginError from '../pages/auth/GoogleLoginError'
+import { MyProfile } from '../pages/auth/MyProfile'
 
 export const router = createBrowserRouter([
   /**
@@ -125,6 +126,14 @@ export const router = createBrowserRouter([
    *
    * 로그인 필요
    */
+  {
+    path: '/myProfile',
+    element: (
+      <ProtectedRoute>
+        <MyProfile />
+      </ProtectedRoute>
+    ),
+  },
   {
     path: '/studio',
     element: (
