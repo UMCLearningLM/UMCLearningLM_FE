@@ -6,6 +6,7 @@ import './index.css'
 
 import App from './App'
 
+console.log('main.tsx loaded')
 
 createRoot(
   document.getElementById('root')!,
