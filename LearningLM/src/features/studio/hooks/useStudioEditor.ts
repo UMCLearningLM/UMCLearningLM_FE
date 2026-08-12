@@ -133,13 +133,13 @@ const DEFAULT_SNAP_GRID:
     20,
   ]
 
-const DEFAULT_CONNECTION_POLICY:
-  StudioConnectionValidationPolicy = {
-    enforceStageOrder: true,
-    requireAdjacentStages: false,
-    preventCycles: true,
-    rejectDuplicateConnections: true,
-  }
+const DEFAULT_CONNECTION_POLICY: StudioConnectionValidationPolicy = {
+  enforceStageOrder: true,
+  requireAdjacentStages: true,
+  preventCycles: true,
+  rejectDuplicateConnections: true,
+  limitSourceHandleToSingleEdge: true,
+}
 
 /**
  * 검증으로 추가된 노드 상태를 기본 상태로 되돌립니다.
