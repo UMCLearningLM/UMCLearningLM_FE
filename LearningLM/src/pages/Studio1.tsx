@@ -154,7 +154,7 @@ export function Studio1() {
                   onClick={
                     handleGuidedMode
                   }
-                  className="mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] bg-[#6366F1] text-[14px] font-bold text-white transition hover:bg-[#5558E8]"
+                  className="cursor-pointer mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] bg-[#6366F1] text-[14px] font-bold text-white transition hover:bg-[#5558E8]"
                 >
                   가이드 모드 시작
                 </button>
@@ -180,7 +180,7 @@ export function Studio1() {
                   onClick={
                     handleCreateMode
                   }
-                  className="mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] border border-[#D4D4D8] bg-white text-[14px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
+                  className="cursor-pointer mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] border border-[#D4D4D8] bg-white text-[14px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
                 >
                   빈 캔버스로 시작
                 </button>
@@ -220,7 +220,7 @@ export function Studio1() {
                       true,
                     )
                   }}
-                  className="ml-[24px] inline-flex h-[42px] shrink-0 items-center gap-[4px] rounded-[7px] border-[2px] border-[#6366F1] bg-white px-[14px] text-[13px] font-bold text-[#6366F1] transition hover:bg-[#F4F4FF]"
+                  className="cursor-pointer ml-[24px] inline-flex h-[42px] shrink-0 items-center gap-[4px] rounded-[7px] border-[2px] border-[#6366F1] bg-white px-[14px] text-[13px] font-bold text-[#6366F1] transition hover:bg-[#F4F4FF]"
                 >
                   시뮬레이션 보기
 
@@ -263,7 +263,7 @@ export function Studio1() {
                   onClick={
                     handleContinueCopiedWorkflow
                   }
-                  className="ml-[24px] inline-flex h-[42px] shrink-0 items-center justify-center rounded-[7px] border border-[#D4D4D8] bg-white px-[18px] text-[13px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
+                  className="cursor-pointer ml-[24px] inline-flex h-[42px] shrink-0 items-center justify-center rounded-[7px] border border-[#D4D4D8] bg-white px-[18px] text-[13px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
                 >
                   편집 계속하기
                 </button>

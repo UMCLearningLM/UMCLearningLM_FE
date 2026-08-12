@@ -192,6 +192,7 @@ export function TutorialDetailPage() {
               <Button
                 size="lg"
                 onClick={handleStartTutorial}
+                className="cursor-pointer"
               >
                 튜토리얼 시작하기
               </Button>
@@ -201,6 +202,7 @@ export function TutorialDetailPage() {
                 size="lg"
                 aria-pressed={isSaved}
                 onClick={handleToggleSave}
+                className="cursor-pointer"
               >
                 {isSaved
                   ? '튜토리얼 저장됨'

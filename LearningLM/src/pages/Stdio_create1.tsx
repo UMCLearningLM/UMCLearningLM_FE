@@ -642,11 +642,10 @@ export function Stdio_create1() {
           '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
         result: validationResult.valid
           ? '저장 조건을 충족했습니다.'
-          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
-              slotErrorIssues.length > 0
-                ? ' 필수 슬롯 설정을 확인하세요.'
-                : ''
-            }`,
+          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${slotErrorIssues.length > 0
+            ? ' 필수 슬롯 설정을 확인하세요.'
+            : ''
+          }`,
       },
     ]
   }, [validationResult])
@@ -1105,7 +1104,7 @@ export function Stdio_create1() {
           <button
             type="button"
             onClick={handleValidate}
-            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="cursor-pointer flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             검증
           </button>
@@ -1113,7 +1112,7 @@ export function Stdio_create1() {
           <button
             type="button"
             onClick={handleOpenExample}
-            className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="cursor-pointer flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             예시 결과
           </button>
@@ -1121,7 +1120,7 @@ export function Stdio_create1() {
           <button
             type="button"
             onClick={handleOpenPreview}
-            className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="cursor-pointer flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             미리보기
           </button>
@@ -1133,7 +1132,7 @@ export function Stdio_create1() {
             className={[
               'flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] text-[17px] font-bold',
               validationResult?.valid
-                ? 'border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
+                ? 'cursor-pointer border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
                 : 'cursor-not-allowed border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
             ].join(' ')}
           >
