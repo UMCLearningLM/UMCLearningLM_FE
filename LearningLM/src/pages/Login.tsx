@@ -128,26 +128,76 @@ export function Login() {
             /**
              * 인증 토큰 저장
              */
-            localStorage.setItem(
-                "accessToken",
-                accessToken
-            );
-
-            localStorage.setItem(
-                "refreshToken",
-                refreshToken
-            );
-
             /**
-             * 현재는 기존 코드와의 호환을 위해
-             * 로그인 응답 데이터도 저장합니다.
-             */
-            localStorage.setItem(
-                "user",
-                JSON.stringify(
-                    response.data.result
-                )
-            );
+  * 로그인 상태 유지 여부에 따라
+  * 토큰 저장 위치 결정
+  *
+  * 체크 O → localStorage
+  * 체크 X → sessionStorage
+  */
+            if (ckBox) {
+                // 로그인 상태 유지
+                localStorage.setItem(
+                    "accessToken",
+                    accessToken
+                );
+
+                localStorage.setItem(
+                    "refreshToken",
+                    refreshToken
+                );
+
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(
+                        response.data.result
+                    )
+                );
+
+                // 기존 sessionStorage 정리
+                sessionStorage.removeItem(
+                    "accessToken"
+                );
+
+                sessionStorage.removeItem(
+                    "refreshToken"
+                );
+
+                sessionStorage.removeItem(
+                    "user"
+                );
+            } else {
+                // 로그인 상태 유지 안 함
+                sessionStorage.setItem(
+                    "accessToken",
+                    accessToken
+                );
+
+                sessionStorage.setItem(
+                    "refreshToken",
+                    refreshToken
+                );
+
+                sessionStorage.setItem(
+                    "user",
+                    JSON.stringify(
+                        response.data.result
+                    )
+                );
+
+                // 기존 localStorage 정리
+                localStorage.removeItem(
+                    "accessToken"
+                );
+
+                localStorage.removeItem(
+                    "refreshToken"
+                );
+
+                localStorage.removeItem(
+                    "user"
+                );
+            }
 
             console.log("로그인 성공!");
 
@@ -165,8 +215,8 @@ export function Login() {
              */
             const state =
                 location.state as
-                    | LoginLocationState
-                    | null;
+                | LoginLocationState
+                | null;
 
             const from =
                 state?.from;
@@ -238,23 +288,6 @@ export function Login() {
             "/auth/google/loading"
         );
 
-        // const clientId =
-        //     import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-        // const redirectUri =
-        //     import.meta.env.VITE_GOOGLE_REDIRECT_URI;
-
-        // const googleAuthUrl =
-        //     `https://accounts.google.com/o/oauth2/v2/auth` +
-        //     `?client_id=${encodeURIComponent(clientId)}` +
-        //     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        //     `&response_type=code` +
-        //     `&scope=${encodeURIComponent(
-        //         "openid email profile"
-        //     )}`;
-
-        // window.location.href =
-        //     googleAuthUrl;
     };
 
     return (
@@ -338,14 +371,14 @@ export function Login() {
 
                                 {emailState ===
                                     "incorrect" && (
-                                    <p className="mt-[6.5px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                                        이메일이
-                                        맞지
-                                        않습니다.
-                                        다시
-                                        입력해주세요.
-                                    </p>
-                                )}
+                                        <p className="mt-[6.5px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
+                                            이메일이
+                                            맞지
+                                            않습니다.
+                                            다시
+                                            입력해주세요.
+                                        </p>
+                                    )}
 
                                 {emailFormErr && (
                                     <p className="mt-[4px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
@@ -385,23 +418,23 @@ export function Login() {
 
                             {pwCheckState ===
                                 "incorrect" && (
-                                <p className="mt-[6px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                                    비밀번호가
-                                    맞지
-                                    않습니다.
-                                    다시
-                                    입력해주세요.
-                                </p>
-                            )}
+                                    <p className="mt-[6px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
+                                        비밀번호가
+                                        맞지
+                                        않습니다.
+                                        다시
+                                        입력해주세요.
+                                    </p>
+                                )}
 
                             {pwNumFail ===
                                 "incorrect" && (
-                                <p className="mt-[4px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                                    비밀번호
-                                    8자리 이상
-                                    입력해주세요.
-                                </p>
-                            )}
+                                    <p className="mt-[4px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
+                                        비밀번호
+                                        8자리 이상
+                                        입력해주세요.
+                                    </p>
+                                )}
                         </div>
 
                         {/* login state */}
@@ -441,10 +474,9 @@ export function Login() {
                                     border-2
                                     rounded-[2px]
                                     border-[#6366F1]
-                                    ${
-                                        checked
-                                            ? "bg-[#6366F1]"
-                                            : "border-[#6366F1]"
+                                    ${checked
+                                        ? "bg-[#6366F1]"
+                                        : "border-[#6366F1]"
                                     }
                                 `}
                             >

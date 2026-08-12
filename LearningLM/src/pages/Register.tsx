@@ -30,7 +30,6 @@ export function Register() {
     // 이메일 인증 완료 후 받은 임시 토큰
     const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
 
-
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
@@ -54,7 +53,7 @@ export function Register() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-
+    //인증번호
 
 
     //이메일 형식 유효한지
