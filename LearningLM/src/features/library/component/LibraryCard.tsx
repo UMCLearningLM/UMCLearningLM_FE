@@ -6,10 +6,21 @@ import {
 
 import { Card } from '../../../components/ui/Card'
 
-import type {
-  LibraryItem,
-  LibraryLevel,
-} from '../data/libraryData'
+import type { LibraryLevel } from '../data/libraryData'
+
+export interface LibraryCardItem {
+  id: number
+  authorName: string
+  authorInitial: string
+  title: string
+  description: string
+  level: LibraryLevel
+  categories: string[]
+  saves: number
+  copies: number
+  comments: number
+  isLiked: boolean
+}
 
 const levelClassMap: Record<LibraryLevel, string> = {
   입문: 'border-emerald-200 bg-emerald-50 text-emerald-600',
@@ -18,7 +29,7 @@ const levelClassMap: Record<LibraryLevel, string> = {
 }
 
 interface LibraryCardProps {
-  item: LibraryItem
+  item: LibraryCardItem
   onClick: (libraryId: number) => void
 }
 
@@ -69,7 +80,10 @@ export function LibraryCard({
       <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
         <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
           <span className="flex items-center gap-1">
-            <Heart size={13} />
+            <Heart
+              size={13}
+              fill={item.isLiked ? 'currentColor' : 'none'}
+            />
             {item.saves}
           </span>
 

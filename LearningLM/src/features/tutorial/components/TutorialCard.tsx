@@ -1,14 +1,27 @@
 import { Blocks, Clock } from 'lucide-react'
-import type { Tutorial } from '../data/tutorials'
+import type {
+  TutorialCategory,
+  TutorialLevel,
+} from '../data/tutorials'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 
+export interface TutorialCardData {
+  id: number
+  title: string
+  description: string
+  level: TutorialLevel
+  categories: TutorialCategory[]
+  blockCount: number
+  estimatedMinutes: number
+}
+
 interface TutorialCardProps {
-  tutorial: Tutorial
+  tutorial: TutorialCardData
   onStart?: (tutorialId: number) => void
 }
 
-const levelClassMap: Record<Tutorial['level'], string> = {
+const levelClassMap: Record<TutorialLevel, string> = {
   입문: 'border-emerald-200 bg-emerald-50 text-emerald-600',
   기초: 'border-blue-200 bg-blue-50 text-blue-600',
   응용: 'border-rose-200 bg-rose-50 text-rose-600',

@@ -12,16 +12,24 @@ import { Header } from '../../components/layout/Header'
 import { Footer } from '../../components/layout/Footer'
 import { PageContainer } from '../../components/layout/PageContainer'
 
-import { tutorials } from '../../features/tutorial/data/tutorials'
-
 import {
-  mockCreatedWorkflows as initialCreatedWorkflows,
-  mockSavedTutorialRecords as initialSavedTutorialRecords,
-  mockCopiedWorkflows as initialCopiedWorkflows,
-} from '../../features/storage/data/storage'
+  getSavedTutorials,
+  getStorageFlows,
+  updateFlowVisibility,
+  type SavedTutorial,
+  type StorageCounts,
+} from '../../api/storage'
+import {
+  deleteFlow,
+  deleteTutorialProgress,
+} from '../../api/tutorial'
+import type { TutorialLevel } from '../../features/tutorial/data/tutorials'
 
 import { SavedTutorialCard } from '../../features/storage/components/SavedTutorialCard'
-import { CreateWorkflowCard } from '../../features/storage/components/CreateWorkflowCard'
+import {
+  CreateWorkflowCard,
+  type CreatedWorkflow,
+} from '../../features/storage/components/CreateWorkflowCard'
 import { CopiedWorkflowCard, type CopiedWorkflow } from '../../features/storage/components/CopiedWorkflowCard'
 
 type StorageTab = 'saved' | 'created' | 'copied'
@@ -46,35 +54,145 @@ function MyStoragePage() {
    * mock 데이터를 state에 넣는 이유:
    * 저장 해제나 공개 상태 변경을 화면에 바로 반영하기 위해서입니다.
    */
+
+  // 튜토리얼 목록
   const [savedTutorialRecords, setSavedTutorialRecords] =
-    useState(initialSavedTutorialRecords)
+    useState<SavedTutorial[]>([])
+  // 저장, 직접 생성, 복사 항목 개수
+  const [storageCounts, setStorageCounts] =
+    useState<StorageCounts | null>(null)
+  // API 로딩 여부
+  const [isLoadingSavedTutorials, setIsLoadingSavedTutorials] =
+    useState(true)
+  // API 오류 메시지
+  const [savedTutorialsError, setSavedTutorialsError] =
+    useState('')
+  const [removingTutorialId, setRemovingTutorialId] =
+    useState<number | null>(null)
 
   const [createdWorkflows, setCreatedWorkflows] =
-    useState(initialCreatedWorkflows)
+    useState<CreatedWorkflow[]>([])
 
-  const [copiedWorkflows] = useState(initialCopiedWorkflows)
+  const [copiedWorkflows, setCopiedWorkflows] =
+    useState<CopiedWorkflow[]>([])
+  const [isLoadingFlows, setIsLoadingFlows] = useState(true)
+  const [flowsError, setFlowsError] = useState('')
 
-  /*
-   * 저장 데이터에 대한 정보를 준비합니다.
-   */
-  const savedTutorials = useMemo(() => {
-    return savedTutorialRecords
-      .map((savedRecord) => {
-        const tutorial = tutorials.find(
-          (item) => item.id === savedRecord.tutorialId,
+  // Storage 화면이 처음 열릴 때 API 호출
+  useEffect(() => {
+    // 화면이 현재 열려 있음
+    let isMounted = true
+
+    getSavedTutorials()
+      .then((result) => {
+        // 이미 다른 화면으로 이동했다면 아무것도 하지 않음
+        if (!isMounted) return
+        // 아직 Storage 화면이면 서버 데이터를 저장
+        setSavedTutorialRecords(result.tutorials)
+        // 탭별 개수 저장
+        setStorageCounts(result.counts)
+      })
+      .catch((requestError: unknown) => {
+        if (!isMounted) return
+        // API 오류 메시지 저장
+        setSavedTutorialsError(
+          requestError instanceof Error
+            ? requestError.message
+            : '저장한 튜토리얼을 불러오지 못했습니다.',
+        )
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingSavedTutorials(false)
+      })
+    // Storage 화면을 벗어날 때 실행
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // 내가 만든 흐름과 복사한 흐름을 각각 조회
+  useEffect(() => {
+    let isMounted = true
+
+    Promise.all([
+      getStorageFlows('own'),
+      getStorageFlows('copied'),
+    ])
+      .then(([ownResult, copiedResult]) => {
+        if (!isMounted) return
+
+        const levelMap: Record<string, TutorialLevel> = {
+          BEGINNER: '입문',
+          BASIC: '기초',
+          ADVANCED: '응용',
+        }
+
+        setCreatedWorkflows(
+          ownResult.flows.map((flow) => ({
+            id: flow.flowId,
+            title: flow.title,
+            description: flow.summary ?? '',
+            level: levelMap[flow.difficulty] ?? '입문',
+            categories: flow.categories.map((category) => category.name),
+            visibility:
+              flow.visibility === 'PUBLIC' ? 'public' : 'private',
+          })),
         )
 
-        if (!tutorial) {
-          return null
-        }
+        setCopiedWorkflows(
+          copiedResult.flows.map((flow) => ({
+            id: flow.flowId,
+            originalWorkflowId: flow.originalFlowId ?? flow.flowId,
+            authorName: flow.originalAuthorNickname ?? '알 수 없음',
+            authorInitial:
+              flow.originalAuthorNickname?.slice(0, 1) ?? '?',
+            title: flow.title,
+            description: flow.summary ?? '',
+            level: levelMap[flow.difficulty] ?? '입문',
+            categories: flow.categories.map((category) => category.name),
+          })),
+        )
 
-        return {
-          tutorial,
-          currentStep: savedRecord.currentStep,
-          totalSteps: savedRecord.totalSteps,
-        }
+        setStorageCounts(ownResult.counts)
       })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .catch((requestError: unknown) => {
+        if (!isMounted) return
+        setFlowsError(
+          requestError instanceof Error
+            ? requestError.message
+            : '저장한 흐름을 불러오지 못했습니다.',
+        )
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingFlows(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const savedTutorials = useMemo(() => {
+    // 백엔드 영문 난이도를 프론트 한글 난이도로 변환
+    const levelMap: Record<string, TutorialLevel> = {
+      BEGINNER: '입문',
+      BASIC: '기초',
+      ADVANCED: '응용',
+    }
+
+    return savedTutorialRecords.map((savedRecord) => ({
+      tutorial: {
+        id: savedRecord.tutorialId,
+        title: savedRecord.title,
+        description: savedRecord.summary,
+        level: levelMap[savedRecord.difficulty] ?? '입문',
+        categories: savedRecord.categories.map((category) => category.name),
+        thumbnailUrl: savedRecord.thumbnailUrl,
+      },
+      currentStep: savedRecord.currentStepOrder,
+      totalSteps: savedRecord.totalSteps,
+      status: savedRecord.status,
+    }))
   }, [savedTutorialRecords])
 
   const tabs = [
@@ -82,19 +200,19 @@ function MyStoragePage() {
       id: 'saved' as const,
       label: '저장한 튜토리얼',
       icon: Bookmark,
-      count: savedTutorials.length,
+      count: storageCounts?.saved ?? savedTutorials.length,
     },
     {
       id: 'created' as const,
       label: '내가 만든 흐름',
       icon: FolderKanban,
-      count: createdWorkflows.length,
+      count: storageCounts?.own ?? createdWorkflows.length,
     },
     {
       id: 'copied' as const,
       label: '복사한 흐름',
       icon: Copy,
-      count: copiedWorkflows.length,
+      count: storageCounts?.copied ?? copiedWorkflows.length,
     },
   ]
 
@@ -169,41 +287,99 @@ function MyStoragePage() {
     navigate(`/official-tutorials/${tutorialId}`)
   }
 
-  const handleRemoveTutorial = (tutorialId: number) => {
-    setSavedTutorialRecords((previousRecords) =>
-      previousRecords.filter(
-        (record) => record.tutorialId !== tutorialId,
-      ),
+  const handleRemoveTutorial = async (tutorialId: number) => {
+    const savedTutorial = savedTutorialRecords.find(
+      (record) => record.tutorialId === tutorialId,
     )
+
+    if (!savedTutorial) return
+
+    const shouldRemove = window.confirm(
+      '저장을 해제하면 튜토리얼 진행 기록도 함께 삭제됩니다. 해제할까요?',
+    )
+
+    if (!shouldRemove) return
+
+    setRemovingTutorialId(tutorialId)
+    setSavedTutorialsError('')
+
+    try {
+      // 시작 또는 완료한 튜토리얼은 연결된 가이드 flow를 먼저 삭제한다.
+      if (
+        (savedTutorial.status === 'IN_PROGRESS' ||
+          savedTutorial.status === 'COMPLETED') &&
+        savedTutorial.flowId
+      ) {
+        await deleteFlow(savedTutorial.flowId)
+      }
+
+      // flow 삭제 성공 후(또는 NOT_STARTED인 경우) 저장·진행 기록을 삭제한다.
+      await deleteTutorialProgress(tutorialId)
+
+      setSavedTutorialRecords((previousRecords) =>
+        previousRecords.filter(
+          (record) => record.tutorialId !== tutorialId,
+        ),
+      )
+      setStorageCounts((previousCounts) =>
+        previousCounts
+          ? {
+              ...previousCounts,
+              saved: Math.max(previousCounts.saved - 1, 0),
+            }
+          : previousCounts,
+      )
+    } catch (requestError) {
+      setSavedTutorialsError(
+        requestError instanceof Error
+          ? requestError.message
+          : '튜토리얼 저장을 해제하지 못했습니다.',
+      )
+    } finally {
+      setRemovingTutorialId(null)
+    }
   }
 
   /*
    * 내가 만든 흐름 버튼 함수
    */
   const handleEditWorkflow = (workflowId: number) => {
-   navigate(`/my-storage/workflows/${workflowId}`)
+    navigate(`/my-storage/workflows/${workflowId}`)
   }
 
   const handlePreviewWorkflow = (workflowId: number) => {
-    navigate(`/workflows/${workflowId}/preview`)
+    // 미리보기에서는 워크플로우 저장 1단계인 검토 화면으로 이동합니다.
+    navigate(`/my-storage/workflows/${workflowId}/preview`)
   }
 
-  const handleToggleVisibility = (workflowId: number) => {
-    setCreatedWorkflows((previousWorkflows) =>
-      previousWorkflows.map((workflow) => {
-        if (workflow.id !== workflowId) {
-          return workflow
-        }
+  const handleToggleVisibility = async (workflowId: number) => {
+    const workflow = createdWorkflows.find((item) => item.id === workflowId)
+    if (!workflow) return
 
-        return {
-          ...workflow,
-          visibility:
-            workflow.visibility === 'public'
-              ? 'private'
-              : 'public',
-        }
-      }),
-    )
+    const nextVisibility =
+      workflow.visibility === 'public' ? 'private' : 'public'
+    setFlowsError('')
+
+    try {
+      // 전체 갱신 API 내부에서 기존 상세값을 보존하고 공개 상태만 변경합니다.
+      await updateFlowVisibility(
+        workflowId,
+        nextVisibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+      )
+      setCreatedWorkflows((previousWorkflows) =>
+        previousWorkflows.map((item) =>
+          item.id === workflowId
+            ? { ...item, visibility: nextVisibility }
+            : item,
+        ),
+      )
+    } catch (error) {
+      setFlowsError(
+        error instanceof Error
+          ? error.message
+          : '공개 상태를 변경하지 못했습니다.',
+      )
+    }
   }
 
   /*
@@ -216,7 +392,8 @@ function MyStoragePage() {
   }
 
   const handleEditCopy = (workflowId: number) => {
-    navigate(`/studio/${workflowId}/edit`)
+    // 복사한 흐름도 내가 만든 흐름과 동일한 상세페이지/API를 사용합니다.
+    navigate(`/my-storage/workflows/${workflowId}`)
   }
 
   const handlePreviousPage = () => {
@@ -286,7 +463,29 @@ function MyStoragePage() {
 
           {/* 카드 목록 */}
           <div className="relative mt-12">
-            {selectedItemCount > 0 ? (
+            {selectedTab === 'saved' && isLoadingSavedTutorials ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center text-sm font-semibold text-slate-500">
+                저장한 튜토리얼을 불러오는 중입니다.
+              </div>
+            ) : selectedTab === 'saved' && savedTutorialsError ? (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm font-semibold text-red-700"
+              >
+                {savedTutorialsError}
+              </div>
+            ) : selectedTab !== 'saved' && isLoadingFlows ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center text-sm font-semibold text-slate-500">
+                저장한 흐름을 불러오는 중입니다.
+              </div>
+            ) : selectedTab !== 'saved' && flowsError ? (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm font-semibold text-red-700"
+              >
+                {flowsError}
+              </div>
+            ) : selectedItemCount > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {/* 저장한 튜토리얼 */}
                 {selectedTab === 'saved' &&
@@ -296,6 +495,8 @@ function MyStoragePage() {
                       tutorial={item.tutorial}
                       currentStep={item.currentStep}
                       totalSteps={item.totalSteps}
+                      status={item.status}
+                      isRemoving={removingTutorialId === item.tutorial.id}
                       onContinue={handleContinueTutorial}
                       onRemove={handleRemoveTutorial}
                     />

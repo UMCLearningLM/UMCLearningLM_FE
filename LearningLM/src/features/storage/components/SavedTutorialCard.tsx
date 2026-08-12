@@ -1,16 +1,27 @@
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
-import type { Tutorial } from '../../tutorial/data/tutorials'
+import type { TutorialLevel } from '../../tutorial/data/tutorials'
+
+export interface StorageTutorialCardData {
+  id: number
+  title: string
+  description: string
+  level: TutorialLevel
+  categories: string[]
+  thumbnailUrl: string | null
+}
 
 interface StorageTutorialCardProps {
-  tutorial: Tutorial
+  tutorial: StorageTutorialCardData
   currentStep: number
   totalSteps: number
+  status: string
+  isRemoving?: boolean
   onContinue: (tutorialId: number) => void
   onRemove: (tutorialId: number) => void
 }
 
-const levelClassMap: Record<Tutorial['level'], string> = {
+const levelClassMap: Record<TutorialLevel, string> = {
   입문: 'border-emerald-200 bg-emerald-50 text-emerald-600',
   기초: 'border-blue-200 bg-blue-50 text-blue-600',
   응용: 'border-rose-200 bg-rose-50 text-rose-600',
@@ -31,12 +42,30 @@ export function SavedTutorialCard({
   tutorial,
   currentStep,
   totalSteps,
+  status,
+  isRemoving = false,
   onContinue,
   onRemove,
 }: StorageTutorialCardProps) {
+  // 별도 상태 배지를 만들지 않고 기존 단계 문구만 진행 상태에 따라 바꾼다.
+  const progressText =
+    status === 'NOT_STARTED'
+      ? '시작 전'
+      : status === 'COMPLETED'
+        ? '완료'
+        : `${currentStep}/${totalSteps} 단계`
+
   return (
     <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
-      <WireframeThumbnail />
+      {tutorial.thumbnailUrl ? (
+        <img
+          src={tutorial.thumbnailUrl}
+          alt={`${tutorial.title} 썸네일`}
+          className="h-24 w-full border-b border-slate-200 object-cover"
+        />
+      ) : (
+        <WireframeThumbnail />
+      )}
 
       <div className="px-6 py-5">
         <h3 className="text-xl font-black tracking-tight text-slate-950">
@@ -69,7 +98,7 @@ export function SavedTutorialCard({
 
         <div className="mt-7 flex items-end justify-between gap-4">
           <span className="text-xs font-semibold text-slate-400">
-            {currentStep}/{totalSteps} 단계
+            {progressText}
           </span>
 
           <div className="flex items-center gap-2">
@@ -83,9 +112,10 @@ export function SavedTutorialCard({
             <Button
               variant="secondary"
               size="sm"
+              disabled={isRemoving}
               onClick={() => onRemove(tutorial.id)}
             >
-              저장 해제
+              {isRemoving ? '해제 중...' : '저장 해제'}
             </Button>
           </div>
         </div>

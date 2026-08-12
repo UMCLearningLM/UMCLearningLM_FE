@@ -8,16 +8,23 @@ import { PublicLibraryPage } from '../pages/library/PublicLibraryPage'
 import LibraryDetailPage from '../pages/library/LibraryDetailPage'
 import MyStoragePage from '../pages/storage/MyStoragePage'
 import WorkflowDetailPage from '../pages/storage/WorkflowDetailPage'
+import { Studio_create_review1 } from '../pages/Studio_create_review1'
 import { Stdio_create1 } from '../pages/Stdio_create1'
 import { OfficialTutorialPage } from '../pages/tutorial/OfficialTutorialPage'
 import { TutorialDetailPage } from '../pages/tutorial/TutorialDetailPage'
 import { StudioNodeCardTestPage } from '../pages/dev/StudioNodeCardTestPage'
 import { ProcessTestPage } from '../pages/dev/ProcessTestPage'
+import LoginPage from '../pages/auth/Login'
+import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <HomePage />,
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
   },
   {
     path: '/official-tutorials',
@@ -42,7 +49,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/my-storage',
-    element: <MyStoragePage />,
+    element: (
+      <ProtectedRoute>
+        <MyStoragePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/public-library',
@@ -54,7 +65,20 @@ export const router = createBrowserRouter([
   },
   {
     path: '/my-storage/workflows/:workflowId',
-    element: <WorkflowDetailPage />,
+    element: (
+      <ProtectedRoute>
+        <WorkflowDetailPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    // 내가 만든 흐름 카드의 미리보기(저장 전 검토) 화면입니다.
+    path: '/my-storage/workflows/:workflowId/preview',
+    element: (
+      <ProtectedRoute>
+        <Studio_create_review1 />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/studionodecardtestpage',
