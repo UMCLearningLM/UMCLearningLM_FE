@@ -9,7 +9,7 @@ export function PwFind() {
     const [email, setEmail] = useState("");
     //이메일 인증 확인
     const [emailCheck, setEmailCheck] = useState<"basic" | "false" | "true">("basic");
-    const [emailState, setEmailState] = useState<"basic" | "notEnroll" | "success">("basic");
+    const [emailState, setEmailState] = useState<"basic" | "notEnroll" | "success" | "incorrect">("basic");
     const [emailForm, setEmailForm] = useState(false);
     //회원가입 버튼 클릭시
     const [verifiedStatus, setVerifiedStatus] = useState<
@@ -27,20 +27,12 @@ export function PwFind() {
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
     const [count, setCount] = useState(180);
+    const [code, setCode] = useState("");
 
-    const emailFind = async () => {
-        if (email == "ssemilife@gmail.com" && emailForm) {
-            console.log("이메일 찾기 성공");
-            setEmailState("success");
-            console.log(emailState);
-            console.log(emailForm);
-        } else {
-            console.log("이메일 찾기 실패");
-            setEmailState("notEnroll");
-            console.log(emailState);
-            console.log(emailForm);
-            // setPwState(false);
-        }
+
+    const sendEmail = async () => {
+        // console.log("인증번호 전송 버튼 클릭");
+
 
         try {
             const res = await axios.post(
@@ -65,6 +57,52 @@ export function PwFind() {
             setEmailCheck("false");
         }
     }
+    useEffect(() => {
+        if (!isSendCode) return;
+        if (count <= 0) {
+            alert("인증시간 만료");
+            setIsSendCode(false);
+            return;
+        }
+        //1초마다 카운트-1 표시
+        const timer = setTimeout(() => {
+            setCount((prev) => prev - 1);
+        }, 1000);
+        //이전 타이머 제거
+        return () => clearTimeout(timer);
+    }, [count, isSendCode]);
+    // 이메일 인증 완료 후 받은 임시 토큰
+    const [temporaryAccessToken, setTemporaryAccessToken] = useState("")
+    const [emailPass, setEmailPass] = useState<"none" | "false" | "true">("none");
+    const verifyCode = async () => {
+        //이메일&&인증번호 백엔드 전송
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/email/verify",
+                {
+                    verificationType: "NON_LOGIN",
+                    purpose: "SIGNUP",
+                    email: email,
+                    code: code,
+                }
+            )
+            console.log("이메일 인증 성공");
+            console.log("응답 data: ", res.data);
+            const temporaryToken = res.data.result.temporaryAccessToken;
+            setTemporaryAccessToken(temporaryToken);
+            setIsSendCode(false);
+            setVerifiedStatus("succ");
+            setEmailState("success");
+        } catch (error) {
+            console.log("이메일 인증 성공");
+            console.log(error);
+
+            setVerifiedStatus("fail");
+        }
+
+    }
+    //회원가입 클릭 시 이메일 인증 여부에 따른 상태값
+
     useEffect(() => {
         if (0 < email.length) {
             setEmailForm(true);
@@ -106,7 +144,7 @@ export function PwFind() {
         );
     }, [pw, pwCheck]);
 
-    const pwChangeFun = () => {
+    const pwChangeFun = async () => {
 
         if (!validatePw(pw)) {
             setPwNull("basic");
@@ -117,9 +155,147 @@ export function PwFind() {
         } else {
             // alert("비밀번호 변경 실패");
         }
+
+        try {
+            const res = await axios.post(
+                "http://3.35.22.232:8080/api/auth/password",
+                {
+                    newPassword: pw
+                }
+            )
+            const temporaryToken = res.data?.result?.temporaryAccessToken;
+            console.log("verify 응답 전체:", res.data);
+            console.log("임시 토큰 존재:", Boolean(temporaryToken));
+            if (!temporaryToken) {
+                console.error("이메일 인증 응답:", res.data);
+                throw new Error("이메일 인증 토큰을 받지 못했습니다.");
+            }
+
+            setTemporaryAccessToken(temporaryToken);
+            setIsSendCode(false);
+            setVerifiedStatus("succ");
+
+            console.log("비밀번호 변경 완료. 변경된 이메일 : ", pw);
+        } catch (error) {
+            console.log("비밀번호 변경 실패");
+        }
     }
 
+    const renderVerifyCode = () => {
 
+        switch (verifiedStatus) {
+            case "none":
+                return (
+                    <>
+                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
+                            onClick={() => {
+                                sendEmail()
+                                setEmailPass("none");
+                                //api 완성되면 제거 ((; 테스트용 생성))
+                                if (emailCheck == "true") {
+                                    setIsSendCode(true);
+                                    setVerifiedStatus("sendCode");
+                                }
+                            }}
+                        >인증번호 전송</button>
+
+
+                    </>
+                )
+            case "sendCode":
+                return (
+                    <>
+                        <input type="text"
+                            onChange={(e) => setCode(e.target.value)}
+                            placeholder="인증번호 6자리를 입력해주세요." className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#E4E4E7]" />
+                        <div className="flex justify-center items-center">
+                            <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
+                                <span className="cursor-pointer text-[#6366F1] ml-[12px]"
+                                    onClick={() => {
+                                        console.log("이메일 재전송")
+                                        sendEmail()
+                                    }
+                                    }
+                                >인증번호 재전송</span>
+                            </p>
+                            <span className="font-bold text-[#EF8888] ml-[98px]"
+                            >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
+                            </span>
+                        </div>
+                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[112px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
+                            onClick={verifyCode}
+                        >인증 완료</button>
+                    </>
+                )
+            case "fail":
+                return (
+                    <>
+                        <input type="text"
+                            onChange={(e) => setCode(e.target.value)}
+                            placeholder="인증번호 6자리를 입력해주세요." className="h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#F8A3A3]" />
+                        <p className="text-[#EF8888] font-bold mt-[15px]">인증번호가 유효하지 않습니다. 다시 입력해주세요.</p>
+                        <div className="flex justify-center items-center">
+                            <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
+                                <span className="cursor-pointer text-[#6366F1] ml-[12px]"
+                                    onClick={sendEmail}
+                                >인증번호 재전송</span>
+                            </p>
+                            <span className="font-bold text-[#EF8888] ml-[98px]"
+                            >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
+                            </span>
+                        </div>
+                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[112px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
+                            onClick={verifyCode}
+                        >인증 완료</button>
+                    </>
+                )
+            case "succ":
+                return (
+                    <p className="text-[#5FAA81] font-bold mt-[15px]">인증을 완료했습니다.</p>
+                )
+            case "emailError":
+                return (
+                    <>
+                        <p className="text-[#EF8888] my-[15px]">유요한 이메일이 아닙니다. 다시 작성해 주세요.</p>
+                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
+                            onClick={() => {
+                                sendEmail();
+                            }}
+                        >
+                            인증번호 전송</button>
+                    </>
+                )
+            case "emailcertificationNo":
+                return (
+                    <>
+                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] mt-[11px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
+                            onClick={() => {
+                                sendEmail();
+                                //api 완성되면 제거 ((; 테스트용 생성))
+                                setIsSendCode(true)
+                            }}
+                        >
+                            인증번호 전송</button>
+                        <p className="text-[#EF8888] font-bold my-[11px]">이메일 인증을 완료해주세요.</p>
+                    </>
+                )
+        }
+
+    }
+
+    const next = () => {
+        if (verifiedStatus != "succ") {
+            setEmailPass("false");
+        } else {
+            setEmailPass("true");
+        }
+    }
+    useEffect(() => {
+        if (emailPass == "true") {
+            setEmailState("success");
+        }
+    })
+    console.log("이메일 패스 ", emailPass);
 
     return (
         <>
@@ -140,27 +316,28 @@ export function PwFind() {
                     {emailState != "success" ?
                         (<>
                             <p className="w-[519px] text-[32px] font-bold text-[#27272A]">비밀번호 찾기</p>
-                            <p className="w-[519px] mt-[7px]">이메일을 입력해주세요.</p>
+                            <p className="w-[519px] mt-[7px]">이메일 인증을 완료해주세요.</p>
                             {/*main content */}
                             {/*email */}
-                            <div className="flex flex-col my-[47px] w-[519px]">
-                                <p className="font-bold">이메일</p>
-                                <input type="email"
-                                    onChange={(e) => {
-                                        setEmail(e.target.value);
-                                    }}
-                                    value={email}
-                                    placeholder="you@example.com"
-                                    className={`hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${emailState == "notEnroll" ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
-                                {emailState == "notEnroll" && (
-                                    <p className="font-bold text-[#EF8888] mt-[15px]">등록되지 않은 이메일입니다. 다시 입력해주세요.</p>
-                                )}
+                            <div className="flex flex-col mb-[47px] w-[519px]">
+                                <div className="flex flex-col mt-[47px] w-[519px]">
+                                    <p className="font-bold text-[#52525B]">이메일</p>
+                                    <input type="email" value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="you@example.com" className={`hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
 
+                                    {renderVerifyCode()}
+                                </div>
+                                {emailPass == "false" && (
+                                    <>
+                                        <p className="mt-[11px] font-bold text-[#EF8888]">이메일 인증을 완료해주세요</p>
+                                    </>
+                                )}
                             </div>
                             <button className="cursor-pointer hover:bg-[#6366F1]
                         hover:text-white text-[#9D9ED0] w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                                 onClick={() => {
-                                    emailFind();
+                                    next();
                                 }}>
                                 <span className=" text-[24px] font-bold ">다음</span>
                             </button>

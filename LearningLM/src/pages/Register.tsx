@@ -52,7 +52,7 @@ export function Register() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-
+    //인증번호
 
 
     //이메일 형식 유효한지
