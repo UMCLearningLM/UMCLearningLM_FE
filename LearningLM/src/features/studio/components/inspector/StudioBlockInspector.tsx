@@ -72,21 +72,33 @@ import {
 } from './process/ProcessCoreInspectors'
 
 import {
-  CallSkillInspector,
-  ChecklistTransformInspector,
   ClassifyItemsInspector,
   CompareInspector,
+  OrderInspector,
+} from './process/Process03To05Inspectors'
+
+import {
   DecomposeFunctionsInspector,
-  DraftInspector,
   FindExceptionsInspector,
   LinkPolicyInspector,
-  OrderInspector,
-  PromptComposeInspector,
-  PromptFillBlanksInspector,
-  QuestionListInspector,
-  SummaryPromptLayoutInspector,
+} from './process/Process06To08Inspectors'
+
+import {
+  ChecklistTransformInspector,
+  DraftInspector,
   TableTransformInspector,
-} from './process/ProcessDetailedInspectors'
+} from './process/Process09To11Inspectors'
+
+import {
+  CallSkillInspector,
+  PromptComposeInspector,
+  QuestionListInspector,
+} from './process/Process12To14Inspectors'
+
+import {
+  PromptFillBlanksInspector,
+  SummaryPromptLayoutInspector,
+} from './process/Process15To16Inspectors'
 
 
 export interface StudioInspectorConfigUpdateOptions {
@@ -94,10 +106,24 @@ export interface StudioInspectorConfigUpdateOptions {
   state?: StudioSlotState
 }
 
+export interface StudioInspectorConnectedNode {
+  id: string
+  title: string
+  stage: StudioStage
+  slots: StudioNodeSlot[]
+}
+
+export interface StudioInspectorConnectionInfo {
+  incomingNodes: StudioInspectorConnectedNode[]
+  outgoingNodes: StudioInspectorConnectedNode[]
+}
+
 export interface StudioBlockInspectorComponentProps {
   nodeId: string
 
   slot: StudioNodeSlot
+
+  connectionInfo?: StudioInspectorConnectionInfo
 
   onConfigChange: (
     patch: StudioBlockConfig,
@@ -113,6 +139,8 @@ export interface StudioBlockInspectorProps {
   nodeId: string
 
   slot: StudioNodeSlot
+
+  connectionInfo?: StudioInspectorConnectionInfo
 
   onConfigChange: (
     patch: StudioBlockConfig,
@@ -487,6 +515,7 @@ function GenericStudioBlockInspector({
 export function StudioBlockInspector({
   nodeId,
   slot,
+  connectionInfo,
   onConfigChange,
   onValueChange,
 }: StudioBlockInspectorProps) {
@@ -503,6 +532,9 @@ export function StudioBlockInspector({
         }
         slot={
           slot
+        }
+        connectionInfo={
+          connectionInfo
         }
         onConfigChange={
           onConfigChange

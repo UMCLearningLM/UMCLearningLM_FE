@@ -764,7 +764,7 @@ export function SummaryInspector({
         summaryValue:
           nextComplete
             ? `${lengthLabel} · ${formatLabel}`
-            : lengthLabel,
+            : '',
 
         state:
           resolveState(

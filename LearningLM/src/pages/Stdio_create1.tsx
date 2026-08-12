@@ -24,6 +24,7 @@ import dashed from '../assets/dashed.png'
 
 import {
   StudioBlockInspector,
+  type StudioInspectorConnectionInfo,
 } from '../features/studio/components/inspector/StudioBlockInspector'
 
 import {
@@ -359,6 +360,93 @@ export function Stdio_create1() {
   const selectedNode =
     studio.nodes.find((node) => node.selected) ?? null
 
+    const selectedNodeConnectionInfo =
+  useMemo<StudioInspectorConnectionInfo>(
+    () => {
+      if (!selectedNode) {
+        return {
+          incomingNodes: [],
+          outgoingNodes: [],
+        }
+      }
+
+      const incomingNodeIds =
+        new Set(
+          studio.edges
+            .filter(
+              (edge) =>
+                edge.target ===
+                selectedNode.id,
+            )
+            .map(
+              (edge) =>
+                edge.source,
+            ),
+        )
+
+      const outgoingNodeIds =
+        new Set(
+          studio.edges
+            .filter(
+              (edge) =>
+                edge.source ===
+                selectedNode.id,
+            )
+            .map(
+              (edge) =>
+                edge.target,
+            ),
+        )
+
+      const toConnectedNode = (
+        node: StudioFlowNodeInstance,
+      ) => ({
+        id:
+          node.id,
+
+        title:
+          node.data.node.title,
+
+        stage:
+          node.data.node.stage,
+
+        slots:
+          node.data.node.slots,
+      })
+
+      return {
+        incomingNodes:
+          studio.nodes
+            .filter(
+              (node) =>
+                incomingNodeIds.has(
+                  node.id,
+                ),
+            )
+            .map(
+              toConnectedNode,
+            ),
+
+        outgoingNodes:
+          studio.nodes
+            .filter(
+              (node) =>
+                outgoingNodeIds.has(
+                  node.id,
+                ),
+            )
+            .map(
+              toConnectedNode,
+            ),
+      }
+    },
+    [
+      selectedNode,
+      studio.edges,
+      studio.nodes,
+    ],
+  )
+
   const filteredBlocks = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
 
@@ -373,23 +461,31 @@ export function Stdio_create1() {
     )
   }, [searchText])
 
-    const workflowStructureSignature = useMemo(() => {
-      return studio.nodes
+    const workflowStructureSignature =
+  useMemo(() => {
+    const nodeSignature =
+      studio.nodes
         .map((node) => {
-          const slots = node.data.node.slots
-            .map((slot) =>
-              [
-                slot.id,
-                slot.value ?? '',
-                slot.state ?? '',
-                slot.required ? '1' : '0',
-                JSON.stringify(
-                  slot.config ?? {},
-                ),
-              ].join(':'),
-            )
-            .sort()
-            .join(',')
+          const slots =
+            node.data.node.slots
+              .map((slot) =>
+                [
+                  slot.id,
+                  slot.value ??
+                    '',
+                  slot.state ??
+                    '',
+                  slot.required
+                    ? '1'
+                    : '0',
+                  JSON.stringify(
+                    slot.config ??
+                      {},
+                  ),
+                ].join(':'),
+              )
+              .sort()
+              .join(',')
 
           return [
             node.id,
@@ -399,7 +495,31 @@ export function Stdio_create1() {
         })
         .sort()
         .join('||')
-    }, [studio.nodes])
+
+    const edgeSignature =
+      studio.edges
+        .map(
+          (edge) =>
+            [
+              edge.source,
+              edge.target,
+              edge.sourceHandle ??
+                '',
+              edge.targetHandle ??
+                '',
+            ].join('>'),
+        )
+        .sort()
+        .join('||')
+
+    return [
+      nodeSignature,
+      edgeSignature,
+    ].join('###')
+  }, [
+    studio.nodes,
+    studio.edges,
+  ])
 
   useEffect(() => {
     setValidationResult(null)
@@ -870,6 +990,9 @@ export function Stdio_create1() {
                             key={slot.id}
                             nodeId={selectedNode.id}
                             slot={slot}
+                            connectionInfo={
+                              selectedNodeConnectionInfo
+                            }
                             onConfigChange={(patch, options) => {
                               studio.updateBlockConfig({
                                 nodeId: selectedNode.id,

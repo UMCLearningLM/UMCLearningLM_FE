@@ -262,8 +262,42 @@ export function GoalSettingInspector({
 
   const save = (
     patch: StudioBlockConfig,
-    summary = goalType,
+    summary?: string,
   ) => {
+    const nextGoalType =
+      typeof patch.goalType ===
+      'string'
+        ? patch.goalType
+        : goalType
+
+    const nextDescription =
+      typeof patch.description ===
+      'string'
+        ? patch.description
+        : description
+
+    const nextIsCustomGoal =
+      nextGoalType ===
+      '직접 입력'
+
+    const nextComplete =
+      Boolean(
+        nextGoalType &&
+          (
+            !nextIsCustomGoal ||
+            nextDescription.trim()
+          ),
+      )
+
+    const nextSummary =
+      summary ??
+      (
+        nextIsCustomGoal &&
+        nextDescription.trim()
+          ? nextDescription.trim()
+          : nextGoalType
+      )
+
     onConfigChange(
       {
         goalType,
@@ -274,10 +308,13 @@ export function GoalSettingInspector({
       },
       {
         summaryValue:
-          summary,
+          nextComplete
+            ? nextSummary
+            : '',
+
         state:
           resolveState(
-            complete,
+            nextComplete,
           ),
       },
     )
@@ -2155,17 +2192,65 @@ export function TargetAudienceInspector({
       'customAudience',
     )
 
+  const isCustomAudience =
+    audience ===
+    '직접 입력'
+
   const complete =
     Boolean(
       audience &&
-        level,
+        level &&
+        (
+          !isCustomAudience ||
+          customAudience.trim()
+        ),
     )
 
   const save = (
     patch: StudioBlockConfig,
-    summary =
-      audience,
+    summary?: string,
   ) => {
+    const nextAudience =
+      typeof patch.audience ===
+      'string'
+        ? patch.audience
+        : audience
+
+    const nextLevel =
+      typeof patch.level ===
+      'string'
+        ? patch.level
+        : level
+
+    const nextCustomAudience =
+      typeof patch.customAudience ===
+      'string'
+        ? patch.customAudience
+        : customAudience
+
+    const nextIsCustomAudience =
+      nextAudience ===
+      '직접 입력'
+
+    const nextComplete =
+      Boolean(
+        nextAudience &&
+          nextLevel &&
+          (
+            !nextIsCustomAudience ||
+            nextCustomAudience.trim()
+          ),
+      )
+
+    const nextSummary =
+      summary ??
+      (
+        nextIsCustomAudience &&
+        nextCustomAudience.trim()
+          ? nextCustomAudience.trim()
+          : nextAudience
+      )
+
     onConfigChange(
       {
         audience,
@@ -2177,11 +2262,13 @@ export function TargetAudienceInspector({
       },
       {
         summaryValue:
-          summary,
+          nextComplete
+            ? nextSummary
+            : '',
 
         state:
           resolveState(
-            complete,
+            nextComplete,
           ),
       },
     )
