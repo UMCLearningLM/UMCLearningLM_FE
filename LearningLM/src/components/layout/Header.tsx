@@ -94,7 +94,10 @@ export function Header() {
         const accessToken =
           localStorage.getItem(
             'accessToken',
-          )
+          ) ??
+          sessionStorage.getItem(
+            'accessToken',
+          );
 
         /**
          * 토큰 자체가 없으면
@@ -124,8 +127,8 @@ export function Header() {
           const user =
             response.data
               ?.result as
-              | CurrentUser
-              | undefined
+            | CurrentUser
+            | undefined
 
           /**
            * 정상 응답인데도
@@ -351,27 +354,27 @@ export function Header() {
           {/* 인증 확인 중 */}
           {authStatus ===
             'checking' && (
-            <div
-              className="h-[31px] w-[72px]"
-              aria-hidden="true"
-            />
-          )}
+              <div
+                className="h-[31px] w-[72px]"
+                aria-hidden="true"
+              />
+            )}
 
           {/* 비로그인 */}
           {authStatus ===
             'guest' && (
-            <button
-              type="button"
-              onClick={() => {
-                navigate(
-                  '/login',
-                )
-              }}
-              className="cursor-pointer whitespace-nowrap text-[11px] font-medium tracking-[-0.02em] text-[#666666] transition-colors hover:text-[#6366F1]"
-            >
-              로그인/회원가입
-            </button>
-          )}
+              <button
+                type="button"
+                onClick={() => {
+                  navigate(
+                    '/login',
+                  )
+                }}
+                className="cursor-pointer whitespace-nowrap text-[11px] font-medium tracking-[-0.02em] text-[#666666] transition-colors hover:text-[#6366F1]"
+              >
+                로그인/회원가입
+              </button>
+            )}
 
           {/* 로그인 */}
           {authStatus ===
