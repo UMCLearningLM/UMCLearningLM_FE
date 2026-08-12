@@ -5,6 +5,7 @@ import {
 import {
   useEffect,
   useState,
+  useRef,
   type FormEvent,
 } from 'react'
 
@@ -76,7 +77,39 @@ export function Header() {
   ] = useState<CurrentUser | null>(
     null,
   )
+  const [
+    isProfileMenuOpen,
+    setIsProfileMenuOpen,
+  ] = useState(false)
 
+  const profileMenuRef =
+    useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleClickOutside = (
+      event: MouseEvent,
+    ) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener(
+      'mousedown',
+      handleClickOutside,
+    )
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleClickOutside,
+      )
+    }
+  }, [])
   /**
    * 현재 사용자 확인
    *
@@ -124,8 +157,8 @@ export function Header() {
           const user =
             response.data
               ?.result as
-              | CurrentUser
-              | undefined
+            | CurrentUser
+            | undefined
 
           /**
            * 정상 응답인데도
@@ -231,6 +264,65 @@ export function Header() {
     event.preventDefault()
 
     handleSearch()
+  }
+
+  const handleLogout = async () => {
+    const accessToken =
+      localStorage.getItem('accessToken')
+
+    const refreshToken =
+      localStorage.getItem('refreshToken')
+
+    // 토큰이 없으면 서버 요청 없이 로그아웃 처리
+    if (!accessToken || !refreshToken) {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+
+      setCurrentUser(null)
+      setAuthStatus('guest')
+      setIsProfileMenuOpen(false)
+
+      navigate('/login')
+
+      return
+    }
+
+    try {
+      // 백엔드 로그아웃 API 호출
+      await api.post(
+        '/auth/logout',
+        {
+          refreshToken,
+        },
+      )
+
+      console.log('로그아웃 성공')
+
+      // 로그아웃 성공 후 로컬 인증 정보 삭제
+      localStorage.removeItem(
+        'accessToken',
+      )
+
+      localStorage.removeItem(
+        'refreshToken',
+      )
+
+      localStorage.removeItem(
+        'user',
+      )
+
+      setCurrentUser(null)
+      setAuthStatus('guest')
+      setIsProfileMenuOpen(false)
+
+      // navigate('/login')
+    } catch (error) {
+      console.error(
+        '로그아웃 실패:',
+        error,
+      )
+    }
   }
 
   /**
@@ -351,49 +443,78 @@ export function Header() {
           {/* 인증 확인 중 */}
           {authStatus ===
             'checking' && (
-            <div
-              className="h-[31px] w-[72px]"
-              aria-hidden="true"
-            />
-          )}
+              <div
+                className="h-[31px] w-[72px]"
+                aria-hidden="true"
+              />
+            )}
 
           {/* 비로그인 */}
           {authStatus ===
             'guest' && (
-            <button
-              type="button"
-              onClick={() => {
-                navigate(
-                  '/login',
-                )
-              }}
-              className="cursor-pointer whitespace-nowrap text-[11px] font-medium tracking-[-0.02em] text-[#666666] transition-colors hover:text-[#6366F1]"
-            >
-              로그인/회원가입
-            </button>
-          )}
+              <button
+                type="button"
+                onClick={() => {
+                  navigate(
+                    '/login',
+                  )
+                }}
+                className="cursor-pointer whitespace-nowrap text-[11px] font-medium tracking-[-0.02em] text-[#666666] transition-colors hover:text-[#6366F1]"
+              >
+                로그인/회원가입
+              </button>
+            )}
 
           {/* 로그인 */}
           {authStatus ===
             'authenticated' &&
             currentUser && (
-              <button
-                type="button"
-                aria-label={`${currentUser.nickname}님의 내 저장소로 이동`}
-                title={
-                  currentUser.nickname
-                }
-                onClick={() => {
-                  navigate(
-                    '/my-storage',
-                  )
-                }}
-                className="flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-full border border-[#E4E4E7] bg-[#F5F5F7] text-[12px] font-bold text-[#52525B] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
+              <div
+                ref={profileMenuRef}
+                className="relative"
               >
-                {
-                  profileLabel
-                }
-              </button>
+                {/* 프로필 버튼 */}
+                <button
+                  type="button"
+                  aria-label={`${currentUser.nickname}님의 프로필 메뉴`}
+                  title={currentUser.nickname}
+                  onClick={() => {
+                    setIsProfileMenuOpen(
+                      (prev) => !prev,
+                    )
+                  }}
+                  className="flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-full border border-[#E4E4E7] bg-[#F5F5F7] text-[12px] font-bold text-[#52525B] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
+                >
+                  {profileLabel}
+                </button>
+
+                {/* 드롭다운 메뉴 */}
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 top-[39px] z-[1000] w-[145px] overflow-hidden rounded-[2px] border border-[#E4E4E7] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
+
+                    {/* 프로필 설정 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false)
+                        navigate('/profile')
+                      }}
+                      className="flex h-[55px] w-full cursor-pointer items-center justify-center border-b border-[#E4E4E7] bg-white text-[18px] font-semibold text-[#52525B] transition-colors hover:bg-[#F8F8FA]"
+                    >
+                      프로필 설정
+                    </button>
+
+                    {/* 로그아웃 */}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex h-[55px] w-full cursor-pointer items-center justify-center bg-white text-[18px] font-semibold text-[#E58A8A] transition-colors hover:bg-[#F8F8FA]"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
         </div>
       </div>
