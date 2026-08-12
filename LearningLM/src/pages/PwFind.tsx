@@ -1,35 +1,46 @@
 import { useEffect, useState } from "react";
 {/* npm install react-icons */ }
-import axios from "axios";
 import { useNavigate } from "react-router-dom"
+import axios from "axios";
 
 export function PwFind() {
     const navigate = useNavigate();
     //이메일 인증
     const [email, setEmail] = useState("");
-    const [emailState, setEmailState] = useState<"basic" | "notEnroll" | "success">("basic");
-    const [emailForm, setEmailForm] = useState(false);
-    const [code, setCode] = useState("");
-    //이메일 인증
     //이메일 인증 확인
     const [emailCheck, setEmailCheck] = useState<"basic" | "false" | "true">("basic");
-    // 이메일 인증 완료 후 받은 임시 토큰
-    const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
+    const [emailState, setEmailState] = useState<"basic" | "notEnroll" | "success">("basic");
+    const [emailForm, setEmailForm] = useState(false);
+    //회원가입 버튼 클릭시
+    const [verifiedStatus, setVerifiedStatus] = useState<
+        "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("none");
+
+    //비밀번호 변경
+    const [pw, setPw] = useState("");
+    const [pwCheck, setPwCheck] = useState("");
+    const [pwNull, setPwNull] = useState<"basic" | "false" | "true">("basic");
+
+    //비밀번호 인증
+    const [pwOk, setPwOk] = useState(false);
 
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
     const [count, setCount] = useState(180);
 
-    //회원가입 버튼 클릭시
-    const [verifiedStatus, setVerifiedStatus] = useState<
-        "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("sendCode");
-
-
-
-    const sendEmail = async () => {
-        // console.log("인증번호 전송 버튼 클릭");
-
+    const emailFind = async () => {
+        if (email == "ssemilife@gmail.com" && emailForm) {
+            console.log("이메일 찾기 성공");
+            setEmailState("success");
+            console.log(emailState);
+            console.log(emailForm);
+        } else {
+            console.log("이메일 찾기 실패");
+            setEmailState("notEnroll");
+            console.log(emailState);
+            console.log(emailForm);
+            // setPwState(false);
+        }
 
         try {
             const res = await axios.post(
@@ -55,195 +66,12 @@ export function PwFind() {
         }
     }
     useEffect(() => {
-        if (!isSendCode) return;
-        if (count <= 0) {
-            alert("인증시간 만료");
-            setIsSendCode(false);
-            return;
-        }
-        //1초마다 카운트-1 표시
-        const timer = setTimeout(() => {
-            setCount((prev) => prev - 1);
-        }, 1000);
-        //이전 타이머 제거
-        return () => clearTimeout(timer);
-    }, [count, isSendCode]);
-
-
-    //비밀번호 변경
-    const [pw, setPw] = useState("");
-    const [pwCheck, setPwCheck] = useState("");
-    const [pwNull, setPwNull] = useState<"basic" | "false" | "true">("basic");
-
-    //비밀번호 인증
-    const [pwOk, setPwOk] = useState(false);
-
-    const emailFind = async () => {
-        try {
-            const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/email/request",
-                {
-                    verificationType: "NON_LOGIN",
-                    purpose: "SIGNUP",
-                    email: email,
-                }
-            );
-            console.log("이메일 찾기 성공");
-            setEmailState("success");
-            console.log(emailState);
-            console.log(emailForm);
-
-            console.log("응답 status:", res.status);
-            console.log("응답 data:", JSON.stringify(res.data, null, 2));
-        }
-        catch (error) {
-            console.log("이메일 찾기 실패");
-            setEmailState("notEnroll");
-            console.log(emailState);
-            console.log(emailForm);
-        }
-
-    }
-    useEffect(() => {
         if (0 < email.length) {
             setEmailForm(true);
         } else {
             setEmailForm(false);
         }
     }, [email]);
-
-    const verifyCode = async () => {
-        //이메일&&인증번호 백엔드 전송
-        try {
-            const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/email/verify",
-                {
-                    verificationType: "NON_LOGIN",
-                    purpose: "SIGNUP",
-                    email: email,
-                    code: code,
-                }
-            )
-            console.log("이메일 인증 성공");
-            console.log("응답 data: ", res.data);
-            const temporaryToken = res.data.result.temporaryAccessToken;
-            setTemporaryAccessToken(temporaryToken);
-            setIsSendCode(false);
-            setVerifiedStatus("succ");
-        } catch (error) {
-            console.log("이메일 인증 성공");
-            console.log(error);
-
-            setVerifiedStatus("fail");
-        }
-
-    }
-    //회원가입 클릭 시 이메일 인증 여부에 따른 상태값
-
-    const renderVerifyCode = () => {
-
-        switch (verifiedStatus) {
-            case "none":
-                return (
-                    <>
-                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#6366F1] mt-[15px] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={() => {
-                                sendEmail()
-                                //api 완성되면 제거 ((; 테스트용 생성))
-                                if (emailCheck == "true") {
-                                    setIsSendCode(true);
-                                    setVerifiedStatus("sendCode");
-                                }
-                            }}
-                        >인증번호 전송</button>
-
-                    </>
-                )
-            case "sendCode":
-                return (
-                    <>
-                        <input type="text"
-                            onChange={(e) => setCode(e.target.value)}
-                            placeholder="인증번호 6자리를 입력해주세요." className="hover:border-[#666666] placeholder:text-[#666666] h-[51px] flex items-center pl-[20px] mt-[12px] rounded-[8px] border-2 border-[#E4E4E7]" />
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-[14.5px] text-[#666666] mt-[11px] my-[15px]">인증번호를 받지 못하셨나요?
-                                    <span className="cursor-pointer text-[#6366F1] ml-[12px]"
-                                        onClick={() => {
-                                            console.log("이메일 재전송")
-                                            sendEmail()
-                                        }
-                                        }
-                                    >인증번호 재전송</span>
-                                </p>
-                            </div>
-                            <span className="font-bold text-[#EF8888] text-[16px] mt-[-4px]"
-                            >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
-                            </span>
-                        </div>
-                        <div className="hover:bg-[#3A3DC2] text-white cursor-pointer w-[112px] h-[49px] bg-[#6366F1] flex items-center justify-center mt-[-3px] mb-[42px] text-[16px] font-bold rounded-[12px]"
-                            onClick={verifyCode}
-                        >인증 완료</div>
-                    </>
-                )
-            case "fail":
-                return (
-                    <>
-                        <input type="text"
-                            onChange={(e) => setCode(e.target.value)}
-                            placeholder="인증번호 6자리를 입력해주세요." className="h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#F8A3A3]" />
-                        <p className="text-[#EF8888] font-bold mt-[15px]">인증번호가 유효하지 않습니다. 다시 입력해주세요.</p>
-                        <div className="flex justify-center items-center">
-                            <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
-                                <span className="cursor-pointer text-[#6366F1] ml-[12px]"
-                                    onClick={sendEmail}
-                                >인증번호 재전송</span>
-                            </p>
-                            <span className="font-bold text-[#EF8888] ml-[98px]"
-                            >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
-                            </span>
-                        </div>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[112px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={verifyCode}
-                        >인증 완료</button>
-                    </>
-                )
-            case "succ":
-                return (
-                    <p className="text-[#5FAA81] font-bold mt-[15px]">인증을 완료했습니다.</p>
-                )
-            case "emailError":
-                return (
-                    <>
-                        <p className="text-[#EF8888] my-[15px]">유요한 이메일이 아닙니다. 다시 작성해 주세요.</p>
-                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={() => {
-                                sendEmail();
-                                //api 완성되면 제거 ((; 테스트용 생성))
-                                // setIsSendCode(true)
-                            }}
-                        >
-                            인증번호 전송</button>
-                    </>
-                )
-            case "emailcertificationNo":
-                return (
-                    <>
-                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] mt-[11px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={() => {
-                                sendEmail();
-                                //api 완성되면 제거 ((; 테스트용 생성))
-                                setIsSendCode(true)
-                            }}
-                        >
-                            인증번호 전송</button>
-                        <p className="text-[#EF8888] font-bold my-[11px]">이메일 인증을 완료해주세요.</p>
-                    </>
-                )
-        }
-
-    }
-
 
     //----------------비밀번호 확인-----------------
 
@@ -295,62 +123,46 @@ export function PwFind() {
 
     return (
         <>
-            <div className="min-h-screen flex flex-col items-center bg-[#F5F5F7] text-[#52525B] text-[18px] py-[92px]">
+            <div className="min-h-screen flex flex-col items-center bg-[#F5F5F7] text-[#52525B] text-[18px] py-[100px]">
                 {/* branding */}
-                <div className="px-[10px] flex flex-col items-center mb-[38px]">
+                <div className="px-[10px] flex flex-col items-center mb-[44px]">
                     <div className="flex flex-row gap-[8px]">
-                        <div className="w-[39px] h-[39px] flex flex-col rounded-[8px] bg-[#6366F1] justify-center items-center
+                        <div className="flex flex-col rounded-[8px] bg-[#6366F1] px-[15px] py-[4px] justify-center items-center
                         text-[24px] font-bold text-[#FFF]
                         ">L</div>
-                        <p className="text-[#27272A] text-[25px] font-bold">LearningLM</p>
+                        <p className="text-[#27272A] text-[28px] font-bold">LearningLM</p>
                     </div>
-                    <p className="mt-[10px] tracking-tighter text-[15px] text-[#52525B]">AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼</p>
+                    <p className="mt-[14px]">AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼</p>
                 </div>
                 {/*white box */}
-                <div className="bg-white w-[600px] min-h-[531px] flex flex-col items-center px-[10px] pt-[42px] pb-[50px] rounded-[12px]
-                border-[1px] border-[#E4E4E7]">
+                <div className="bg-white w-[600px] min-h-[531px] flex flex-col items-center px-[10px] py-[50px] rounded-[12px]">
                     {/* title */}
                     {emailState != "success" ?
                         (<>
-                            <p className="w-[519px] text-[27px] font-bold text-[#27272A] tracking-tighter">비밀번호 찾기</p>
-                            <p className="w-[519px] mt-[2px] text-[15px] text-[#52525B] tracking-tighter">이메일을 입력해주세요.</p>
+                            <p className="w-[519px] text-[32px] font-bold text-[#27272A]">비밀번호 찾기</p>
+                            <p className="w-[519px] mt-[7px]">이메일을 입력해주세요.</p>
                             {/*main content */}
                             {/*email */}
-                            {/* <div className="flex flex-col mt-[38px] w-[519px]">
-                                <p className="text-[15px] font-bold tracking-tighter">이메일</p>
+                            <div className="flex flex-col my-[47px] w-[519px]">
+                                <p className="font-bold">이메일</p>
                                 <input type="email"
                                     onChange={(e) => {
                                         setEmail(e.target.value);
                                     }}
                                     value={email}
                                     placeholder="you@example.com"
-                                    className={`hover:border-[#666666] h-[50px] flex items-center pl-[20px] mt-[8px] mb-[10px] rounded-[8px] border-2 ${emailState == "notEnroll" ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
+                                    className={`hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[11px] rounded-[8px] border-2 ${emailState == "notEnroll" ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
                                 {emailState == "notEnroll" && (
                                     <p className="font-bold text-[#EF8888] mt-[15px]">등록되지 않은 이메일입니다. 다시 입력해주세요.</p>
                                 )}
-                                <input type="email"
-                                    onChange={(e) => {
-                                        setEmail(e.target.value);
-                                    }}
-                                    value={email}
-                                    placeholder="you@example.com"
-                                    className={`hover:border-[#666666] h-[50px] flex items-center pl-[20px] mt-[2px] mb-[10px] rounded-[8px] border-2 ${emailState == "notEnroll" ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
-                                {emailState == "notEnroll" && (
-                                    <p className="font-bold text-[#EF8888] mt-[15px]">등록되지 않은 이메일입니다. 다시 입력해주세요.</p>
-                                )}
-                            </div> */}
-                            <div className="flex flex-col mt-[38px] w-[519px]">
-                                <p className="font-bold text-[15px] text-[#52525B] tracking-tighter">이메일</p>
-                                <input type="email" value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="you@example.com" className={`hover:border-[#666666] placeholder:text-[#666666] h-[51px] flex items-center pl-[20px] mt-[7px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                                {renderVerifyCode()}
+
                             </div>
-                            <button className="cursor-pointer hover:bg-[#3A3DC2] text-white w-[519px] h-[52px] bg-[#6366F1] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+                            <button className="cursor-pointer hover:bg-[#6366F1]
+                        hover:text-white text-[#9D9ED0] w-[519px] h-[57px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
                                 onClick={() => {
                                     emailFind();
                                 }}>
-                                <span className=" text-[19.5px] font-bold ">다음</span>
+                                <span className=" text-[24px] font-bold ">다음</span>
                             </button>
                         </>) :
                         (
@@ -381,6 +193,7 @@ export function PwFind() {
                                             비밀번호는 영문·숫자만 포함할 수 있습니다
                                         </p>
                                     )}
+
                                 </div>
                                 <div className="w-[519px] flex flex-col mt-[20px]">
                                     <p className="text-[#52525B] font-bold">비밀번호 확인</p>
@@ -410,13 +223,18 @@ export function PwFind() {
                                 </button>
                             </>
                         )}
+
                     <div>
-                        <p className="mt-[71px]">계정이 없으신가요? {" "}
-                            <button onClick={() => { navigate("/") }}>
+                        <p className=" mt-[71px]">계정이 없으신가요? {" "}
+                            <button onClick={() => { navigate("/register") }}>
                                 <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">회원가입</span>
                             </button>
                         </p>
-                        <p className="mt-[14px]">이미 계정이 있으신가요? <span className="text-[#6366F1] font-bold mt-[20px]">로그인</span></p>
+                        <p className="mt-[14px]">이미 계정이 있으신가요? {" "}
+                            <button onClick={() => { navigate("/login") }}>
+                                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">로그인</span>
+                            </button>
+                        </p>
                     </div>
                 </div>
                 {/*white box 끝 */}
@@ -426,6 +244,7 @@ export function PwFind() {
                     <p>개인정보처리방침</p>
                 </div>
             </div >
+
         </>
     )
 }
