@@ -11,11 +11,21 @@ import {
   type Edge,
 } from '@xyflow/react'
 
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router-dom'
+
 import { Header } from '../components/layout/Header'
 import searchRound from '../assets/searchRound.svg'
 import searchStick from '../assets/searchStick.svg'
 import dashed from '../assets/dashed.png'
-import { Slider } from '../components/ui/Slider'
+
+import {
+  StudioBlockInspector,
+  type StudioInspectorConnectionInfo,
+} from '../features/studio/components/inspector/StudioBlockInspector'
 
 import {
   studioNodeTypes,
@@ -60,6 +70,16 @@ type ValidationCheck = {
   status: ValidationCheckStatus
   criterion: string
   result: string
+}
+
+type StudioNavigationState = {
+  mode?: 'guided' | 'create' | 'copied' | 'edit'
+  tutorialId?: number
+  copiedLibraryItemId?: number
+  workflowId?: number
+  nodes?: StudioFlowNodeInstance[]
+  edges?: Edge[]
+  validationResult?: StudioWorkflowValidationResult | null
 }
 
 const stageStyleMap: Record<
@@ -191,16 +211,9 @@ function PaletteBlockCard({
     blockId: string,
   ) => void
 }) {
-  const stageStyle =
-    stageStyleMap[block.stage]
-
-  const requirement =
-    requirementStyleMap[
-      block.requirement
-    ]
-
-  const available =
-    block.availability === 'available'
+  const stageStyle = stageStyleMap[block.stage]
+  const requirement = requirementStyleMap[block.requirement]
+  const available = block.availability === 'available'
 
   return (
     <div
@@ -211,10 +224,7 @@ function PaletteBlockCard({
           return
         }
 
-        onDragStart(
-          event,
-          block.id,
-        )
+        onDragStart(event, block.id)
       }}
       className={[
         'mb-[12px] h-[72px] w-[290px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white px-[16.5px] pt-[13.88px] transition',
@@ -243,9 +253,7 @@ function PaletteBlockCard({
               : 'rounded-[8px] bg-[#F0F0F3] px-[8px] py-[4px] text-[#9A9AA3]',
           ].join(' ')}
         >
-          {available
-            ? requirement.label
-            : '준비중'}
+          {available ? requirement.label : '준비중'}
         </span>
       </div>
 
@@ -265,10 +273,7 @@ function ValidationRow({
   open: boolean
   onToggle: () => void
 }) {
-  const statusStyle =
-    validationStatusStyleMap[
-      check.status
-    ]
+  const statusStyle = validationStatusStyleMap[check.status]
 
   return (
     <div className="min-h-[54px] border-t-[1.5px] border-[#EEEEF1] px-[21px] pt-[10px]">
@@ -297,9 +302,7 @@ function ValidationRow({
           <button
             type="button"
             onClick={onToggle}
-            aria-label={`${check.title} 상세 ${
-              open ? '닫기' : '열기'
-            }`}
+            aria-label={`${check.title} 상세 ${open ? '닫기' : '열기'}`}
             className="ml-[13.5px] mt-[-4px] text-[19.5px] text-[#9A9AA3]"
           >
             {open ? '⌃' : '⌄'}
@@ -329,91 +332,156 @@ function ValidationRow({
 }
 
 export function Stdio_create1() {
-  const [
-    searchText,
-    setSearchText,
-  ] = useState('')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { workflowId } = useParams()
 
-  const [
-    strength,
-    setStrength,
-  ] = useState(0.7)
+  const locationState =
+    (location.state as StudioNavigationState | null) ?? null
 
-  const [
-    openInspectorSlotId,
-    setOpenInspectorSlotId,
-  ] = useState<string | null>(
-    null,
-  )
-
-  const [
-    openValidationId,
-    setOpenValidationId,
-  ] = useState<number | null>(
-    null,
-  )
-
-  const [
-    validationResult,
-    setValidationResult,
-  ] =
+  const [searchText, setSearchText] = useState('')
+  const [openValidationId, setOpenValidationId] =
+    useState<number | null>(null)
+  const [validationResult, setValidationResult] =
     useState<StudioWorkflowValidationResult | null>(
-      null,
+      locationState?.validationResult ?? null,
     )
 
   /*
-   * initialNodes를 전달하지 않습니다.
-   * 첫 진입 시 캔버스는 노드 0개입니다.
+   * API 연동 전 라우트 연결 단계에서는 location.state로 넘겨진
+   * 노드와 연결선을 초기값으로 재사용합니다.
+   * 전달된 값이 없으면 기존 요구사항대로 노드 0개로 시작합니다.
    */
-  const studio =
-    useStudioEditor()
+  const studio = useStudioEditor({
+    initialNodes: locationState?.nodes ?? [],
+    initialEdges: locationState?.edges ?? [],
+  })
 
   const selectedNode =
-    studio.nodes.find(
-      (node) => node.selected,
-    ) ?? null
+    studio.nodes.find((node) => node.selected) ?? null
 
-  const filteredBlocks =
-    useMemo(() => {
-      const keyword =
-        searchText
-          .trim()
-          .toLowerCase()
-
-      if (!keyword) {
-        return studioBlockCatalog
+    const selectedNodeConnectionInfo =
+  useMemo<StudioInspectorConnectionInfo>(
+    () => {
+      if (!selectedNode) {
+        return {
+          incomingNodes: [],
+          outgoingNodes: [],
+        }
       }
 
-      return studioBlockCatalog.filter(
-        (block) =>
-          block.title
-            .toLowerCase()
-            .includes(keyword) ||
-          block.description
-            .toLowerCase()
-            .includes(keyword),
-      )
-    }, [searchText])
+      const incomingNodeIds =
+        new Set(
+          studio.edges
+            .filter(
+              (edge) =>
+                edge.target ===
+                selectedNode.id,
+            )
+            .map(
+              (edge) =>
+                edge.source,
+            ),
+        )
 
-  /*
-   * 노드 위치나 선택 여부가 아니라
-   * 워크플로우 구성이 바뀌었을 때만
-   * 이전 검증 결과를 초기화합니다.
-   */
-  const workflowStructureSignature =
-    useMemo(() => {
-      return studio.nodes
+      const outgoingNodeIds =
+        new Set(
+          studio.edges
+            .filter(
+              (edge) =>
+                edge.source ===
+                selectedNode.id,
+            )
+            .map(
+              (edge) =>
+                edge.target,
+            ),
+        )
+
+      const toConnectedNode = (
+        node: StudioFlowNodeInstance,
+      ) => ({
+        id:
+          node.id,
+
+        title:
+          node.data.node.title,
+
+        stage:
+          node.data.node.stage,
+
+        slots:
+          node.data.node.slots,
+      })
+
+      return {
+        incomingNodes:
+          studio.nodes
+            .filter(
+              (node) =>
+                incomingNodeIds.has(
+                  node.id,
+                ),
+            )
+            .map(
+              toConnectedNode,
+            ),
+
+        outgoingNodes:
+          studio.nodes
+            .filter(
+              (node) =>
+                outgoingNodeIds.has(
+                  node.id,
+                ),
+            )
+            .map(
+              toConnectedNode,
+            ),
+      }
+    },
+    [
+      selectedNode,
+      studio.edges,
+      studio.nodes,
+    ],
+  )
+
+  const filteredBlocks = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase()
+
+    if (!keyword) {
+      return studioBlockCatalog
+    }
+
+    return studioBlockCatalog.filter(
+      (block) =>
+        block.title.toLowerCase().includes(keyword) ||
+        block.description.toLowerCase().includes(keyword),
+    )
+  }, [searchText])
+
+    const workflowStructureSignature =
+  useMemo(() => {
+    const nodeSignature =
+      studio.nodes
         .map((node) => {
           const slots =
             node.data.node.slots
               .map((slot) =>
                 [
                   slot.id,
-                  slot.value ?? '',
-                  slot.state ?? '',
+                  slot.value ??
+                    '',
+                  slot.state ??
+                    '',
                   slot.required
                     ? '1'
                     : '0',
+                  JSON.stringify(
+                    slot.config ??
+                      {},
+                  ),
                 ].join(':'),
               )
               .sort()
@@ -427,256 +495,185 @@ export function Stdio_create1() {
         })
         .sort()
         .join('||')
-    }, [studio.nodes])
 
-  useEffect(() => {
-    setValidationResult(null)
+    const edgeSignature =
+      studio.edges
+        .map(
+          (edge) =>
+            [
+              edge.source,
+              edge.target,
+              edge.sourceHandle ??
+                '',
+              edge.targetHandle ??
+                '',
+            ].join('>'),
+        )
+        .sort()
+        .join('||')
+
+    return [
+      nodeSignature,
+      edgeSignature,
+    ].join('###')
   }, [
-    workflowStructureSignature,
+    studio.nodes,
+    studio.edges,
   ])
 
   useEffect(() => {
-    setOpenInspectorSlotId(
-      null,
-    )
-  }, [selectedNode?.id])
+    setValidationResult(null)
+  }, [workflowStructureSignature])
 
-  const validationChecks =
-    useMemo<
-      ValidationCheck[]
-    >(() => {
-      if (!validationResult) {
-        return [
-          {
-            id: 1,
-            title:
-              '입력 노드 CORE 블록',
-            status: 'pending',
-            criterion:
-              '입력 단계의 필수 블록이 모두 포함되어야 합니다.',
-            result:
-              '아직 검증을 실행하지 않았습니다.',
-          },
-          {
-            id: 2,
-            title:
-              '프로세스 노드 CORE 블록',
-            status: 'pending',
-            criterion:
-              '프로세스 단계의 필수 블록이 모두 포함되어야 합니다.',
-            result:
-              '아직 검증을 실행하지 않았습니다.',
-          },
-          {
-            id: 3,
-            title:
-              '결과 노드 CORE 블록',
-            status: 'pending',
-            criterion:
-              '결과 단계의 필수 블록이 모두 포함되어야 합니다.',
-            result:
-              '아직 검증을 실행하지 않았습니다.',
-          },
-          {
-            id: 4,
-            title:
-              '필수 슬롯 채움',
-            status: 'pending',
-            criterion:
-              '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
-            result:
-              '아직 검증을 실행하지 않았습니다.',
-          },
-          {
-            id: 5,
-            title: '저장 조건',
-            status: 'pending',
-            criterion:
-              '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
-            result:
-              '검증을 실행하면 저장 가능 여부가 표시됩니다.',
-          },
-        ]
-      }
-
-      const missingRequiredByStage =
-        (
-          stage: StudioStage,
-        ) =>
-          validationResult.issues.filter(
-            (issue) =>
-              issue.stage ===
-                stage &&
-              issue.type ===
-                'missing-required-block',
-          )
-
-      const inputIssues =
-        missingRequiredByStage(
-          'INPUT',
-        )
-
-      const processIssues =
-        missingRequiredByStage(
-          'PROCESS',
-        )
-
-      const outputIssues =
-        missingRequiredByStage(
-          'OUTPUT',
-        )
-
-      const slotIssues =
-        validationResult.issues.filter(
-          (issue) =>
-            issue.type ===
-              'missing-required-slot-value' ||
-            issue.type ===
-              'invalid-required-slot' ||
-            issue.type ===
-              'required-slot-warning',
-        )
-
-      const slotErrorIssues =
-        slotIssues.filter(
-          (issue) =>
-            issue.severity ===
-            'error',
-        )
-
-      const buildStageResult = (
-        issues: StudioValidationIssue[],
-      ) =>
-        issues.length === 0
-          ? '필수 블록이 모두 포함되어 있습니다.'
-          : `누락: ${getIssueBlockTitles(
-              issues,
-            )}`
-
+  const validationChecks = useMemo<ValidationCheck[]>(() => {
+    if (!validationResult) {
       return [
         {
           id: 1,
-          title:
-            '입력 노드 CORE 블록',
-          status:
-            inputIssues.length === 0
-              ? 'pass'
-              : 'fail',
+          title: '입력 노드 CORE 블록',
+          status: 'pending',
           criterion:
             '입력 단계의 필수 블록이 모두 포함되어야 합니다.',
-          result:
-            buildStageResult(
-              inputIssues,
-            ),
+          result: '아직 검증을 실행하지 않았습니다.',
         },
         {
           id: 2,
-          title:
-            '프로세스 노드 CORE 블록',
-          status:
-            processIssues.length ===
-            0
-              ? 'pass'
-              : 'fail',
+          title: '프로세스 노드 CORE 블록',
+          status: 'pending',
           criterion:
             '프로세스 단계의 필수 블록이 모두 포함되어야 합니다.',
-          result:
-            buildStageResult(
-              processIssues,
-            ),
+          result: '아직 검증을 실행하지 않았습니다.',
         },
         {
           id: 3,
-          title:
-            '결과 노드 CORE 블록',
-          status:
-            outputIssues.length ===
-            0
-              ? 'pass'
-              : 'fail',
+          title: '결과 노드 CORE 블록',
+          status: 'pending',
           criterion:
             '결과 단계의 필수 블록이 모두 포함되어야 합니다.',
-          result:
-            buildStageResult(
-              outputIssues,
-            ),
+          result: '아직 검증을 실행하지 않았습니다.',
         },
         {
           id: 4,
-          title:
-            '필수 슬롯 채움',
-          status:
-            slotIssues.length === 0
-              ? 'pass'
-              : 'warning',
+          title: '필수 슬롯 채움',
+          status: 'pending',
           criterion:
             '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
-          result:
-            slotIssues.length === 0
-              ? '필수 슬롯 설정이 모두 완료되었습니다.'
-              : slotIssues
-                  .map(
-                    (issue) =>
-                      issue.message,
-                  )
-                  .join(' '),
+          result: '아직 검증을 실행하지 않았습니다.',
         },
         {
           id: 5,
           title: '저장 조건',
-          status:
-            validationResult.valid
-              ? 'pass'
-              : 'pending',
+          status: 'pending',
           criterion:
             '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
-          result:
-            validationResult.valid
-              ? '저장 조건을 충족했습니다.'
-              : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
-                  slotErrorIssues.length >
-                  0
-                    ? ' 필수 슬롯 설정을 확인하세요.'
-                    : ''
-                }`,
+          result: '검증을 실행하면 저장 가능 여부가 표시됩니다.',
         },
       ]
-    }, [validationResult])
+    }
 
-  const validationSummary =
-    useMemo(() => {
-      const passCount =
-        validationChecks.filter(
-          (check) =>
-            check.status ===
-            'pass',
-        ).length
+    const missingRequiredByStage = (stage: StudioStage) =>
+      validationResult.issues.filter(
+        (issue) =>
+          issue.stage === stage &&
+          issue.type === 'missing-required-block',
+      )
 
-      const insufficientCount =
-        validationChecks.filter(
-          (check) =>
-            check.status ===
-              'warning' ||
-            check.status ===
-              'fail',
-        ).length
+    const inputIssues = missingRequiredByStage('INPUT')
+    const processIssues = missingRequiredByStage('PROCESS')
+    const outputIssues = missingRequiredByStage('OUTPUT')
 
-      const pendingCount =
-        validationChecks.filter(
-          (check) =>
-            check.status ===
-            'pending',
-        ).length
+    const slotIssues = validationResult.issues.filter(
+      (issue) =>
+        issue.type === 'missing-required-slot-value' ||
+        issue.type === 'invalid-required-slot' ||
+        issue.type === 'required-slot-warning',
+    )
 
-      return {
-        passCount,
-        insufficientCount,
-        pendingCount,
-      }
-    }, [validationChecks])
+    const slotErrorIssues = slotIssues.filter(
+      (issue) => issue.severity === 'error',
+    )
 
-  const overallValidationStatus:
-    ValidationCheckStatus =
+    const buildStageResult = (issues: StudioValidationIssue[]) =>
+      issues.length === 0
+        ? '필수 블록이 모두 포함되어 있습니다.'
+        : `누락: ${getIssueBlockTitles(issues)}`
+
+    return [
+      {
+        id: 1,
+        title: '입력 노드 CORE 블록',
+        status: inputIssues.length === 0 ? 'pass' : 'fail',
+        criterion:
+          '입력 단계의 필수 블록이 모두 포함되어야 합니다.',
+        result: buildStageResult(inputIssues),
+      },
+      {
+        id: 2,
+        title: '프로세스 노드 CORE 블록',
+        status: processIssues.length === 0 ? 'pass' : 'fail',
+        criterion:
+          '프로세스 단계의 필수 블록이 모두 포함되어야 합니다.',
+        result: buildStageResult(processIssues),
+      },
+      {
+        id: 3,
+        title: '결과 노드 CORE 블록',
+        status: outputIssues.length === 0 ? 'pass' : 'fail',
+        criterion:
+          '결과 단계의 필수 블록이 모두 포함되어야 합니다.',
+        result: buildStageResult(outputIssues),
+      },
+      {
+        id: 4,
+        title: '필수 슬롯 채움',
+        status: slotIssues.length === 0 ? 'pass' : 'warning',
+        criterion:
+          '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
+        result:
+          slotIssues.length === 0
+            ? '필수 슬롯 설정이 모두 완료되었습니다.'
+            : slotIssues.map((issue) => issue.message).join(' '),
+      },
+      {
+        id: 5,
+        title: '저장 조건',
+        status: validationResult.valid ? 'pass' : 'pending',
+        criterion:
+          '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
+        result: validationResult.valid
+          ? '저장 조건을 충족했습니다.'
+          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
+              slotErrorIssues.length > 0
+                ? ' 필수 슬롯 설정을 확인하세요.'
+                : ''
+            }`,
+      },
+    ]
+  }, [validationResult])
+
+  const validationSummary = useMemo(() => {
+    const passCount = validationChecks.filter(
+      (check) => check.status === 'pass',
+    ).length
+
+    const insufficientCount = validationChecks.filter(
+      (check) =>
+        check.status === 'warning' ||
+        check.status === 'fail',
+    ).length
+
+    const pendingCount = validationChecks.filter(
+      (check) => check.status === 'pending',
+    ).length
+
+    return {
+      passCount,
+      insufficientCount,
+      pendingCount,
+    }
+  }, [validationChecks])
+
+  const overallValidationStatus: ValidationCheckStatus =
     !validationResult
       ? 'pending'
       : validationResult.valid
@@ -689,24 +686,52 @@ export function Stdio_create1() {
     ) ?? []
 
   const selectedCompletedRequiredSlots =
-    selectedRequiredSlots.filter(
-      hasSlotValue,
-    ).length
+    selectedRequiredSlots.filter(hasSlotValue).length
 
   const handleValidate = () => {
-    const result =
-      validateStudioWorkflow({
-        nodes: studio.nodes,
-        includeRecommended: true,
-      })
+    const result = validateStudioWorkflow({
+      nodes: studio.nodes,
+      includeRecommended: true,
+    })
 
-    /*
-     * useStudioEditor 쪽 검증도 호출해
-     * 노드의 warning/missing/error 상태를 갱신합니다.
-     */
     studio.validateWorkflow()
-
     setValidationResult(result)
+  }
+
+  const buildNavigationState = (): StudioNavigationState => ({
+    mode:
+      locationState?.mode ??
+      (workflowId ? 'edit' : 'create'),
+    tutorialId: locationState?.tutorialId,
+    copiedLibraryItemId: locationState?.copiedLibraryItemId,
+    workflowId:
+      locationState?.workflowId ??
+      (workflowId ? Number(workflowId) : undefined),
+    nodes: studio.nodes,
+    edges: studio.edges,
+    validationResult,
+  })
+
+  const handleOpenExample = () => {
+    navigate('/workflows/draft/preview?view=example', {
+      state: buildNavigationState(),
+    })
+  }
+
+  const handleOpenPreview = () => {
+    navigate('/workflows/draft/preview', {
+      state: buildNavigationState(),
+    })
+  }
+
+  const handleStartSave = () => {
+    if (!validationResult?.valid) {
+      return
+    }
+
+    navigate('/studio/save/review', {
+      state: buildNavigationState(),
+    })
   }
 
   return (
@@ -744,9 +769,7 @@ export function Stdio_create1() {
                 type="search"
                 value={searchText}
                 onChange={(event) =>
-                  setSearchText(
-                    event.target.value,
-                  )
+                  setSearchText(event.target.value)
                 }
                 placeholder="블록 검색"
                 className="h-[50px] w-[296px] rounded-[50px] border-[1.5px] border-[#E4E4E7] bg-white pl-[60px] pr-[18px] text-[#52525B] outline-none placeholder:text-[#9A9AA3] focus:border-[#6366F1]"
@@ -766,70 +789,49 @@ export function Stdio_create1() {
             </div>
           </div>
 
-          {/*
-           * 이 영역에만 세로 스크롤을 적용합니다.
-           * 전체 Studio 페이지는 움직이지 않습니다.
-           */}
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[32px]">
-            {STUDIO_STAGE_ORDER.map(
-              (stage) => {
-                const blocks =
-                  filteredBlocks.filter(
-                    (block) =>
-                      block.stage ===
-                      stage,
-                  )
+            {STUDIO_STAGE_ORDER.map((stage) => {
+              const blocks = filteredBlocks.filter(
+                (block) => block.stage === stage,
+              )
 
-                if (
-                  blocks.length === 0
-                ) {
-                  return null
-                }
+              if (blocks.length === 0) {
+                return null
+              }
 
-                const stageStyle =
-                  stageStyleMap[stage]
+              const stageStyle = stageStyleMap[stage]
 
-                return (
-                  <section key={stage}>
-                    <div className="flex w-[290px] items-center pb-[15.5px] pt-[18px]">
-                      <div
-                        className={[
-                          'h-[13px] w-[13px] rounded-[4px]',
-                          stageStyle.dot,
-                        ].join(' ')}
-                      />
+              return (
+                <section key={stage}>
+                  <div className="flex w-[290px] items-center pb-[15.5px] pt-[18px]">
+                    <div
+                      className={[
+                        'h-[13px] w-[13px] rounded-[4px]',
+                        stageStyle.dot,
+                      ].join(' ')}
+                    />
 
-                      <p className="ml-[10.5px] flex-1 text-[13.5px] font-bold text-[#9A9AA3]">
-                        {
-                          studioStageLabelMap[
-                            stage
-                          ]
-                        }
-                      </p>
+                    <p className="ml-[10.5px] flex-1 text-[13.5px] font-bold text-[#9A9AA3]">
+                      {studioStageLabelMap[stage]}
+                    </p>
 
-                      <p className="text-[13.5px] font-bold text-[#9A9AA3]">
-                        {stage}
-                      </p>
-                    </div>
+                    <p className="text-[13.5px] font-bold text-[#9A9AA3]">
+                      {stage}
+                    </p>
+                  </div>
 
-                    {blocks.map(
-                      (block) => (
-                        <PaletteBlockCard
-                          key={block.id}
-                          block={block}
-                          onDragStart={
-                            studio.onBlockDragStart
-                          }
-                        />
-                      ),
-                    )}
-                  </section>
-                )
-              },
-            )}
+                  {blocks.map((block) => (
+                    <PaletteBlockCard
+                      key={block.id}
+                      block={block}
+                      onDragStart={studio.onBlockDragStart}
+                    />
+                  ))}
+                </section>
+              )
+            })}
 
-            {filteredBlocks.length ===
-              0 && (
+            {filteredBlocks.length === 0 && (
               <div className="flex min-h-[220px] items-center justify-center text-center">
                 <p className="text-[14px] text-[#9A9AA3]">
                   검색 결과가 없습니다.
@@ -841,41 +843,21 @@ export function Stdio_create1() {
 
         {/* 메인 캔버스 */}
         <main className="relative z-10 min-h-0 min-w-0 flex-1 overflow-hidden bg-[#F7F7F9]">
-          <ReactFlow<
-            StudioFlowNodeInstance,
-            Edge
-          >
+          <ReactFlow<StudioFlowNodeInstance, Edge>
             nodes={studio.nodes}
             edges={studio.edges}
             nodeTypes={studioNodeTypes}
-            onNodesChange={
-              studio.onNodesChange
-            }
-            onEdgesChange={
-              studio.onEdgesChange
-            }
-            onConnect={
-              studio.onConnect
-            }
-            isValidConnection={
-              studio.isValidConnection
-            }
+            onNodesChange={studio.onNodesChange}
+            onEdgesChange={studio.onEdgesChange}
+            onConnect={studio.onConnect}
+            isValidConnection={studio.isValidConnection}
             onInit={studio.onInit}
-            onDragOver={
-              studio.onDragOver
-            }
+            onDragOver={studio.onDragOver}
             onDrop={studio.onDrop}
-            onNodeClick={(
-              _event,
-              node,
-            ) =>
-              studio.selectNode(
-                node.id,
-              )
+            onNodeClick={(_event, node) =>
+              studio.selectNode(node.id)
             }
-            onPaneClick={
-              studio.clearSelection
-            }
+            onPaneClick={studio.clearSelection}
             zoomOnScroll={false}
             zoomOnPinch={false}
             zoomOnDoubleClick={false}
@@ -884,16 +866,9 @@ export function Stdio_create1() {
             nodesDraggable
             nodesConnectable
             elementsSelectable
-            deleteKeyCode={[
-              'Backspace',
-              'Delete',
-            ]}
-            snapToGrid={
-              studio.snapToGrid
-            }
-            snapGrid={
-              studio.snapGrid
-            }
+            deleteKeyCode={['Backspace', 'Delete']}
+            snapToGrid={studio.snapToGrid}
+            snapGrid={studio.snapGrid}
             defaultViewport={{
               x: 0,
               y: 0,
@@ -902,12 +877,10 @@ export function Stdio_create1() {
             defaultEdgeOptions={{
               type: 'smoothstep',
               markerEnd: {
-                type:
-                  MarkerType.ArrowClosed,
+                type: MarkerType.ArrowClosed,
               },
               style: {
-                stroke:
-                  '#6366F1',
+                stroke: '#6366F1',
                 strokeWidth: 2,
               },
             }}
@@ -925,11 +898,6 @@ export function Stdio_create1() {
             인스펙터
           </div>
 
-          {/*
-           * 와이어프레임처럼 검증 결과는
-           * 인스펙터 아래에 이어서 표시합니다.
-           * 별도의 탭으로 분리하지 않습니다.
-           */}
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {!selectedNode && (
               <div className="flex min-h-[510px] flex-col border-b-[1.5px] border-[#E4E4E7]">
@@ -949,8 +917,7 @@ export function Stdio_create1() {
                 </div>
 
                 <div className="flex flex-1 items-center justify-center px-[30px] text-center text-[14px] text-[#9A9AA3]">
-                  노드 설정은 선택 후
-                  표시됩니다.
+                  노드 설정은 선택 후 표시됩니다.
                 </div>
               </div>
             )}
@@ -962,42 +929,26 @@ export function Stdio_create1() {
                     <p
                       className={[
                         'flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[12px] text-[18px] font-bold text-white',
-                        stageStyleMap[
-                          selectedNode.data
-                            .node.stage
-                        ].dot,
+                        stageStyleMap[selectedNode.data.node.stage].dot,
                       ].join(' ')}
                     >
-                      {
-                        selectedNode.data
-                          .node.order
-                      }
+                      {selectedNode.data.node.order}
                     </p>
 
                     <div className="ml-[14px] min-w-0 flex-1">
                       <p className="truncate text-[19px] font-bold">
-                        {
-                          selectedNode.data
-                            .node.title
-                        }{' '}
-                        노드
+                        {selectedNode.data.node.title} 노드
                       </p>
 
                       <p className="mt-[2px] truncate text-[13px] text-[#9A9AA3]">
-                        {
-                          selectedNode.data
-                            .node.stage
-                        }
-                        {selectedNode.data
-                          .node.slots[0]
+                        {selectedNode.data.node.stage}
+                        {selectedNode.data.node.slots[0]
                           ? ` · ${selectedNode.data.node.slots[0].label}`
                           : ''}
                       </p>
                     </div>
 
-                    {selectedNode.data.node
-                      .stage ===
-                      'PROCESS' && (
+                    {selectedNode.data.node.stage === 'PROCESS' && (
                       <div className="flex h-[33px] w-[132px] items-center justify-center rounded-[8px] border-[1.5px] border-dashed border-[#E4E4E7] text-[15px] font-bold text-[#52525B]">
                         AI Optional
                       </div>
@@ -1006,31 +957,18 @@ export function Stdio_create1() {
 
                   <div className="mt-[14px] flex items-center gap-[10px] text-[13px] font-bold text-[#52525B]">
                     <div className="flex h-[29px] min-w-[78px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] bg-[#F0F0F3] px-[9px]">
-                      필수{' '}
-                      {
-                        selectedCompletedRequiredSlots
-                      }
-                      /
-                      {
-                        selectedRequiredSlots.length
-                      }
+                      필수 {selectedCompletedRequiredSlots}/
+                      {selectedRequiredSlots.length}
                     </div>
 
                     <div className="flex h-[29px] min-w-[78px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] bg-[#F0F0F3] px-[9px]">
-                      슬롯{' '}
-                      {
-                        selectedNode.data
-                          .node.slots
-                          .length
-                      }
+                      슬롯 {selectedNode.data.node.slots.length}
                     </div>
                   </div>
 
                   <p className="mt-[11px] text-[14px] leading-[20px] text-[#9A9AA3]">
-                    이 노드는
-                    컨테이너입니다. 아래
-                    컴포넌트(블록)마다
-                    도구·프롬프트 강도·옵션을
+                    이 노드는 컨테이너입니다. 아래
+                    컴포넌트(블록)마다 도구·프롬프트 강도·옵션을
                     따로 설정하세요.
                   </p>
                 </div>
@@ -1042,163 +980,41 @@ export function Stdio_create1() {
                     </p>
 
                     <p className="text-[13px]">
-                      {
-                        selectedNode.data
-                          .node.slots
-                          .length
-                      }
-                      개 · 노드에 부착된
-                      블록
+                      {selectedNode.data.node.slots.length}개 · 노드에 부착된 블록
                     </p>
                   </div>
 
-                  <div className="mt-[14px] flex flex-col gap-[8px]">
-                    {selectedNode.data.node.slots.map(
-                      (slot) => {
-                        const isOpen =
-                          openInspectorSlotId ===
-                          slot.id
-
-                        return (
-                          <div
-                            key={
-                              slot.id
+                                    <div className="mt-[14px] flex flex-col gap-[8px]">
+                    {selectedNode.data.node.slots.map((slot) => (
+                          <StudioBlockInspector
+                            key={slot.id}
+                            nodeId={selectedNode.id}
+                            slot={slot}
+                            connectionInfo={
+                              selectedNodeConnectionInfo
                             }
-                            className="rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white px-[14px] py-[13px]"
-                          >
-                            <div className="flex items-center">
-                              <div
-                                className={[
-                                  'h-[21px] w-[21px] shrink-0 rounded-[8px]',
-                                  stageStyleMap[
-                                    selectedNode
-                                      .data
-                                      .node
-                                      .stage
-                                  ].dot,
-                                ].join(
-                                  ' ',
-                                )}
-                              />
-
-                              <p className="ml-[12px] min-w-0 flex-1 truncate text-[16.5px] font-bold">
-                                {
-                                  slot.label
-                                }
-                              </p>
-
-                              <span
-                                className={[
-                                  'text-[11.5px] font-bold',
-                                  slot.required
-                                    ? 'text-[#6366F1]'
-                                    : 'rounded-[6px] bg-[#F0F0F3] px-[7px] py-[3px] text-[#9A9AA3]',
-                                ].join(
-                                  ' ',
-                                )}
-                              >
-                                {slot.required
-                                  ? '필수'
-                                  : '선택'}
-                              </span>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setOpenInspectorSlotId(
-                                    isOpen
-                                      ? null
-                                      : slot.id,
-                                  )
-                                }
-                                className="ml-[22px] mt-[-6px] text-[18px] text-[#9A9AA3]"
-                              >
-                                {isOpen
-                                  ? '⌃'
-                                  : '⌄'}
-                              </button>
-                            </div>
-
-                            {isOpen && (
-                              <div className="mt-[12px] border-t border-[#EEEEF1] pt-[12px]">
-                                {slot.id ===
-                                'process-extract-core' ? (
-                                  <>
-                                    <p className="text-[15.5px] font-bold text-[#52525B]">
-                                      추출 강도
-                                    </p>
-
-                                    <div className="mt-[8px] flex items-center gap-[12px]">
-                                      <Slider
-                                        value={
-                                          strength
-                                        }
-                                        showValue={
-                                          false
-                                        }
-                                        onChange={
-                                          setStrength
-                                        }
-                                        min={
-                                          0
-                                        }
-                                        max={
-                                          1
-                                        }
-                                        step={
-                                          0.1
-                                        }
-                                        className="flex-1"
-                                      />
-
-                                      <p className="shrink-0 text-[14px] text-[#9A9AA3]">
-                                        {
-                                          strength
-                                        }{' '}
-                                        ·
-                                        적극적
-                                      </p>
-                                    </div>
-
-                                    <p className="mt-[14px] text-[15px] font-bold text-[#52525B]">
-                                      추출 단위
-                                    </p>
-
-                                    <div className="mt-[8px] flex h-[41px] items-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[14px] font-bold">
-                                      <span className="flex h-full flex-1 items-center justify-center border-r-[1.5px] border-[#E4E4E7]">
-                                        문장
-                                      </span>
-
-                                      <span className="flex h-full flex-1 items-center justify-center border-r-[1.5px] border-[#E4E4E7] text-[#6366F1]">
-                                        요점
-                                      </span>
-
-                                      <span className="flex h-full flex-1 items-center justify-center">
-                                        주제
-                                      </span>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <p className="text-[14px] font-bold text-[#52525B]">
-                                      설정값
-                                    </p>
-
-                                    <p className="mt-[6px] text-[14px] leading-[20px] text-[#9A9AA3]">
-                                      {slot.value?.trim()
-                                        ? slot.value
-                                        : '아직 설정된 값이 없습니다.'}
-                                    </p>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      },
-                    )}
+                            onConfigChange={(patch, options) => {
+                              studio.updateBlockConfig({
+                                nodeId: selectedNode.id,
+                                slotId: slot.id,
+                                patch,
+                                summaryValue:
+                                  options?.summaryValue,
+                                state:
+                                  options?.state,
+                              })
+                            }}
+                            onValueChange={(value) => {
+                              studio.updateSlotValue({
+                                nodeId: selectedNode.id,
+                                slotId: slot.id,
+                                value,
+                              })
+                            }}
+                          />
+                        ))}
                   </div>
-                </div>
+                                  </div>
 
                 <div className="my-[14px] border-t-[1.5px] border-[#EEEEF1]" />
 
@@ -1220,18 +1036,14 @@ export function Stdio_create1() {
                   <div
                     className={[
                       'flex h-[64px] w-[64px] items-center justify-center rounded-[12px] border-[1.5px] text-[25px] font-bold',
-                      overallValidationStatus ===
-                      'pass'
+                      overallValidationStatus === 'pass'
                         ? 'border-[#CFE2D5] bg-[#EEF4EE] text-[#2F7D52]'
-                        : overallValidationStatus ===
-                            'fail'
+                        : overallValidationStatus === 'fail'
                           ? 'border-[#E9C9C9] bg-[#FBF1F0] text-[#B4453A]'
                           : 'border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
                     ].join(' ')}
                   >
-                    {
-                      validationSummary.passCount
-                    }
+                    {validationSummary.passCount}
 
                     <span className="mt-[10px] text-[14px] text-[#9A9AA3]">
                       /5
@@ -1244,18 +1056,9 @@ export function Stdio_create1() {
                     </p>
 
                     <p className="text-[14px] text-[#9A9AA3]">
-                      통과{' '}
-                      {
-                        validationSummary.passCount
-                      }{' '}
-                      · 미흡{' '}
-                      {
-                        validationSummary.insufficientCount
-                      }{' '}
-                      · 대기{' '}
-                      {
-                        validationSummary.pendingCount
-                      }
+                      통과 {validationSummary.passCount} · 미흡{' '}
+                      {validationSummary.insufficientCount} · 대기{' '}
+                      {validationSummary.pendingCount}
                     </p>
                   </div>
                 </div>
@@ -1263,44 +1066,29 @@ export function Stdio_create1() {
                 <div
                   className={[
                     'flex h-[33px] min-w-[70px] items-center justify-center rounded-[8px] border-[1.5px] px-[9px] text-[14px] font-bold',
-                    overallValidationStatus ===
-                    'pass'
+                    overallValidationStatus === 'pass'
                       ? 'border-[#CFE2D5] bg-[#EEF4EE] text-[#2F7D52]'
-                      : overallValidationStatus ===
-                          'fail'
+                      : overallValidationStatus === 'fail'
                         ? 'border-[#E9C9C9] bg-[#FBF1F0] text-[#B4453A]'
                         : 'border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
                   ].join(' ')}
                 >
-                  {
-                    validationStatusStyleMap[
-                      overallValidationStatus
-                    ].label
-                  }
+                  {validationStatusStyleMap[overallValidationStatus].label}
                 </div>
               </div>
 
-              {validationChecks.map(
-                (check) => (
-                  <ValidationRow
-                    key={check.id}
-                    check={check}
-                    open={
-                      openValidationId ===
-                      check.id
-                    }
-                    onToggle={() =>
-                      setOpenValidationId(
-                        (current) =>
-                          current ===
-                          check.id
-                            ? null
-                            : check.id,
-                      )
-                    }
-                  />
-                ),
-              )}
+              {validationChecks.map((check) => (
+                <ValidationRow
+                  key={check.id}
+                  check={check}
+                  open={openValidationId === check.id}
+                  onToggle={() =>
+                    setOpenValidationId((current) =>
+                      current === check.id ? null : check.id,
+                    )
+                  }
+                />
+              ))}
             </div>
           </div>
         </aside>
@@ -1309,8 +1097,7 @@ export function Stdio_create1() {
       {/* 하단 작업 바 */}
       <footer className="flex h-[85px] shrink-0 items-center justify-between border-t-[1.5px] border-[#E4E4E7] bg-white px-[27px] text-[20px]">
         <p className="text-[14px] text-[#9A9AA3]">
-          자유 제작 · 노드{' '}
-          {studio.nodes.length} ·
+          자유 제작 · 노드 {studio.nodes.length} ·
           입력→컨텍스트→프로세스→검토→결과
         </p>
 
@@ -1325,6 +1112,7 @@ export function Stdio_create1() {
 
           <button
             type="button"
+            onClick={handleOpenExample}
             className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             예시 결과
@@ -1332,6 +1120,7 @@ export function Stdio_create1() {
 
           <button
             type="button"
+            onClick={handleOpenPreview}
             className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             미리보기
@@ -1339,9 +1128,8 @@ export function Stdio_create1() {
 
           <button
             type="button"
-            disabled={
-              !validationResult?.valid
-            }
+            disabled={!validationResult?.valid}
+            onClick={handleStartSave}
             className={[
               'flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] text-[17px] font-bold',
               validationResult?.valid

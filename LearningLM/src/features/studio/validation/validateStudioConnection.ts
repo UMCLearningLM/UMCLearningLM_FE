@@ -32,6 +32,7 @@ export type StudioConnectionValidationReason =
   | 'output-as-source'
   | 'input-as-target'
   | 'duplicate-connection'
+  | 'source-handle-in-use'
   | 'backward-stage'
   | 'non-adjacent-stage'
   | 'cycle'
@@ -71,7 +72,14 @@ export interface StudioConnectionValidationPolicy {
    * 기본값은 true입니다.
    */
   rejectDuplicateConnections?: boolean
+    /**
+   * 하나의 Source Handle에서 하나의 Edge만 나갈 수 있도록 제한합니다.
+   *
+   * 기본값은 true입니다.
+   */
+  limitSourceHandleToSingleEdge?: boolean
 }
+
 
 /**
  * 연결 검증에 필요한 값입니다.
@@ -154,9 +162,10 @@ export interface CreateStudioConnectionValidatorOptions {
 
 const DEFAULT_CONNECTION_POLICY: Required<StudioConnectionValidationPolicy> = {
   enforceStageOrder: true,
-  requireAdjacentStages: false,
+  requireAdjacentStages: true,
   preventCycles: true,
   rejectDuplicateConnections: true,
+  limitSourceHandleToSingleEdge: true,
 }
 
 /**
@@ -270,6 +279,62 @@ export function hasDuplicateStudioConnection({
       ) === targetHandle
     )
   })
+}
+
+/**
+ * 하나의 Source Handle에 이미 다른 Edge가 연결되어 있는지 검사합니다.
+ *
+ * Handle ID가 없는 현재 Studio 노드는 null Handle 하나를 사용하는 것으로
+ * 간주하므로 노드당 하나의 출력 연결만 허용하게 됩니다.
+ */
+export function hasSourceHandleConnection({
+  connection,
+  edges,
+}: Pick<
+  ValidateStudioConnectionOptions,
+  'connection' | 'edges'
+>): boolean {
+  const sourceNodeId =
+    connection.source?.trim()
+
+  if (!sourceNodeId) {
+    return false
+  }
+
+  const candidateEdgeId =
+    getCandidateEdgeId(
+      connection,
+    )
+
+  const sourceHandle =
+    normalizeHandleId(
+      connection.sourceHandle,
+    )
+
+  return edges.some(
+    (edge) => {
+      /*
+       * 기존 Edge 재연결 상황에서는
+       * 자기 자신을 사용 중인 Edge로 판단하지 않습니다.
+       */
+      if (
+        candidateEdgeId &&
+        edge.id ===
+          candidateEdgeId
+      ) {
+        return false
+      }
+
+      return (
+        edge.source ===
+          sourceNodeId &&
+        normalizeHandleId(
+          edge.sourceHandle,
+        ) ===
+          sourceHandle
+      )
+    },
+  )
 }
 
 /**
@@ -590,6 +655,21 @@ export function validateStudioConnection({
     return createInvalidConnectionResult(
       'duplicate-connection',
       '두 노드 사이에 동일한 연결이 이미 존재합니다.',
+      sourceNodeId,
+      targetNodeId,
+    )
+  }
+
+  if (
+    resolvedPolicy.limitSourceHandleToSingleEdge &&
+    hasSourceHandleConnection({
+      connection,
+      edges,
+    })
+  ) {
+    return createInvalidConnectionResult(
+      'source-handle-in-use',
+      '하나의 출력 포트에서는 하나의 노드에만 연결할 수 있습니다.',
       sourceNodeId,
       targetNodeId,
     )
