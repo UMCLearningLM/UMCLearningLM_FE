@@ -57,6 +57,13 @@ import type {
 } from '../features/studio/types/studioValidation'
 
 import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
+import { useRef } from 'react'
+
+import {
+  FlowPreviewResponse,
+  saveFlow,
+  type FlowSavePayload,
+} from './api/StudioApi'
 
 type ValidationCheckStatus =
   | 'pass'
@@ -81,6 +88,9 @@ type StudioNavigationState = {
   edges?: Edge[]
   validationResult?: StudioWorkflowValidationResult | null
 }
+
+
+
 
 const stageStyleMap: Record<
   StudioStage,
@@ -717,21 +727,71 @@ export function Stdio_create1() {
     })
   }
 
-  const handleOpenPreview = () => {
-    navigate('/workflows/draft/preview', {
-      state: buildNavigationState(),
-    })
+  const handleOpenPreview = async () => {
+    try{
+      const flowId=8;
+      // TODO: 로그인 API 머지 후 실제 accessToken으로 교체
+      const accessToken = "여기에_나중에_실제_accessToken";
+      const data=await FlowPreviewResponse(
+        flowId,
+        accessToken,
+      );
+      console.log("불러온 Flow:", data);
+      navigate(
+        `/studio/create?mode=copied&flowId=${flowId}`,
+      {
+        state: {
+          mode: "preview",
+          flowId: flowId,
+          flowData: data,
+        },
+      },
+    );
+    } catch (error) {
+    console.error("Flow 불러오기 실패:", error);
+  }
+  }
+const buildFlowSavePayload = (): FlowSavePayload => ({
+  title: '새 흐름',
+  summary: '자동 생성된 요약',
+  purpose: '사용자 정의 흐름',
+  difficulty: 'BEGINNER',
+  categoryIds: [],
+  visibility: 'PRIVATE',
+  status: 'COMPLETED',
+  authorNote: '',
+  exampleInput: '',
+  exampleResult: '',
+  blocks: studio.nodes.map((node, index) => ({
+    blockId: index + 1,
+    blockOrder: index,
+    options: {
+      title: node.data.node.title,
+      stage: node.data.node.stage,
+      id: node.data.node.id,
+    },
+    promptTemplateId: 0,
+  })),
+})
+
+const handleStartSave = async () => {
+  if (!validationResult?.valid) {
+    return
   }
 
-  const handleStartSave = () => {
-    if (!validationResult?.valid) {
-      return
-    }
+  try {
+    const flowIdNum = workflowId ? Number(workflowId) : undefined
+    if (!flowIdNum) return
+
+    const { result } = await saveFlow(flowIdNum, buildFlowSavePayload())
 
     navigate('/studio/save/review', {
-      state: buildNavigationState(),
+      state: { ...buildNavigationState(), saveResult: result },
     })
+  } catch (error) {
+    // 에러 코드별 분기 (FLOW400xx, AUTH401xx, FLOW403xx, FLOW404xx)
   }
+}
 
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
