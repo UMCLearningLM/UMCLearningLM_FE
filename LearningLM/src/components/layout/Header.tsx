@@ -127,7 +127,10 @@ export function Header() {
         const accessToken =
           localStorage.getItem(
             'accessToken',
-          )
+          ) ??
+          sessionStorage.getItem(
+            'accessToken',
+          );
 
         /**
          * 토큰 자체가 없으면

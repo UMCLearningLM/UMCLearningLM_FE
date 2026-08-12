@@ -42,10 +42,43 @@ let reissuePromise:
     | Promise<string>
     | null = null;
 
+
+
+/**
+* 현재 로그인된 사용자의 Access Token을 가져옵니다.
+*
+* 로그인 상태 유지 O → localStorage
+* 로그인 상태 유지 X → sessionStorage
+*/
+const getAccessToken = () => {
+    return (
+        localStorage.getItem(
+            "accessToken"
+        ) ??
+        sessionStorage.getItem(
+            "accessToken"
+        )
+    );
+};
+
+/**
+ * 현재 로그인된 사용자의 Refresh Token을 가져옵니다.
+ */
+const getRefreshToken = () => {
+    return (
+        localStorage.getItem(
+            "refreshToken"
+        ) ??
+        sessionStorage.getItem(
+            "refreshToken"
+        )
+    );
+};
 /**
  * 인증 관련 localStorage 정보를 제거합니다.
  */
 const clearAuthStorage = () => {
+    // localStorage 삭제
     localStorage.removeItem(
         "accessToken"
     );
@@ -55,6 +88,19 @@ const clearAuthStorage = () => {
     );
 
     localStorage.removeItem(
+        "user"
+    );
+
+    // sessionStorage 삭제
+    sessionStorage.removeItem(
+        "accessToken"
+    );
+
+    sessionStorage.removeItem(
+        "refreshToken"
+    );
+
+    sessionStorage.removeItem(
         "user"
     );
 };
@@ -120,9 +166,7 @@ const isReissueExcludedRequest = (
 api.interceptors.request.use(
     (config) => {
         const accessToken =
-            localStorage.getItem(
-                "accessToken"
-            );
+            getAccessToken();
 
         if (accessToken) {
             config.headers.Authorization =
@@ -159,8 +203,8 @@ api.interceptors.response.use(
     ) => {
         const originalRequest =
             error.config as
-                | RetryableRequestConfig
-                | undefined;
+            | RetryableRequestConfig
+            | undefined;
 
         /**
          * 요청 정보 자체가 없다면
@@ -203,9 +247,7 @@ api.interceptors.response.use(
          * Refresh Token 확인
          */
         const refreshToken =
-            localStorage.getItem(
-                "refreshToken"
-            );
+            getRefreshToken();
 
         /**
          * Refresh Token도 없다면
@@ -253,10 +295,10 @@ api.interceptors.response.use(
                             ) => {
                                 const {
                                     accessToken:
-                                        newAccessToken,
+                                    newAccessToken,
 
                                     refreshToken:
-                                        newRefreshToken,
+                                    newRefreshToken,
                                 } =
                                     response
                                         .data
@@ -277,15 +319,41 @@ api.interceptors.response.use(
                                 /**
                                  * 새 토큰 저장
                                  */
-                                localStorage.setItem(
-                                    "accessToken",
-                                    newAccessToken
-                                );
+                                /**
+ * 기존 Refresh Token이
+ * 어디에 저장되어 있었는지 확인합니다.
+ *
+ * localStorage에 있었다면
+ * 로그인 상태 유지가 활성화된 상태입니다.
+ */
+                                const useLocalStorage =
+                                    localStorage.getItem(
+                                        "refreshToken"
+                                    ) !== null;
 
-                                localStorage.setItem(
-                                    "refreshToken",
-                                    newRefreshToken
-                                );
+                                if (useLocalStorage) {
+                                    // 로그인 상태 유지
+                                    localStorage.setItem(
+                                        "accessToken",
+                                        newAccessToken
+                                    );
+
+                                    localStorage.setItem(
+                                        "refreshToken",
+                                        newRefreshToken
+                                    );
+                                } else {
+                                    // 로그인 상태 유지 안 함
+                                    sessionStorage.setItem(
+                                        "accessToken",
+                                        newAccessToken
+                                    );
+
+                                    sessionStorage.setItem(
+                                        "refreshToken",
+                                        newRefreshToken
+                                    );
+                                }
 
                                 return newAccessToken;
                             }
@@ -328,7 +396,7 @@ api.interceptors.response.use(
                 originalRequest
             );
         } catch (
-            reissueError
+        reissueError
         ) {
             /**
              * Refresh Token까지 만료됐거나
