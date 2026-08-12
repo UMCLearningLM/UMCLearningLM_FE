@@ -108,9 +108,9 @@ function FilterButton({
 
         isSelected
           ? selectedClassName ||
-            'border-[#6366F1] bg-[#ECEEFF] text-[#6366F1]'
+          'border-[#6366F1] bg-[#ECEEFF] text-[#6366F1]'
           : baseClassName ||
-            'border-[#656568] bg-white text-[#52525B] hover:bg-[#F7F7F8]',
+          'border-[#656568] bg-white text-[#52525B] hover:bg-[#F7F7F8]',
       ].join(' ')}
     >
       {label}
@@ -356,7 +356,7 @@ export function OfficialTutorialPage() {
                 type="button"
                 aria-label="이전 튜토리얼 페이지"
                 onClick={goPrevPage}
-                className="absolute -left-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
+                className="cursor-pointer absolute -left-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
               >
                 <ArrowLeft size={42} strokeWidth={3} />
               </button>
@@ -367,7 +367,7 @@ export function OfficialTutorialPage() {
                 type="button"
                 aria-label="다음 튜토리얼 페이지"
                 onClick={goNextPage}
-                className="absolute -right-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
+                className="cursor-pointer absolute -right-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
               >
                 <ArrowRight size={42} strokeWidth={3} />
               </button>

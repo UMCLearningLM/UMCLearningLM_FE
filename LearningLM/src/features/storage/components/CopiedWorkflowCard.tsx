@@ -47,10 +47,10 @@ export function CopiedWorkflowCard({ workflow, onViewOriginal, onEditCopy }: Cop
         ))}
       </div>
       <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-        <button type="button" onClick={() => onViewOriginal(workflow.originalWorkflowId)} className="text-sm font-black text-indigo-500 transition hover:text-indigo-600">
+        <button type="button" onClick={() => onViewOriginal(workflow.originalWorkflowId)} className="cursor-pointer text-sm font-black text-indigo-500 transition hover:text-indigo-600">
           원작 흐름 보기 →
         </button>
-        <Button variant="link" size="sm" onClick={() => onEditCopy(workflow.id)}>복사본 편집하기 →</Button>
+        <Button variant="link" size="sm" onClick={() => onEditCopy(workflow.id)} className="cursor-pointer">복사본 편집하기 →</Button>
       </div>
     </Card>
   )

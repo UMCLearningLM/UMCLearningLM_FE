@@ -89,7 +89,8 @@ export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
             </span>
           </div>
 
-          <Button size="sm" onClick={() => onStart?.(tutorial.id)}>
+          <Button size="sm" onClick={() => onStart?.(tutorial.id)}
+            className="cursor-pointer">
             시작하기
           </Button>
         </div>
