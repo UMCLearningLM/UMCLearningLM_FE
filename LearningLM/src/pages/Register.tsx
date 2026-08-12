@@ -29,7 +29,6 @@ export function Register() {
     // 이메일 인증 완료 후 받은 임시 토큰
     const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
 
-
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
@@ -53,7 +52,7 @@ export function Register() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-
+    //인증번호
 
 
     //이메일 형식 유효한지
@@ -89,7 +88,7 @@ export function Register() {
 
         try {
             const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/email/request",
+                "http://3.39.165.3:8080/api/auth/email/request",
                 {
                     verificationType: "NON_LOGIN",
                     purpose: "SIGNUP",
@@ -130,7 +129,7 @@ export function Register() {
         //이메일&&인증번호 백엔드 전송
         try {
             const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/email/verify",
+                "http://3.39.165.3:8080/api/auth/email/verify",
                 {
                     verificationType: "NON_LOGIN",
                     purpose: "SIGNUP",
@@ -364,7 +363,7 @@ export function Register() {
         try {
             const emailVerificationToken = temporaryAccessToken.trim();
             const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/signup",
+                "http://3.39.165.3:8080/api/auth/signup",
                 {
                     email,
                     password: pw,
