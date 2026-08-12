@@ -10,6 +10,7 @@ import {
   getTutorialById,
   type TutorialBlock,
 } from '../../features/tutorial/data/tutorials'
+import { deleteFlow, getFlow, type GetFlowResult } from "../api/StudioApi"
 
 const levelClassMap = {
   입문: 'bg-emerald-50 text-emerald-600',
@@ -95,6 +96,7 @@ export function TutorialDetailPage() {
   const [isSaved, setIsSaved] = useState(false)
 
   const tutorialId = Number(params.tutorialId)
+  console.log("현재 tutorialId:", tutorialId)
   const tutorial = getTutorialById(tutorialId)
 
   if (!tutorial) {
