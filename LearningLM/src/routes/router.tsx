@@ -1,56 +1,44 @@
 import {
   Navigate,
   createBrowserRouter,
-  useLocation,
 } from 'react-router-dom'
+
+import { ProtectedRoute } from './ProtectedRoute'
 
 import { HomePage } from '../pages/home/HomePage'
 import { PublicLibraryPage } from '../pages/library/PublicLibraryPage'
 import LibraryDetailPage from '../pages/library/LibraryDetailPage'
 import MyStoragePage from '../pages/storage/MyStoragePage'
 import WorkflowDetailPage from '../pages/storage/WorkflowDetailPage'
+
 import { Stdio_create1 } from '../pages/Stdio_create1'
 import { Studio_create_review1 } from '../pages/Studio_create_review1'
 import { Studio_create_review_details1 } from '../pages/Studio_create_review_details1'
 import { Studio_create_review_publish1 } from '../pages/Studio_create_review_publish1'
+import { Studio1 } from '../pages/Studio1'
+
 import { OfficialTutorialPage } from '../pages/tutorial/OfficialTutorialPage'
 import { TutorialDetailPage } from '../pages/tutorial/TutorialDetailPage'
+
 import { StudioNodeCardTestPage } from '../pages/dev/StudioNodeCardTestPage'
+
 import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
 import { PwFind } from '../pages/PwFind'
+
 import GoogleLoginLoading from '../pages/auth/GoogleLogin'
 import GoogleLoginSuccess from '../pages/auth/GoogleLoginSuccess'
 import GoogleLoginError from '../pages/auth/GoogleLoginError'
-import { Studio1 } from '../pages/Studio1'
-
-/**
- * /studio로 들어온 query string과 location.state를 잃지 않고
- * 실제 편집 화면인 /studio/create로 넘깁니다.
- *
- * 공개 라이브러리 복사, 튜토리얼 시작 등에서 전달한 state가
- * 단순 <Navigate /> 리다이렉트 과정에서 사라지는 문제를 막습니다.
- */
-function StudioRedirect() {
-  const location = useLocation()
-
-  return (
-    <Navigate
-      to={{
-        pathname: '/studio/create',
-        search: location.search,
-      }}
-      state={location.state}
-      replace
-    />
-  )
-}
 
 export const router = createBrowserRouter([
+  /**
+   * 공개 페이지
+   */
   {
     path: '/',
     element: <HomePage />,
   },
+
   {
     path: '/home',
     element: (
@@ -60,14 +48,20 @@ export const router = createBrowserRouter([
       />
     ),
   },
+
+  /**
+   * 인증
+   */
   {
     path: '/login',
     element: <Login />,
   },
+
   {
     path: '/register',
     element: <Register />,
   },
+
   {
     path: '/signup',
     element: (
@@ -77,10 +71,12 @@ export const router = createBrowserRouter([
       />
     ),
   },
+
   {
     path: '/pw-find',
     element: <PwFind />,
   },
+
   {
     path: '/password-find',
     element: (
@@ -90,74 +86,162 @@ export const router = createBrowserRouter([
       />
     ),
   },
+
+  /**
+   * Google OAuth
+   */
   {
     path: '/auth/google/loading',
     element: <GoogleLoginLoading />,
   },
+
   {
     path: '/auth/google/success',
     element: <GoogleLoginSuccess />,
   },
+
   {
     path: '/auth/google/error',
     element: <GoogleLoginError />,
   },
+
+  /**
+   * 공식 튜토리얼
+   *
+   * 로그인하지 않아도 조회 가능
+   */
   {
     path: '/official-tutorials',
     element: <OfficialTutorialPage />,
   },
+
   {
     path: '/official-tutorials/:tutorialId',
     element: <TutorialDetailPage />,
   },
+
+  /**
+   * Studio
+   *
+   * 로그인 필요
+   */
   {
     path: '/studio',
-    element: <Studio1 />,
+    element: (
+      <ProtectedRoute>
+        <Studio1 />
+      </ProtectedRoute>
+    ),
   },
+
   {
     path: '/studio/create',
-    element: <Stdio_create1 />,
+    element: (
+      <ProtectedRoute>
+        <Stdio_create1 />
+      </ProtectedRoute>
+    ),
   },
+
   {
     path: '/studio/:workflowId/edit',
-    element: <Stdio_create1 />,
+    element: (
+      <ProtectedRoute>
+        <Stdio_create1 />
+      </ProtectedRoute>
+    ),
   },
+
   {
     path: '/studio/save/review',
-    element: <Studio_create_review1 />,
+    element: (
+      <ProtectedRoute>
+        <Studio_create_review1 />
+      </ProtectedRoute>
+    ),
   },
+
   {
     path: '/studio/save/details',
-    element: <Studio_create_review_details1 />,
+    element: (
+      <ProtectedRoute>
+        <Studio_create_review_details1 />
+      </ProtectedRoute>
+    ),
   },
+
   {
     path: '/studio/save/publish',
-    element: <Studio_create_review_publish1 />,
+    element: (
+      <ProtectedRoute>
+        <Studio_create_review_publish1 />
+      </ProtectedRoute>
+    ),
   },
+
+  /**
+   * Workflow Preview
+   *
+   * 현재 사용자 Workflow 미리보기이므로 로그인 필요
+   */
   {
     path: '/workflows/:workflowId/preview',
-    element: <Studio_create_review1 />,
+    element: (
+      <ProtectedRoute>
+        <Studio_create_review1 />
+      </ProtectedRoute>
+    ),
   },
+
+  /**
+   * 내 저장소
+   *
+   * 로그인 필요
+   */
   {
     path: '/my-storage',
-    element: <MyStoragePage />,
+    element: (
+      <ProtectedRoute>
+        <MyStoragePage />
+      </ProtectedRoute>
+    ),
   },
+
+  {
+    path: '/my-storage/workflows/:workflowId',
+    element: (
+      <ProtectedRoute>
+        <WorkflowDetailPage />
+      </ProtectedRoute>
+    ),
+  },
+
+  /**
+   * 공개 라이브러리
+   *
+   * 로그인하지 않아도 조회 가능
+   */
   {
     path: '/public-library',
     element: <PublicLibraryPage />,
   },
+
   {
     path: '/public-library/:libraryId',
     element: <LibraryDetailPage />,
   },
-  {
-    path: '/my-storage/workflows/:workflowId',
-    element: <WorkflowDetailPage />,
-  },
+
+  /**
+   * 개발 테스트 페이지
+   */
   {
     path: '/studionodecardtestpage',
     element: <StudioNodeCardTestPage />,
   },
+
+  /**
+   * 존재하지 않는 경로
+   */
   {
     path: '*',
     element: (
