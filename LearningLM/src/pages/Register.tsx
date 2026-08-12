@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from '../api/api'
 //.\gradlew bootRun 스프링부트 서버 키는 방법
 
 export function Register() {
@@ -87,8 +88,8 @@ export function Register() {
         setEmailFormErr(false);
 
         try {
-            const res = await axios.post(
-                "http://3.39.165.3:8080/api/auth/email/request",
+            const res = await api.post(
+                "/auth/email/request",
                 {
                     verificationType: "NON_LOGIN",
                     purpose: "SIGNUP",
@@ -128,8 +129,8 @@ export function Register() {
     const verifyCode = async () => {
         //이메일&&인증번호 백엔드 전송
         try {
-            const res = await axios.post(
-                "http://3.39.165.3:8080/api/auth/email/verify",
+            const res = await api.post(
+                "auth/email/verify",
                 {
                     verificationType: "NON_LOGIN",
                     purpose: "SIGNUP",
@@ -362,8 +363,8 @@ export function Register() {
         );
         try {
             const emailVerificationToken = temporaryAccessToken.trim();
-            const res = await axios.post(
-                "http://3.39.165.3:8080/api/auth/signup",
+            const res = await api.post(
+                "auth/signup",
                 {
                     email,
                     password: pw,
