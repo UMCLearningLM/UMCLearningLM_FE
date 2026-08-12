@@ -24,6 +24,10 @@ import {
   StudioSimulation,
 } from '../features/studio/simulation/components/StudioSimulation'
 
+import { createFlow } from "../pages/api/StudioApi";
+
+
+
 export function Studio1() {
   const navigate =
     useNavigate()
@@ -45,49 +49,96 @@ export function Studio1() {
     )
   }
 
-  const handleCreateMode = () => {
+  // 1. 자유 제작 모드 (빈 캔버스 생성)
+const handleCreateMode = async () => {
+  try {
+    const accessToken = localStorage.getItem('accessToken') || '';
+    
+    // Swagger Body에 맞춰 mode: "CREATE" 전달
+    const data = await createFlow({
+      mode: "CREATE",
+      tutorialId: null,
+      originFlowId: null,
+    }, accessToken);
+
+    console.log("생성된 Flow:", data);
+
     navigate(
-      '/studio/create?mode=create',
+      `/studio/create?mode=create&flowId=${data.result.flowId}`,
       {
         state: {
-          mode: 'create',
+          mode: "create",
+          flowId: data.result.flowId,
         },
       },
-    )
+    );
+  } catch (error) {
+    console.error("Flow 생성 실패:", error);
   }
+};
 
-  const handleContinueCopiedWorkflow =
-    () => {
-      /*
-       * 현재 API 기반 복사 워크플로우
-       * 복원 데이터가 연결되기 전에도
-       * Studio가 정상 진입할 수 있도록
-       * copied 모드로 전달합니다.
-       */
-      navigate(
-        '/studio/create?mode=copied',
-        {
-          state: {
-            mode: 'copied',
-          },
+
+// 2. 복사한 워크플로우 이어 편집 (복사본 기반 생성)
+const handleContinueCopiedWorkflow = async () => {
+  try {
+    // TODO: 실제 원본 Flow ID를 UI선택값이나 Props에서 받아오도록 수정
+    const originFlowId = 7; 
+    const accessToken = "여기에_나중에_실제_accessToken";
+
+    // 단순 조회(GET)가 아니라 복사본 생성(POST) API를 호출해야 함
+    const data = await createFlow({
+      mode: "COPY",
+      tutorialId: null,
+      originFlowId: originFlowId,
+    }, accessToken);
+
+    console.log("생성된 복사본 Flow:", data);
+
+    // 복사 결과로 새로 발급된 data.result.flowId 로 이동
+    navigate(
+      `/studio/create?mode=copied&flowId=${data.result.flowId}`,
+      {
+        state: {
+          mode: "copied",
+          flowId: data.result.flowId,
         },
-      )
-    }
+      },
+    );
+  } catch (error) {
+    console.error("복사본 Flow 생성 실패:", error);
+  }
+};
 
-  const handleStartStudioFromSimulation =
-    () => {
-      setIsSimulationOpen(false)
 
-      navigate(
-        '/studio/create?mode=create',
-        {
-          state: {
-            mode: 'create',
-          },
+// 3. 시뮬레이션 진입 후 시작 (또는 가이드/튜토리얼 모드)
+const handleStartStudioFromSimulation = async () => {
+  try {
+    const accessToken = 'temporary-token';
+
+    // 튜토리얼/가이드 모드로 생성할 경우 mode: "TUTORIAL" 및 tutorialId 전달
+    const data = await createFlow({
+      mode: "TUTORIAL",
+      tutorialId: 5, // 필요에 따라 지정한 튜토리얼 ID
+      originFlowId: null,
+    }, accessToken);
+
+    console.log("생성된 Flow:", data);
+
+    setIsSimulationOpen(false);
+
+    navigate(
+      `/studio/create?mode=tutorial&flowId=${data.result.flowId}`,
+      {
+        state: {
+          mode: "tutorial",
+          flowId: data.result.flowId,
         },
-      )
-    }
-
+      },
+    );
+  } catch (error) {
+    console.error("Flow 생성 실패:", error);
+  }
+};
   return (
     <>
       <div className="flex min-h-screen flex-col bg-[#F6F6F8] text-[#27272A]">
@@ -152,9 +203,9 @@ export function Studio1() {
                 <button
                   type="button"
                   onClick={
-                    handleGuidedMode
+                    handleStartStudioFromSimulation
                   }
-                  className="mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] bg-[#6366F1] text-[14px] font-bold text-white transition hover:bg-[#5558E8]"
+                  className="cursor-pointer mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] bg-[#6366F1] text-[14px] font-bold text-white transition hover:bg-[#5558E8]"
                 >
                   가이드 모드 시작
                 </button>
@@ -180,7 +231,7 @@ export function Studio1() {
                   onClick={
                     handleCreateMode
                   }
-                  className="mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] border border-[#D4D4D8] bg-white text-[14px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
+                  className="cursor-pointer mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] border border-[#D4D4D8] bg-white text-[14px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
                 >
                   빈 캔버스로 시작
                 </button>
@@ -220,7 +271,7 @@ export function Studio1() {
                       true,
                     )
                   }}
-                  className="ml-[24px] inline-flex h-[42px] shrink-0 items-center gap-[4px] rounded-[7px] border-[2px] border-[#6366F1] bg-white px-[14px] text-[13px] font-bold text-[#6366F1] transition hover:bg-[#F4F4FF]"
+                  className="cursor-pointer ml-[24px] inline-flex h-[42px] shrink-0 items-center gap-[4px] rounded-[7px] border-[2px] border-[#6366F1] bg-white px-[14px] text-[13px] font-bold text-[#6366F1] transition hover:bg-[#F4F4FF]"
                 >
                   시뮬레이션 보기
 
@@ -263,7 +314,7 @@ export function Studio1() {
                   onClick={
                     handleContinueCopiedWorkflow
                   }
-                  className="ml-[24px] inline-flex h-[42px] shrink-0 items-center justify-center rounded-[7px] border border-[#D4D4D8] bg-white px-[18px] text-[13px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
+                  className="cursor-pointer ml-[24px] inline-flex h-[42px] shrink-0 items-center justify-center rounded-[7px] border border-[#D4D4D8] bg-white px-[18px] text-[13px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
                 >
                   편집 계속하기
                 </button>

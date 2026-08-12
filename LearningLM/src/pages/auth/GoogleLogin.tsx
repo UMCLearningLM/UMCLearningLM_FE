@@ -1,87 +1,273 @@
+import {
+    useEffect,
+    useState,
+} from "react";
+
+import {
+    useNavigate,
+} from "react-router-dom";
+
+import api from "../../api/api";
+
+interface GoogleAuthorizationResponse {
+    code: string;
+    message: string;
+    result: {
+        authorizationUrl: string;
+    };
+    success: boolean;
+}
+
 export default function GoogleLogin() {
-  return (
-    <div className="flex flex-col items-center justify-center h-screen w-[1920px] h-[900px] top-[7009px] left-[4559px] pt-[200px] pr-[660px] pb-[200px] pl-[660px] gap-[10px] bg-[#F5F5F7]">
-        
-            
-        <div className="w-[600px] h-[500px] gap-[47px] flex flex-col justify-center items-center">
-                {/*로고+타이틀*/}
-            <div className="w-[353px] h-[78px] gap-[14px] flex flex-col justify-center items-center">
-                <div className="flex justify-center items-center gap-[8px] w-[201px] h-[43px] ">
-                    {/* 로고 */}
-                    <div className="bg-[#6366F1] pt-[7px] pr-[15px] pb-[7px] pl-[15px] rounded-[8px] flex gap-[10px] w-[44px] h-[43px]">
-                        <span className=" flex items-center justify-center text-[#FFFFFF] text-[24px] font-bold tracking-[-0.03em] w-[14px] h-[29px] items-center">
-                            L
-                        </span>
+    const navigate = useNavigate();
+
+    const [
+        errorMessage,
+        setErrorMessage,
+    ] = useState("");
+
+    /**
+     * 백엔드에서 authorizationUrl이
+     * 절대 URL 또는 상대 URL 어느 쪽으로 와도
+     * 정상적으로 Google 인증 페이지로 이동할 수 있게 합니다.
+     */
+    const resolveAuthorizationUrl = (
+        authorizationUrl: string
+    ) => {
+        /**
+         * 이미 완전한 URL이면 그대로 사용합니다.
+         */
+        if (
+            authorizationUrl.startsWith(
+                "http://"
+            ) ||
+            authorizationUrl.startsWith(
+                "https://"
+            )
+        ) {
+            return authorizationUrl;
+        }
+
+        /**
+         * 상대 경로라면
+         * 공용 Axios의 백엔드 baseURL 기준으로
+         * 절대 URL로 변환합니다.
+         */
+        const baseURL =
+            api.defaults.baseURL;
+
+        if (!baseURL) {
+            throw new Error(
+                "API 서버 주소가 설정되어 있지 않습니다."
+            );
+        }
+
+        return new URL(
+            authorizationUrl,
+            baseURL
+        ).toString();
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const startGoogleLogin =
+            async () => {
+                try {
+                    /**
+                     * Google 로그인 시작 API
+                     *
+                     * GET /api/auth/google
+                     */
+                    const response =
+                        await api.get<
+                            GoogleAuthorizationResponse
+                        >(
+                            "/auth/google"
+                        );
+
+                    if (cancelled) {
+                        return;
+                    }
+
+                    const authorizationUrl =
+                        response.data
+                            ?.result
+                            ?.authorizationUrl;
+
+                    /**
+                     * 백엔드 응답에
+                     * authorizationUrl이 없는 경우
+                     */
+                    if (
+                        !authorizationUrl
+                    ) {
+                        throw new Error(
+                            "Google 인증 URL을 받지 못했습니다."
+                        );
+                    }
+
+                    /**
+                     * OAuth 진행 중임을 기록합니다.
+                     *
+                     * 추후 callback 성공 처리에서
+                     * Google 로그인 흐름인지 구분하는 데
+                     * 사용할 수 있습니다.
+                     */
+                    sessionStorage.setItem(
+                        "googleLoginPending",
+                        "true"
+                    );
+
+                    const resolvedUrl =
+                        resolveAuthorizationUrl(
+                            authorizationUrl
+                        );
+
+                    /**
+                     * Google 로그인 페이지로 이동
+                     *
+                     * replace를 사용해서
+                     * 뒤로가기를 눌렀을 때 loading 페이지로
+                     * 다시 튕기는 현상을 줄입니다.
+                     */
+                    window.location.replace(
+                        resolvedUrl
+                    );
+                } catch (error) {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    console.error(
+                        "Google 로그인 시작 실패:",
+                        error
+                    );
+
+                    sessionStorage.removeItem(
+                        "googleLoginPending"
+                    );
+
+                    setErrorMessage(
+                        "Google 로그인 요청을 시작하지 못했습니다."
+                    );
+
+                    /**
+                     * 잠깐 오류 메시지를 보여준 뒤
+                     * 기존 실패 페이지로 이동합니다.
+                     */
+                    window.setTimeout(
+                        () => {
+                            navigate(
+                                "/auth/google/error",
+                                {
+                                    replace:
+                                        true,
+                                }
+                            );
+                        },
+                        1000
+                    );
+                }
+            };
+
+        startGoogleLogin();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [navigate]);
+
+    return (
+        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[#F5F5F7] px-[24px]">
+            <div className="flex w-full max-w-[600px] flex-col items-center gap-[47px]">
+                {/* Logo + Title */}
+                <div className="flex flex-col items-center gap-[14px]">
+                    <div className="flex items-center justify-center gap-[8px]">
+                        {/* Logo */}
+                        <div className="flex h-[43px] w-[44px] items-center justify-center rounded-[8px] bg-[#6366F1]">
+                            <span className="text-[24px] font-bold tracking-[-0.03em] text-white">
+                                L
+                            </span>
+                        </div>
+
+                        {/* Title */}
+                        <h1 className="text-[28px] font-bold tracking-[-0.03em] text-[#27272A]">
+                            LearningLM
+                        </h1>
                     </div>
-                    {/* 타이틀 */}
-                    <h1 className="flex items-center w-[149px] h-[33px] text-[28px] font-bold tracking-[-0.03em]">
-                    LearningLM
-                    </h1>
-                    
-                </div>
-                <p className="w-[353px] h-[21px] whitespace-nowrap text-center text-[18px] tracking-[-0.03em] font-normal leading-none text-[#52525B]">
-                    AI 활용 흐름을 블록형 튜토리얼로 배우는 플랫폼
-                </p>
-            </div>
-            
-            
-            
 
-            {/*박스*/}
-            <div className="flex flex-col items-center  gap-[10px] w-[600px] h-[310.5px] rounded-[12px] border border-[2px] border-[#E4E4E7] pt-[50px] px-[10px] pb-[50px] pr-[10px] bg-[#FFFFFF]">
-            
-            <div className="w-[427px] h-[210.5px] gap-[21px] flex flex-col justify-center items-center">
-                <div className=" w-[60px] h-[124.5px] gap-[24px] flex flex-col justify-center items-center">
-                    <div className="relative w-[60px] h-[60px] rounded-full overflow-hidden" >
-                        
-                        <div className="absolute left-[8.79px] w-[21.21px] h-[30px] bg-[#4285F4] outline outline-[0.75px] outline-[#4285F4] " />
-                        <div className="absolute top-[8.79px]  w-[30px] h-[21.21px] bg-[#4285F4] outline outline-[0.75px] outline-[#4285F4]" />
-                        
-                        <div className="absolute top-[30px]  w-[21.21px] h-[30px] bg-[#34A853] outline outline-[0.75px] outline-[#34A853] " />
-                        <div className="absolute top-[30px] left-[8.79px] w-[21.21px] h-[30px] bg-[#34A853] outline outline-[0.75px] outline-[#34A853]" />
-                        
-                        <div className="absolute top-[30px] left-[30px] w-[21.21px] h-[30px] bg-[#FBBC05] outline outline-[0.75px] outline-[#FBBC05] " />
-                        <div className="absolute top-[30px] left-[30px] w-[30px] h-[21.21px] bg-[#FBBC05] outline outline-[0.75px] outline-[#FBBC05] " />
-                        
-                        <div className="absolute top-[8.79px] left-[30px] w-[30px] h-[21.21px] bg-[#EA4335] outline outline-[0.75px] outline-[#EA4335]" />
-                        <div className="absolute  left-[30px] w-[30px] h-[8.79px] bg-[#EA4335] outline outline-[0.75px] outline-[#EA4335]" />
-                    
+                    <p className="text-center text-[18px] font-normal tracking-[-0.03em] text-[#52525B]">
+                        AI 활용 흐름을
+                        블록형 튜토리얼로
+                        배우는 플랫폼
+                    </p>
+                </div>
+
+                {/* Auth Box */}
+                <div className="flex min-h-[310px] w-full flex-col items-center justify-center rounded-[12px] border-2 border-[#E4E4E7] bg-white px-[30px] py-[50px]">
+                    <div className="flex w-full flex-col items-center gap-[21px]">
+                        {/* Google Symbol */}
+                        <div className="relative h-[60px] w-[60px] overflow-hidden rounded-full">
+                            <div className="absolute left-[8.79px] h-[30px] w-[21.21px] bg-[#4285F4]" />
+                            <div className="absolute top-[8.79px] h-[21.21px] w-[30px] bg-[#4285F4]" />
+
+                            <div className="absolute top-[30px] h-[30px] w-[21.21px] bg-[#34A853]" />
+                            <div className="absolute left-[8.79px] top-[30px] h-[30px] w-[21.21px] bg-[#34A853]" />
+
+                            <div className="absolute left-[30px] top-[30px] h-[30px] w-[21.21px] bg-[#FBBC05]" />
+                            <div className="absolute left-[30px] top-[30px] h-[21.21px] w-[30px] bg-[#FBBC05]" />
+
+                            <div className="absolute left-[30px] top-[8.79px] h-[21.21px] w-[30px] bg-[#EA4335]" />
+                            <div className="absolute left-[30px] h-[8.79px] w-[30px] bg-[#EA4335]" />
+                        </div>
+
+                        {/* Spinner */}
+                        <div className="h-[40px] w-[40px] animate-spin rounded-full border-[4px] border-[#E4E4E7] border-t-[#6366F1]" />
+
+                        <div className="flex flex-col items-center gap-[11px]">
+                            <h2 className="text-center text-[28px] font-bold tracking-[-0.03em] text-[#27272A]">
+                                Google 계정으로
+                                인증 중...
+                            </h2>
+
+                            {errorMessage ? (
+                                <p className="text-center text-[16px] font-medium tracking-[-0.03em] text-[#EF8888]">
+                                    {
+                                        errorMessage
+                                    }
+                                </p>
+                            ) : (
+                                <p className="text-center text-[18px] font-normal tracking-[-0.03em] text-[#52525B]">
+                                    잠시만
+                                    기다려주세요.
+                                    권한 확인이
+                                    끝나면 자동으로
+                                    이동합니다.
+                                </p>
+                            )}
+                        </div>
                     </div>
-                    {/* 원 */}
-                    <div className="w-[40.5px] h-[40.5px] border-[4.5px] border-[#E4E4E7] rounded-full"></div>
-                </div>
-                <div className="w-[427px] h-[33px] font-bold text-[28px] tracking-[-0.03em] leading-none items-center text-[#27272A] text-center ">
-                    Google 계정으로 인증 중...
                 </div>
 
-                <div className="flex items-center justify-center w-[427px] h-[21px] text-[18px] tracking-[-0.03em] font-normal leading-none text-[#52525B] whitespace-nowrap">
-                    잠시만 기다려주세요. 권한 확인이 끝나면 자동으로 이동합니다.
-                </div>
-
-            </div>
-            </div>
-
-            {/* Footer */}
-                <footer >
-                    <div className="w-[408px] h-[21px] gap-[36px] flex whitespace-nowrap ">
-                        
-                        <span className="text-[18px] leading-none tracking-[-0.03em] font-normal w-[154px] h-[21px] text-[#9A9AA3]">
-                        © 2026 LearningLM
+                {/* Footer */}
+                <footer>
+                    <div className="flex flex-wrap items-center justify-center gap-[36px] text-[18px] font-normal tracking-[-0.03em] text-[#9A9AA3]">
+                        <span>
+                            © 2026
+                            LearningLM
                         </span>
 
-                        <span className="text-[18px] leading-none tracking-[-0.03em] font-normal w-[61px] h-[21px] text-[#9A9AA3]">
-                        이용약관
+                        <span>
+                            이용약관
                         </span>
 
-                        <span className="text-[18px] leading-none tracking-[-0.03em] font-normal w-[121px] h-[21px] text-[#9A9AA3]">
-                        개인정보처리방침
+                        <span>
+                            개인정보처리방침
                         </span>
-
                     </div>
                 </footer>
+            </div>
         </div>
-            
-    </div>
-   
-  );
+    );
 }

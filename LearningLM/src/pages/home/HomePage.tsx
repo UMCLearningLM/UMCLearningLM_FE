@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   ArrowRight,
   Bookmark,
@@ -50,6 +51,7 @@ import {
 import {
   ThumbnailBox,
 } from '../../components/ui/ThumbnailBox'
+
 
 const values = [
   {
@@ -255,7 +257,25 @@ export function HomePage() {
       )
     }
 
+  useEffect(() => {
+    const googleLoginPending =
+      sessionStorage.getItem("googleLoginPending");
+
+    const accessToken =
+      localStorage.getItem("accessToken");
+
+    if (googleLoginPending === "true" && accessToken) {
+      sessionStorage.removeItem("googleLoginPending");
+
+      navigate("/auth/google/success", {
+        replace: true,
+      });
+    }
+  }, [navigate]);
+
   return (
+
+
     <div className="min-h-screen bg-slate-50">
       <Header />
 
@@ -288,6 +308,7 @@ export function HomePage() {
                   onClick={
                     goToTutorials
                   }
+                  className="cursor-pointer"
                 >
                   튜토리얼 시작하기
                 </Button>
@@ -298,6 +319,7 @@ export function HomePage() {
                   onClick={
                     goToPublicLibrary
                   }
+                  className="cursor-pointer"
                 >
                   공개 활용 흐름
                   둘러보기
@@ -394,6 +416,7 @@ export function HomePage() {
                     '/official-tutorials/1',
                   )
                 }}
+                className="cursor-pointer"
               >
                 이어가기
               </Button>
@@ -540,6 +563,7 @@ export function HomePage() {
                           `/official-tutorials/${tutorial.id}`,
                         )
                       }}
+                      className="cursor-pointer"
                     >
                       시작하기
                     </Button>
@@ -672,6 +696,7 @@ export function HomePage() {
                           `/public-library/${workflow.id}`,
                         )
                       }}
+                      className="cursor-pointer"
                     >
                       복사해서 시작
                     </Button>
@@ -719,8 +744,8 @@ export function HomePage() {
                                   badge,
                                 )
                                   ? getTutorialLevelBadgeVariant(
-                                      badge,
-                                    )
+                                    badge,
+                                  )
                                   : 'blue'
                               }
                             >
@@ -759,6 +784,7 @@ export function HomePage() {
                           item.path,
                         )
                       }}
+                      className="cursor-pointer"
                     >
                       {
                         item.action
@@ -797,6 +823,7 @@ export function HomePage() {
               onClick={
                 goToTutorials
               }
+              className="cursor-pointer"
             >
               안내 가이드 보기
             </Button>
