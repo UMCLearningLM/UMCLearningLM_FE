@@ -1,34 +1,34 @@
-import axios from 'axios'
+import api from '../../api/api'
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  '/api'
+/**
+ * Studio API도 LearningLM 공용 Axios 인스턴스를 사용합니다.
+ *
+ * 공용 api.ts에서 다음 기능을 일괄 처리합니다.
+ *
+ * 1. VITE_API_BASE_URL 적용
+ * 2. localStorage / sessionStorage Access Token 선택
+ * 3. Authorization 헤더 자동 추가
+ * 4. 401 시 Refresh Token 재발급
+ * 5. 재발급 후 실패했던 요청 자동 재시도
+ *
+ * 기존 호출부와의 호환성을 위해 함수의 accessToken 인자는
+ * 당분간 유지하지만 실제 인증은 공용 interceptor가 담당합니다.
+ */
 
-const studioApi =
-  axios.create({
-    baseURL:
-      API_BASE_URL,
+/* =========================================================
+ * 공통
+ * ========================================================= */
 
-    timeout:
-      10_000,
-  })
-
-function authConfig(
-  accessToken?: string,
-) {
-  return {
-    headers:
-      accessToken
-        ? {
-            Authorization:
-              `Bearer ${accessToken}`,
-          }
-        : undefined,
-  }
+export interface StudioApiBaseResponse<T> {
+  code: string
+  message: string
+  result: T
+  success: boolean
 }
 
 /* =========================================================
  * 1. Flow 생성
+ * POST /flows
  * ========================================================= */
 
 export interface CreateFlowRequest {
@@ -37,39 +37,43 @@ export interface CreateFlowRequest {
   originFlowId?: number | null
 }
 
-export interface CreateFlowResponse {
-  code: string
-  message: string
-
-  result: {
-    flowId: number
-    title: string
-    mode: string
-    status: string
-    createdAt: string
-  }
-
-  success: boolean
+export interface CreateFlowResult {
+  flowId: number
+  title: string
+  mode: string
+  status: string
+  createdAt: string
 }
+
+export type CreateFlowResponse =
+  StudioApiBaseResponse<
+    CreateFlowResult
+  >
 
 export async function createFlow(
   data: CreateFlowRequest,
-  accessToken?: string,
+
+  /**
+   * P0 이전 호출부 호환용입니다.
+   * 실제 Authorization 처리는 api.ts interceptor가 담당합니다.
+   */
+  _accessToken?: string,
 ): Promise<CreateFlowResponse> {
-  const response =
-    await studioApi.post<CreateFlowResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.post<CreateFlowResponse>(
       '/flows',
       data,
-      authConfig(
-        accessToken,
-      ),
     )
 
-  return response.data
+  return responseData
 }
 
 /* =========================================================
  * 2. Flow 상세 조회
+ * GET /flows/{flowId}
  * ========================================================= */
 
 export interface FlowCategory {
@@ -85,10 +89,11 @@ export interface FlowBlock {
   stage: string
   blockOrder: number
 
-  options?: Record<
-    string,
-    unknown
-  > | null
+  options?:
+    Record<
+      string,
+      unknown
+    > | null
 
   promptTemplateId?:
     number | null
@@ -134,26 +139,24 @@ export interface GetFlowResult {
   updatedAt: string
 }
 
-export interface GetFlowResponse {
-  code: string
-  message: string
-  result: GetFlowResult
-  success: boolean
-}
+export type GetFlowResponse =
+  StudioApiBaseResponse<
+    GetFlowResult
+  >
 
 export async function getFlow(
   flowId: number,
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<GetFlowResponse> {
-  const response =
-    await studioApi.get<GetFlowResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.get<GetFlowResponse>(
       `/flows/${flowId}`,
-      authConfig(
-        accessToken,
-      ),
     )
 
-  return response.data
+  return responseData
 }
 
 /* =========================================================
@@ -187,12 +190,10 @@ export interface GetStudioBlocksResult {
     StudioApiBlockStage[]
 }
 
-export interface GetStudioBlocksResponse {
-  code: string
-  message: string
-  result: GetStudioBlocksResult
-  success: boolean
-}
+export type GetStudioBlocksResponse =
+  StudioApiBaseResponse<
+    GetStudioBlocksResult
+  >
 
 export interface GetStudioBlocksParams {
   q?: string
@@ -203,16 +204,15 @@ export interface GetStudioBlocksParams {
 export async function getStudioBlocks(
   params:
     GetStudioBlocksParams = {},
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<GetStudioBlocksResponse> {
-  const response =
-    await studioApi.get<GetStudioBlocksResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.get<GetStudioBlocksResponse>(
       '/blocks',
       {
-        ...authConfig(
-          accessToken,
-        ),
-
         params: {
           ...(params.q
             ? {
@@ -238,7 +238,7 @@ export async function getStudioBlocks(
       },
     )
 
-  return response.data
+  return responseData
 }
 
 /* =========================================================
@@ -294,69 +294,67 @@ export interface FlowUpdateRequest {
     FlowUpdateBlock[]
 }
 
-export interface FlowUpdateResponse {
-  code: string
-  message: string
-
-  result: {
-    flowId: number
-    status: string
-    updatedAt: string
-  }
-
-  success: boolean
+export interface FlowUpdateResult {
+  flowId: number
+  status: string
+  updatedAt: string
 }
+
+export type FlowUpdateResponse =
+  StudioApiBaseResponse<
+    FlowUpdateResult
+  >
 
 export async function saveFlow(
   flowId: number,
   data: FlowUpdateRequest,
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<FlowUpdateResponse> {
-  const response =
-    await studioApi.put<FlowUpdateResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.put<FlowUpdateResponse>(
       `/flows/${flowId}`,
       data,
-      authConfig(
-        accessToken,
-      ),
     )
 
-  return response.data
+  return responseData
 }
 
 /* =========================================================
  * 5. Flow 삭제
+ * DELETE /flows/{flowId}
  * ========================================================= */
 
-export interface DeleteFlowResponse {
-  code: string
-  message: string
-
-  result: {
-    flowId: number
-    deleted: boolean
-  }
-
-  success: boolean
+export interface DeleteFlowResult {
+  flowId: number
+  deleted: boolean
 }
+
+export type DeleteFlowResponse =
+  StudioApiBaseResponse<
+    DeleteFlowResult
+  >
 
 export async function deleteFlow(
   flowId: number,
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<DeleteFlowResponse> {
-  const response =
-    await studioApi.delete<DeleteFlowResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.delete<DeleteFlowResponse>(
       `/flows/${flowId}`,
-      authConfig(
-        accessToken,
-      ),
     )
 
-  return response.data
+  return responseData
 }
 
 /* =========================================================
  * 6. Flow 검증
+ * POST /flows/{flowId}/verify
  * ========================================================= */
 
 export interface VerifyFlowBlock {
@@ -397,45 +395,44 @@ export interface VerifyFlowResultItem {
   targetStage: string
 }
 
-export interface VerifyFlowResponse {
-  code: string
-  message: string
+export interface VerifyFlowResult {
+  totalStatus: string
 
-  result: {
-    totalStatus: string
-
-    summary: {
-      pass: number
-      insufficient: number
-      pending: number
-    }
-
-    results:
-      VerifyFlowResultItem[]
+  summary: {
+    pass: number
+    insufficient: number
+    pending: number
   }
 
-  success: boolean
+  results:
+    VerifyFlowResultItem[]
 }
+
+export type VerifyFlowResponse =
+  StudioApiBaseResponse<
+    VerifyFlowResult
+  >
 
 export async function verifyFlow(
   flowId: number,
   data: VerifyFlowRequest,
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<VerifyFlowResponse> {
-  const response =
-    await studioApi.post<VerifyFlowResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.post<VerifyFlowResponse>(
       `/flows/${flowId}/verify`,
       data,
-      authConfig(
-        accessToken,
-      ),
     )
 
-  return response.data
+  return responseData
 }
 
 /* =========================================================
  * 7. 예시 결과 생성
+ * POST /flows/{flowId}/preview
  * ========================================================= */
 
 export interface PreviewFlowBlock {
@@ -466,32 +463,30 @@ export interface PreviewFlowRequest {
     PreviewFlowBlock[]
 }
 
-export interface PreviewFlowResponse {
-  code: string
-  message: string
-
-  result: {
-    resultText: string
-    resultSource: string
-    modelName: string
-  }
-
-  success: boolean
+export interface PreviewFlowResult {
+  resultText: string
+  resultSource: string
+  modelName: string
 }
+
+export type PreviewFlowResponse =
+  StudioApiBaseResponse<
+    PreviewFlowResult
+  >
 
 export async function previewFlow(
   flowId: number,
   data: PreviewFlowRequest,
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<PreviewFlowResponse> {
-  const response =
-    await studioApi.post<PreviewFlowResponse>(
+  const {
+    data:
+      responseData,
+  } =
+    await api.post<PreviewFlowResponse>(
       `/flows/${flowId}/preview`,
       data,
-      authConfig(
-        accessToken,
-      ),
     )
 
-  return response.data
+  return responseData
 }

@@ -21,15 +21,8 @@ const CATEGORY_ID_BY_LABEL:
     커뮤니티: 1,
     자료조사: 2,
     튜토리얼: 3,
-
-    /*
-     * 화면에서는 "문서 요약",
-     * BE CategoryCode 표시명은 "문서요약"이므로
-     * 두 표기를 같은 categoryId로 처리합니다.
-     */
     문서요약: 4,
     '문서 요약': 4,
-
     요약: 5,
     글쓰기: 6,
     '결과물 검토': 7,
@@ -43,8 +36,7 @@ function emptyToNull(
   const normalized =
     value.trim()
 
-  return normalized.length >
-    0
+  return normalized.length > 0
     ? normalized
     : null
 }
@@ -54,10 +46,7 @@ function buildBlockLookup(
     GetStudioBlocksResult,
 ): Map<string, number> {
   const lookup =
-    new Map<
-      string,
-      number
-    >()
+    new Map<string, number>()
 
   for (
     const stage of
@@ -67,14 +56,11 @@ function buildBlockLookup(
       const block of
         stage.blocks
     ) {
-      const key =
+      lookup.set(
         [
           stage.stage,
           block.name.trim(),
-        ].join('::')
-
-      lookup.set(
-        key,
+        ].join('::'),
         block.blockId,
       )
     }
@@ -89,17 +75,13 @@ function resolveCategoryIds(
 ): number[] {
   const ids =
     categories.map(
-      (
-        category,
-      ) => {
+      (category) => {
         const categoryId =
           CATEGORY_ID_BY_LABEL[
             category
           ]
 
-        if (
-          !categoryId
-        ) {
+        if (!categoryId) {
           throw new Error(
             `BE categoryId를 찾을 수 없습니다: ${category}`,
           )
@@ -110,9 +92,7 @@ function resolveCategoryIds(
     )
 
   return Array.from(
-    new Set(
-      ids,
-    ),
+    new Set(ids),
   )
 }
 
@@ -131,8 +111,7 @@ function getStageIndex(
 }
 
 function getSlotOrder(
-  slotId:
-    string,
+  slotId: string,
 ): number {
   return (
     getStudioBlockDefinition(
@@ -142,51 +121,31 @@ function getSlotOrder(
   )
 }
 
-export interface BuildStudioFlowUpdateRequestOptions {
+export interface BuildStudioFlowBlocksOptions {
   nodes:
     readonly StudioFlowNodeInstance[]
-
-  saveDraft:
-    StudioSaveDraft
 
   blockPalette:
     GetStudioBlocksResult
 }
 
 /**
- * React Flow의 Stage Node/slot 구조를
- * 백엔드 FlowUpdateRequest.blocks 구조로 변환합니다.
+ * Studio의 Stage Node 안에 들어있는 slot을
+ * 백엔드 Flow block 배열로 직렬화합니다.
  *
- * 중요한 점:
+ * Studio Node 1개 = BE Block 1개가 아니라,
+ * Node 내부 slot 1개 = BE Block 1개입니다.
  *
- * Studio의 "노드" 하나가 BE 블록 하나가 아닙니다.
- * 노드 내부의 slot 하나가 실제 BE Block 하나입니다.
+ * 이 함수는 저장 PUT과 Preview POST가
+ * 같은 blockId 매핑 규칙을 공유하도록 분리한 공통 함수입니다.
  */
-export function buildStudioFlowUpdateRequest({
+export function buildStudioFlowBlocks({
   nodes,
-  saveDraft,
   blockPalette,
-}: BuildStudioFlowUpdateRequestOptions): FlowUpdateRequest {
-  if (
-    nodes.length ===
-    0
-  ) {
+}: BuildStudioFlowBlocksOptions): FlowUpdateRequest['blocks'] {
+  if (nodes.length === 0) {
     throw new Error(
-      '저장할 Studio 노드가 없습니다.',
-    )
-  }
-
-  const categoryIds =
-    resolveCategoryIds(
-      saveDraft.categories,
-    )
-
-  if (
-    categoryIds.length ===
-    0
-  ) {
-    throw new Error(
-      '카테고리를 하나 이상 선택해 주세요.',
+      'Studio 노드가 없습니다.',
     )
   }
 
@@ -200,13 +159,22 @@ export function buildStudioFlowUpdateRequest({
       (
         first,
         second,
-      ) =>
-        getStageIndex(
-          first,
-        ) -
-        getStageIndex(
-          second,
-        ),
+      ) => {
+        const stageDifference =
+          getStageIndex(first) -
+          getStageIndex(second)
+
+        if (
+          stageDifference !== 0
+        ) {
+          return stageDifference
+        }
+
+        return (
+          first.data.node.order -
+          second.data.node.order
+        )
+      },
     )
 
   const serializedBlocks:
@@ -257,9 +225,7 @@ export function buildStudioFlowUpdateRequest({
           lookupKey,
         )
 
-      if (
-        !blockId
-      ) {
+      if (!blockId) {
         throw new Error(
           [
             'BE 블록 ID를 찾을 수 없습니다.',
@@ -275,14 +241,11 @@ export function buildStudioFlowUpdateRequest({
           string,
           unknown
         > = {
-          ...(slot.config ??
-            {}),
+          ...(
+            slot.config ??
+            {}
+          ),
 
-          /*
-           * 이후 GET /flows/{flowId} → Studio 복원 시
-           * FE 블록과 캔버스 위치를 다시 찾을 수 있도록
-           * Studio 메타데이터도 options에 함께 저장합니다.
-           */
           studioBlockId:
             slot.id,
 
@@ -320,21 +283,12 @@ export function buildStudioFlowUpdateRequest({
         {
           blockId,
 
-          /*
-           * BE validation에서 blockOrder는
-           * 1 이상이어야 하므로 1부터 시작합니다.
-           */
           blockOrder:
             serializedBlocks.length +
             1,
 
           options,
 
-          /*
-           * 현재 Studio Inspector는
-           * promptTemplateId를 선택하지 않으므로
-           * 임의의 0을 보내지 않고 null을 사용합니다.
-           */
           promptTemplateId:
             null,
         },
@@ -347,10 +301,29 @@ export function buildStudioFlowUpdateRequest({
     0
   ) {
     throw new Error(
-      '저장할 Studio 블록이 없습니다.',
+      'Studio 블록이 없습니다.',
     )
   }
 
+  return serializedBlocks
+}
+
+export interface BuildStudioFlowUpdateRequestOptions {
+  nodes:
+    readonly StudioFlowNodeInstance[]
+
+  saveDraft:
+    StudioSaveDraft
+
+  blockPalette:
+    GetStudioBlocksResult
+}
+
+export function buildStudioFlowUpdateRequest({
+  nodes,
+  saveDraft,
+  blockPalette,
+}: BuildStudioFlowUpdateRequestOptions): FlowUpdateRequest {
   const normalizedTitle =
     saveDraft.title.trim()
 
@@ -362,6 +335,26 @@ export function buildStudioFlowUpdateRequest({
       '워크플로우 제목을 입력해 주세요.',
     )
   }
+
+  const categoryIds =
+    resolveCategoryIds(
+      saveDraft.categories,
+    )
+
+  if (
+    categoryIds.length ===
+    0
+  ) {
+    throw new Error(
+      '카테고리를 하나 이상 선택해 주세요.',
+    )
+  }
+
+  const blocks =
+    buildStudioFlowBlocks({
+      nodes,
+      blockPalette,
+    })
 
   return {
     title:
@@ -403,7 +396,6 @@ export function buildStudioFlowUpdateRequest({
         saveDraft.exampleResult,
       ),
 
-    blocks:
-      serializedBlocks,
+    blocks,
   }
 }

@@ -1,11 +1,13 @@
-import axios from 'axios'
+import api from './api'
+
 // 카테고리 정보 타입
 export interface StorageCategory {
   categoryId: number
   code: string
   name: string
 }
-//저장된 튜토리얼 정보
+
+// 저장된 튜토리얼 정보
 export interface SavedTutorial {
   tutorialId: number
   title: string
@@ -27,6 +29,7 @@ export interface StorageCounts {
   own: number
   copied: number
 }
+
 // GET /storage/tutorials의 result 구조
 export interface SavedTutorialsResponse {
   totalElements: number
@@ -62,12 +65,15 @@ export interface FlowDetailBlock {
   name: string
   stage: string
   blockOrder: number
-  // Swagger 스키마에는 생략되어 있어도 실제 상세 응답에 포함되면 그대로 보존합니다.
-  options?: Record<string, unknown>
-  promptTemplateId?: number | null
+
+  options?:
+    Record<string, unknown>
+
+  promptTemplateId?:
+    number | null
 }
 
-// GET /flows/{flowId}의 result 구조입니다.
+// GET /flows/{flowId}의 result 구조
 export interface FlowDetail {
   flowId: number
   title: string
@@ -99,8 +105,10 @@ interface FlowDeleteResult {
   deleted: boolean
 }
 
-export type StorageFlowType = 'own' | 'copied'
-// 백엔드 공통 응답 구조
+export type StorageFlowType =
+  | 'own'
+  | 'copied'
+
 interface BaseResponse<T> {
   code: string
   message: string
@@ -108,64 +116,85 @@ interface BaseResponse<T> {
   success: boolean
 }
 
-// 400, 401 등의 요청 실패 응답 구조
 interface ApiErrorResponse {
-  code: string
-  message: string
-  success: false
+  code?: string
+  message?: string
+  success?: boolean
 }
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
-  timeout: 10_000,
-})
+function getApiErrorMessage(
+  error: unknown,
+): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error
+  ) {
+    const candidate =
+      error as {
+        response?: {
+          data?: ApiErrorResponse
+        }
+      }
 
-// Axios 오류에서 백엔드가 전달한 실제 오류 메시지를 꺼냄
-function getApiErrorMessage(error: unknown): string {
-  if (axios.isAxiosError<ApiErrorResponse>(error)) {
-    return (
-      error.response?.data?.message ??
-      '저장소 요청 처리 중 오류가 발생했습니다.'
-    )
+    const message =
+      candidate.response
+        ?.data
+        ?.message
+
+    if (message) {
+      return message
+    }
   }
 
-  if (error instanceof Error) {
+  if (
+    error instanceof Error
+  ) {
     return error.message
   }
 
   return '저장소 요청 처리 중 오류가 발생했습니다.'
 }
 
+/**
+ * Storage API는 별도 Axios 인스턴스를 만들지 않고
+ * 공용 api.ts 인스턴스를 사용합니다.
+ *
+ * 공용 인스턴스가 담당하는 기능:
+ *
+ * 1. localStorage / sessionStorage Access Token 자동 선택
+ * 2. Authorization 헤더 자동 추가
+ * 3. 401 발생 시 Refresh Token 재발급
+ * 4. 재발급 성공 후 원래 요청 자동 재시도
+ */
+
 // 저장한 튜토리얼 목록 조회
-export async function getSavedTutorials(): Promise<SavedTutorialsResponse> {
-  // 저장한 Access Token을 가져옴
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
-
+export async function getSavedTutorials():
+  Promise<SavedTutorialsResponse> {
   try {
-    // 인증이 필요한 Storage API 호출
-    const { data } = await api.get<BaseResponse<SavedTutorialsResponse>>(
-      '/storage/tutorials',
-      {
-        headers: accessToken
-          ? { Authorization: `Bearer ${accessToken}` }
-          : undefined,
-      },
-    )
+    const {
+      data,
+    } =
+      await api.get<
+        BaseResponse<SavedTutorialsResponse>
+      >(
+        '/storage/tutorials',
+      )
 
-    // HTTP 요청은 성공했지만 백엔드가 실패로 응답한 경우
     if (!data.success) {
       throw new Error(
-        data.message || '저장한 튜토리얼을 불러오지 못했습니다.',
+        data.message ||
+          '저장한 튜토리얼을 불러오지 못했습니다.',
       )
     }
 
-    // 화면에서는 공통 응답 전체가 아니라 result 데이터만 사용
     return data.result
   } catch (error) {
-    // 서버가 전달한 실제 오류 메시지로 변환
-    throw new Error(getApiErrorMessage(error))
+    throw new Error(
+      getApiErrorMessage(
+        error,
+      ),
+    )
   }
 }
 
@@ -173,124 +202,198 @@ export async function getSavedTutorials(): Promise<SavedTutorialsResponse> {
 export async function getStorageFlows(
   type: StorageFlowType,
 ): Promise<StorageFlowsResponse> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
-
   try {
-    const { data } = await api.get<BaseResponse<StorageFlowsResponse>>(
-      '/storage/flows',
-      {
-        // type은 own 또는 copied만 전달
-        params: { type },
-        headers: accessToken
-          ? { Authorization: `Bearer ${accessToken}` }
-          : undefined,
-      },
-    )
+    const {
+      data,
+    } =
+      await api.get<
+        BaseResponse<StorageFlowsResponse>
+      >(
+        '/storage/flows',
+        {
+          params: {
+            type,
+          },
+        },
+      )
 
     if (!data.success) {
       throw new Error(
-        data.message || '저장한 흐름을 불러오지 못했습니다.',
+        data.message ||
+          '저장한 흐름을 불러오지 못했습니다.',
       )
     }
 
     return data.result
   } catch (error) {
-    throw new Error(getApiErrorMessage(error))
+    throw new Error(
+      getApiErrorMessage(
+        error,
+      ),
+    )
   }
 }
 
 // 내가 만든 흐름과 복사한 흐름 모두 flowId로 같은 상세 API를 사용합니다.
-export async function getFlowDetail(flowId: number): Promise<FlowDetail> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
-
+export async function getFlowDetail(
+  flowId: number,
+): Promise<FlowDetail> {
   try {
-    const { data } = await api.get<BaseResponse<FlowDetail>>(
-      `/flows/${flowId}`,
-      {
-        headers: accessToken
-          ? { Authorization: `Bearer ${accessToken}` }
-          : undefined,
-      },
-    )
+    const {
+      data,
+    } =
+      await api.get<
+        BaseResponse<FlowDetail>
+      >(
+        `/flows/${flowId}`,
+      )
 
     if (!data.success) {
-      throw new Error(data.message || '흐름 상세 정보를 불러오지 못했습니다.')
+      throw new Error(
+        data.message ||
+          '흐름 상세 정보를 불러오지 못했습니다.',
+      )
     }
 
     return data.result
   } catch (error) {
-    throw new Error(getApiErrorMessage(error))
+    throw new Error(
+      getApiErrorMessage(
+        error,
+      ),
+    )
   }
 }
 
 // 전체 갱신 API이므로 상세조회 데이터는 유지하고 visibility만 변경합니다.
 export async function updateFlowVisibility(
   flowId: number,
-  visibility: 'PUBLIC' | 'PRIVATE',
+  visibility:
+    | 'PUBLIC'
+    | 'PRIVATE',
 ): Promise<FlowUpdateResult> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
-
-  if (!accessToken) throw new Error('로그인이 필요합니다.')
-
   try {
-    const detail = await getFlowDetail(flowId)
-    const { data } = await api.put<BaseResponse<FlowUpdateResult>>(
-      `/flows/${flowId}`,
-      {
-        title: detail.title,
-        summary: detail.summary,
-        purpose: detail.purpose,
-        difficulty: detail.difficulty,
-        categoryIds: detail.categories.map((category) => category.categoryId),
-        visibility,
-        status: detail.status,
-        authorNote: detail.authorNote,
-        exampleInput: detail.exampleInput,
-        exampleResult: detail.exampleResult,
-        blocks: detail.blockFlow.map((block) => ({
-          blockId: block.blockId,
-          blockOrder: block.blockOrder,
-          ...(block.options !== undefined ? { options: block.options } : {}),
-          ...(block.promptTemplateId !== undefined
-            ? { promptTemplateId: block.promptTemplateId }
-            : {}),
-        })),
-      },
-      { headers: { Authorization: `Bearer ${accessToken}` } },
-    )
+    const detail =
+      await getFlowDetail(
+        flowId,
+      )
+
+    const {
+      data,
+    } =
+      await api.put<
+        BaseResponse<FlowUpdateResult>
+      >(
+        `/flows/${flowId}`,
+        {
+          title:
+            detail.title,
+
+          summary:
+            detail.summary,
+
+          purpose:
+            detail.purpose,
+
+          difficulty:
+            detail.difficulty,
+
+          categoryIds:
+            detail.categories.map(
+              (
+                category,
+              ) =>
+                category.categoryId,
+            ),
+
+          visibility,
+
+          status:
+            detail.status,
+
+          authorNote:
+            detail.authorNote,
+
+          exampleInput:
+            detail.exampleInput,
+
+          exampleResult:
+            detail.exampleResult,
+
+          blocks:
+            detail.blockFlow.map(
+              (
+                block,
+              ) => ({
+                blockId:
+                  block.blockId,
+
+                blockOrder:
+                  block.blockOrder,
+
+                ...(block.options !==
+                undefined
+                  ? {
+                      options:
+                        block.options,
+                    }
+                  : {}),
+
+                ...(block.promptTemplateId !==
+                undefined
+                  ? {
+                      promptTemplateId:
+                        block.promptTemplateId,
+                    }
+                  : {}),
+              }),
+            ),
+        },
+      )
 
     if (!data.success) {
-      throw new Error(data.message || '공개 상태를 변경하지 못했습니다.')
+      throw new Error(
+        data.message ||
+          '공개 상태를 변경하지 못했습니다.',
+      )
     }
+
     return data.result
   } catch (error) {
-    throw new Error(getApiErrorMessage(error))
+    throw new Error(
+      getApiErrorMessage(
+        error,
+      ),
+    )
   }
 }
 
-export async function deleteStoredFlow(flowId: number): Promise<FlowDeleteResult> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
-
-  if (!accessToken) throw new Error('로그인이 필요합니다.')
-
+export async function deleteStoredFlow(
+  flowId: number,
+): Promise<FlowDeleteResult> {
   try {
-    const { data } = await api.delete<BaseResponse<FlowDeleteResult>>(
-      `/flows/${flowId}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } },
-    )
+    const {
+      data,
+    } =
+      await api.delete<
+        BaseResponse<FlowDeleteResult>
+      >(
+        `/flows/${flowId}`,
+      )
+
     if (!data.success) {
-      throw new Error(data.message || '흐름을 삭제하지 못했습니다.')
+      throw new Error(
+        data.message ||
+          '흐름을 삭제하지 못했습니다.',
+      )
     }
+
     return data.result
   } catch (error) {
-    throw new Error(getApiErrorMessage(error))
+    throw new Error(
+      getApiErrorMessage(
+        error,
+      ),
+    )
   }
 }
