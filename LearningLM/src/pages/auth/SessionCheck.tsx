@@ -7,45 +7,83 @@ export function SessionCheck() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log("✅ SessionCheck 페이지 진입");
+
         const checkSession = async () => {
-            // localStorage 우선 확인
             const accessToken =
                 localStorage.getItem("accessToken") ||
                 sessionStorage.getItem("accessToken");
 
-            // 토큰 자체가 없으면 로그인 페이지로 이동
+            console.log(
+                "Access Token 존재 여부:",
+                !!accessToken
+            );
+
             if (!accessToken) {
+                console.log(
+                    "❌ Access Token 없음 → 로그인 페이지"
+                );
+
                 navigate("/login", {
                     replace: true,
                 });
+
                 return;
             }
 
+            // 최소 1초 동안 세션 확인 화면을 보여주기 위한 시간
+            const startTime = Date.now();
+
             try {
-                console.log("로그인 상태 확인 중...");
+                console.log(
+                    "🔄 로그인 상태 확인 중..."
+                );
 
-                /*
-                 * 저장된 accessToken을 이용해서
-                 * 서버에 로그인 상태 확인 요청
-                 *
-                 * ⚠️ "/auth/session"은 예시입니다.
-                 * Swagger에 있는 실제 세션 확인 API로 변경해주세요.
+                const response = await api.get(
+                    "/auth/me",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    }
+                );
+
+                console.log(
+                    "✅ 로그인 상태 확인 성공:",
+                    response.data
+                );
+
+                /**
+                 * API 응답이 너무 빨리 오더라도
+                 * 최소 1초 동안 로딩 화면을 보여줍니다.
                  */
-                await api.get("/auth/session", {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                });
+                const elapsedTime =
+                    Date.now() - startTime;
 
-                console.log("로그인 상태 확인 완료");
+                const remainingTime =
+                    Math.max(
+                        1000 - elapsedTime,
+                        0
+                    );
 
-                // 로그인 상태가 유효하면 Home으로 이동
+                await new Promise(
+                    (resolve) =>
+                        setTimeout(
+                            resolve,
+                            remainingTime
+                        )
+                );
+
+                console.log(
+                    "🏠 Home으로 이동"
+                );
+
                 navigate("/", {
                     replace: true,
                 });
             } catch (error: any) {
                 console.log(
-                    "로그인 상태 확인 실패:",
+                    "❌ 로그인 상태 확인 실패:",
                     error
                 );
 
@@ -61,17 +99,37 @@ export function SessionCheck() {
                     );
                 }
 
-                /*
-                 * 세션이 유효하지 않은 경우
-                 * 저장되어 있는 토큰 제거 후 로그인 페이지로 이동
+                /**
+                 * API 응답이 너무 빨라도
+                 * 최소 1초 동안 화면을 보여줍니다.
                  */
+                const elapsedTime =
+                    Date.now() - startTime;
+
+                const remainingTime =
+                    Math.max(
+                        1000 - elapsedTime,
+                        0
+                    );
+
+                await new Promise(
+                    (resolve) =>
+                        setTimeout(
+                            resolve,
+                            remainingTime
+                        )
+                );
+
+                // 로그인 정보 삭제
                 localStorage.removeItem(
                     "accessToken"
                 );
                 localStorage.removeItem(
                     "refreshToken"
                 );
-                localStorage.removeItem("user");
+                localStorage.removeItem(
+                    "user"
+                );
 
                 sessionStorage.removeItem(
                     "accessToken"
@@ -79,7 +137,13 @@ export function SessionCheck() {
                 sessionStorage.removeItem(
                     "refreshToken"
                 );
-                sessionStorage.removeItem("user");
+                sessionStorage.removeItem(
+                    "user"
+                );
+
+                console.log(
+                    "🔐 로그인 페이지로 이동"
+                );
 
                 navigate("/login", {
                     replace: true,
@@ -92,22 +156,21 @@ export function SessionCheck() {
 
     return (
         <div className="min-h-screen flex flex-col items-center bg-[#F5F5F7] text-[#464646]">
-            {/* 가운데 영역 */}
-            <div className="flex flex-1 flex-col items-center justify-center pb-[40px]">
+            {/* 가운데 콘텐츠 */}
+            <div className="flex flex-1 flex-col items-center justify-center">
                 {/* LearningLM 로고 */}
                 <div className="flex flex-col items-center">
                     <div className="flex flex-row items-center gap-[7px]">
-                        {/* L 로고 */}
                         <div
                             className="
-                                h-[29px]
-                                w-[29px]
+                                w-[26px]
+                                h-[26px]
                                 flex
                                 items-center
                                 justify-center
-                                rounded-[6px]
+                                rounded-[5px]
                                 bg-[#6366F1]
-                                text-[16px]
+                                text-[15px]
                                 font-bold
                                 text-white
                             "
@@ -115,40 +178,38 @@ export function SessionCheck() {
                             L
                         </div>
 
-                        {/* LearningLM */}
                         <p className="text-[18px] font-bold text-[#27272A]">
                             LearningLM
                         </p>
                     </div>
 
-                    {/* 설명 */}
-                    <p className="mt-[6px] text-[9px] tracking-tight text-[#71717A]">
+                    <p className="mt-[5px] text-[9px] tracking-tight text-[#71717A]">
                         AI 활용 흐름을 블록형 튜토리얼로 배우는 플랫폼
                     </p>
                 </div>
 
-                {/* 로딩 애니메이션 */}
+                {/* 회전하는 도넛 */}
                 <div
                     className="
                         mt-[39px]
-                        h-[26px]
                         w-[26px]
-                        animate-spin
+                        h-[26px]
                         rounded-full
                         border-[3px]
                         border-[#E4E4E7]
-                        border-t-[#D4D4D8]
+                        border-t-[#6366F1]
+                        animate-spin
                     "
                 />
 
-                {/* 상태 메시지 */}
+                {/* 안내 문구 */}
                 <p className="mt-[14px] text-[13px] text-[#71717A]">
                     로그인 상태를 확인하는 중입니다...
                 </p>
             </div>
 
-            {/* footer */}
-            <div className="mb-[42px] flex flex-row gap-[24px] text-[9px] text-[#A1A1AA]">
+            {/* Footer */}
+            <div className="flex flex-row gap-[24px] mb-[42px] text-[9px] text-[#A1A1AA]">
                 <p>© 2026 LearningLM</p>
                 <p>이용약관</p>
                 <p>개인정보처리방침</p>

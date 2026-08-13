@@ -213,36 +213,13 @@ export function Login() {
              * → 로그인 성공
              * → /my-storage
              */
-            const state =
-                location.state as
-                | LoginLocationState
-                | null;
-
-            const from =
-                state?.from;
-
-            if (from?.pathname) {
-                const redirectPath =
-                    `${from.pathname}` +
-                    `${from.search ?? ""}` +
-                    `${from.hash ?? ""}`;
-
-                navigate(
-                    redirectPath,
-                    {
-                        replace: true,
-                    }
-                );
-
-                return;
-            }
-
             /**
-             * 로그인 페이지에 직접 들어온 경우
-             * 홈으로 이동합니다.
-             */
+ * 로그인 성공 후
+ * 바로 Home으로 이동하지 않고
+ * 세션 확인 페이지를 거칩니다.
+ */
             navigate(
-                "/",
+                "/session-check",
                 {
                     replace: true,
                 }
