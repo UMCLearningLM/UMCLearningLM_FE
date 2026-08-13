@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   Globe2,
@@ -19,24 +19,132 @@ import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 
 import {
-  mockCreatedWorkflows,
-} from '../../features/storage/data/storage'
+  deleteStoredFlow,
+  getFlowDetail,
+  updateFlowVisibility,
+  type FlowDetail,
+} from '../../api/storage'
 import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
+import type { StudioStage } from '../../features/studio/types/studioNode'
 
 function WorkflowDetailPage() {
   const { workflowId } = useParams()
   const navigate = useNavigate()
 
-  const workflow = mockCreatedWorkflows.find(
-    (item) => item.id === Number(workflowId),
-  )
+  const [flow, setFlow] = useState<FlowDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // 내가 만든/복사한 흐름 모두 URL의 flowId로 공통 상세 API를 호출합니다.
+  useEffect(() => {
+    const parsedFlowId = Number(workflowId)
+    if (!Number.isInteger(parsedFlowId) || parsedFlowId <= 0) {
+      setErrorMessage('올바르지 않은 흐름 번호입니다.')
+      setIsLoading(false)
+      return
+    }
+
+    let isMounted = true
+    getFlowDetail(parsedFlowId)
+      .then((result) => {
+        if (isMounted) setFlow(result)
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : '흐름 상세 정보를 불러오지 못했습니다.',
+        )
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [workflowId])
+
+  const workflow = useMemo(() => {
+    if (!flow) return null
+
+    const stages: StudioStage[] = [
+      'INPUT', 'CONTEXT', 'PROCESS', 'REVIEW', 'OUTPUT',
+    ]
+
+    return {
+      id: flow.flowId,
+      title: flow.title,
+      description: flow.summary ?? flow.purpose ?? '',
+      level: flow.difficulty,
+      categories: flow.categories.map((category) => category.name),
+      visibility:
+        flow.visibility === 'PUBLIC' ? 'public' as const : 'private' as const,
+      updatedAt: new Date(flow.updatedAt).toLocaleDateString('ko-KR'),
+      flowSteps: [...flow.blockFlow]
+        .sort((a, b) => a.blockOrder - b.blockOrder)
+        .filter((block) => stages.includes(block.stage as StudioStage))
+        .map((block) => ({
+          id: String(block.flowBlockId),
+          label: block.name,
+          stage: block.stage as StudioStage,
+        })),
+      exampleInput: flow.exampleInput ?? '등록된 예시 입력이 없습니다.',
+      exampleResult: flow.exampleResult ? [flow.exampleResult] : [],
+      creatorNote: flow.authorNote ?? '등록된 작성자 노트가 없습니다.',
+    }
+  }, [flow])
 
   const [visibility, setVisibility] = useState<
     'public' | 'private'
-  >(workflow?.visibility ?? 'private')
+  >('private')
+
+  useEffect(() => {
+    if (workflow) setVisibility(workflow.visibility)
+  }, [workflow])
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] =
     useState(false)
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [actionError, setActionError] = useState('')
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <PageContainer className="py-20">
+          <Card className="px-6 py-16 text-center font-bold text-slate-600">
+            흐름 상세 정보를 불러오는 중입니다.
+          </Card>
+        </PageContainer>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <PageContainer className="py-20">
+          <Card className="px-6 py-16 text-center">
+            <h1 className="text-2xl font-black text-slate-900">
+              흐름 상세 정보를 불러오지 못했습니다.
+            </h1>
+            <p className="mt-3 text-sm font-semibold text-rose-500">
+              {errorMessage}
+            </p>
+            <Button className="mt-8" onClick={() => navigate('/my-storage')}>
+              내 저장소로
+            </Button>
+          </Card>
+        </PageContainer>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!workflow) {
     return (
@@ -68,25 +176,51 @@ function WorkflowDetailPage() {
   }
 
   const handleEdit = () => {
-    navigate(`/studio/${workflow.id}/edit`)
+    // Studio가 기존 흐름을 불러올 수 있도록 flowId를 전달합니다.
+    navigate(`/studio/create?flowId=${workflow.id}`)
   }
 
-  const handleToggleVisibility = () => {
-    setVisibility((previousVisibility) =>
-      previousVisibility === 'public'
-        ? 'private'
-        : 'public',
-    )
+  const handleToggleVisibility = async () => {
+    const nextVisibility = visibility === 'public' ? 'private' : 'public'
+    setIsUpdatingVisibility(true)
+    setActionError('')
+
+    try {
+      await updateFlowVisibility(
+        workflow.id,
+        nextVisibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+      )
+      setVisibility(nextVisibility)
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : '공개 상태를 변경하지 못했습니다.',
+      )
+    } finally {
+      setIsUpdatingVisibility(false)
+    }
   }
 
   const handleDelete = () => {
     setIsDeleteModalOpen(true)
   }
 
-  const handleConfirmDelete = () => {
-    console.log('삭제할 워크플로우:', workflow.id)
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true)
+    setActionError('')
 
-    navigate('/my-storage')
+    try {
+      await deleteStoredFlow(workflow.id)
+      navigate('/my-storage')
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : '흐름을 삭제하지 못했습니다.',
+      )
+      setIsDeleteModalOpen(false)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -157,13 +291,22 @@ function WorkflowDetailPage() {
               <Button
                 variant="secondary"
                 onClick={handleToggleVisibility}
+                disabled={isUpdatingVisibility}
               >
-                {visibility === 'public'
+                {isUpdatingVisibility
+                  ? '변경 중...'
+                  : visibility === 'public'
                   ? '비공개로 설정'
                   : '공개로 설정'}
               </Button>
             </div>
           </section>
+
+          {actionError && (
+            <p role="alert" className="text-sm font-bold text-rose-500">
+              {actionError}
+            </p>
+          )}
 
           {/* 블록 흐름 */}
           <Card className="px-6 py-5">
@@ -294,7 +437,8 @@ function WorkflowDetailPage() {
             <div className="mt-5 flex flex-wrap gap-4">
               <Button
                 size="lg"
-                onClick={() => setVisibility('public')}
+                disabled={isUpdatingVisibility || visibility === 'public'}
+                onClick={handleToggleVisibility}
               >
                 {visibility === 'public'
                   ? '공개 상태 유지'
@@ -304,7 +448,8 @@ function WorkflowDetailPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                onClick={() => setVisibility('private')}
+                disabled={isUpdatingVisibility || visibility === 'private'}
+                onClick={handleToggleVisibility}
               >
                 {visibility === 'public'
                   ? '비공개로 전환'
@@ -359,9 +504,10 @@ function WorkflowDetailPage() {
               <button
                 type="button"
                 onClick={handleConfirmDelete}
+                disabled={isDeleting}
                 className="inline-flex h-10 items-center justify-center rounded-xl bg-[#C0473C] px-4 text-sm font-semibold text-white transition hover:bg-[#A93D34]"
               >
-                삭제
+                {isDeleting ? '삭제 중...' : '삭제'}
               </button>
             </div>
           </div>
