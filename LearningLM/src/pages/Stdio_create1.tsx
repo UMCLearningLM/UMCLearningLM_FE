@@ -1,12 +1,3 @@
-import { Footer } from "../components/layout/Footer";
-import { Header } from "../components/layout/Header";
-import searchRound from "../assets/searchRound.svg"
-import searchStick from "../assets/searchStick.svg";
-// ReactFlow은 현재 사용하지 않습니다.
-// npx shadcn@latest add slider 설치
-import { Slider } from "../components/ui/Slider";
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import {
   useEffect,
   useMemo,
@@ -36,61 +27,319 @@ import {
   type StudioInspectorConnectionInfo,
 } from '../features/studio/components/inspector/StudioBlockInspector'
 
-export function Stdio_create1() {
-  const [value, setValue] = useState(0.7);
-  const [openId, setOpenId] = useState<number | null>(null);
+import {
+  studioNodeTypes,
+  type StudioFlowNodeInstance,
+} from '../features/studio/components/node/StudioFlowNode'
 
-  const location = useLocation();
-  const navigate = useNavigate();
+import {
+  STUDIO_STAGE_ORDER,
+  getStudioBlockDefinition,
+  studioBlockCatalog,
+  studioStageLabelMap,
+} from '../features/studio/data/studioBlockCatalog'
 
-  // Studio1에서 navigate의 state로 전달한 실제 flowId
-  const flowId: number | null =
-    location.state?.flowId ??
-    location.state?.workflowId ??
-    null;
+import { useStudioEditor } from '../features/studio/hooks/useStudioEditor'
 
-  console.log("현재 Studio flowId:", flowId);
+import type {
+  StudioBlockDefinition,
+  StudioBlockRequirement,
+} from '../features/studio/types/studioBlock'
 
-  // TODO: 실제 노드 상태 연결 필요
-  const nodes: any[] = [];
+import type {
+  StudioNodeSlot,
+  StudioStage,
+} from '../features/studio/types/studioNode'
 
-    const toggleItem = (id: number) => {
-        setOpenId((prev) => (prev === id ? null : id));
-    }
+import type {
+  StudioValidationIssue,
+  StudioWorkflowValidationResult,
+} from '../features/studio/types/studioValidation'
 
-  const handleStartSave = async () => {
-  const accessToken =
-    localStorage.getItem("accessToken") ?? undefined;
+import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
+import { useRef } from 'react'
 
-  if (!flowId) {
-    console.error("flowId가 없습니다.");
-    return;
+import {
+  FlowPreviewResponse,
+  saveFlow,
+  type FlowSavePayload,
+} from './api/StudioApi'
+
+type ValidationCheckStatus =
+  | 'pass'
+  | 'fail'
+  | 'warning'
+  | 'pending'
+
+type ValidationCheck = {
+  id: number
+  title: string
+  status: ValidationCheckStatus
+  criterion: string
+  result: string
+}
+
+type StudioNavigationState = {
+  mode?: 'guided' | 'create' | 'copied' | 'edit'
+  tutorialId?: number
+  copiedLibraryItemId?: number
+  workflowId?: number
+  nodes?: StudioFlowNodeInstance[]
+  edges?: Edge[]
+  validationResult?: StudioWorkflowValidationResult | null
+}
+
+
+
+
+const stageStyleMap: Record<
+  StudioStage,
+  {
+    dot: string
+    text: string
+    soft: string
+  }
+> = {
+  INPUT: {
+    dot: 'bg-[#4A5E8A]',
+    text: 'text-[#4A5E8A]',
+    soft: 'bg-[#EEF1F7]',
+  },
+  CONTEXT: {
+    dot: 'bg-[#2F8190]',
+    text: 'text-[#2F8190]',
+    soft: 'bg-[#EDF7F8]',
+  },
+  PROCESS: {
+    dot: 'bg-[#6366F1]',
+    text: 'text-[#6366F1]',
+    soft: 'bg-[#F0F0FF]',
+  },
+  REVIEW: {
+    dot: 'bg-[#B07A2E]',
+    text: 'text-[#B07A2E]',
+    soft: 'bg-[#FBF6EC]',
+  },
+  OUTPUT: {
+    dot: 'bg-[#3C7A52]',
+    text: 'text-[#3C7A52]',
+    soft: 'bg-[#EEF4EE]',
+  },
+}
+
+const requirementStyleMap: Record<
+  StudioBlockRequirement,
+  {
+    label: string
+    className: string
+  }
+> = {
+  required: {
+    label: '필수',
+    className: 'text-[#6366F1]',
+  },
+  recommended: {
+    label: '권장',
+    className:
+      'rounded-[8px] bg-[#EEF4EE] px-[8px] py-[4px] text-[#3C7A52]',
+  },
+  optional: {
+    label: '선택',
+    className:
+      'rounded-[8px] bg-[#F0F0F3] px-[8px] py-[4px] text-[#9A9AA3]',
+  },
+}
+
+const validationStatusStyleMap: Record<
+  ValidationCheckStatus,
+  {
+    dot: string
+    badge: string
+    label: string
+  }
+> = {
+  pass: {
+    dot: 'bg-[#2F8A5B]',
+    badge: 'bg-[#EEF4EE] text-[#2F7D52]',
+    label: '통과',
+  },
+  fail: {
+    dot: 'bg-[#B4453A]',
+    badge: 'bg-[#FBF1F0] text-[#B4453A]',
+    label: '미통과',
+  },
+  warning: {
+    dot: 'bg-[#B88A3C]',
+    badge: 'bg-[#FBF6EC] text-[#9A6A1E]',
+    label: '미흡',
+  },
+  pending: {
+    dot: 'bg-[#E7E7EC]',
+    badge: 'bg-[#F0F0F3] text-[#9A9AA3]',
+    label: '대기',
+  },
+}
+
+function hasSlotValue(
+  slot: StudioNodeSlot,
+): boolean {
+  if (slot.state === 'filled') {
+    return true
   }
 
-  const saveData: FlowUpdateRequest = {
-    title: "제품 리뷰 요약기",
-    summary: "리뷰 더미에서 장단점을 추출",
-    purpose: "여러 리뷰를 비교해 핵심만 정리",
-    difficulty: "BASIC",
-    categoryIds: [1],
-    visibility: "PRIVATE",
-    status: "COMPLETED",
-    authorNote: "검색 블록 기간을 좁히면 정확도가 올라갑니다.",
-    exampleInput: "리뷰 100건을 항목별로 정리해줘",
-    exampleResult: "비교 표 예시",
-    blocks: [
-      {
-        blockId: 3,
-        blockOrder: 1,
-        options: {},
-        promptTemplateId: 5,
-      },
-    ],
-  };
+  return (
+    typeof slot.value === 'string' &&
+    slot.value.trim().length > 0
+  )
+}
 
-  try {
-    console.log("저장할 flowId:", flowId);
-    console.log("저장할 데이터:", saveData);
+function getIssueBlockTitles(
+  issues: readonly StudioValidationIssue[],
+): string {
+  const titles = issues.map((issue) => {
+    if (!issue.blockId) {
+      return issue.message
+    }
+
+    return (
+      getStudioBlockDefinition(
+        issue.blockId,
+      )?.title ?? issue.message
+    )
+  })
+
+  return titles.join(', ')
+}
+
+function PaletteBlockCard({
+  block,
+  onDragStart,
+}: {
+  block: StudioBlockDefinition
+  onDragStart: (
+    event: DragEvent<HTMLDivElement>,
+    blockId: string,
+  ) => void
+}) {
+  const stageStyle = stageStyleMap[block.stage]
+  const requirement = requirementStyleMap[block.requirement]
+  const available = block.availability === 'available'
+
+  return (
+    <div
+      draggable={available}
+      onDragStart={(event) => {
+        if (!available) {
+          event.preventDefault()
+          return
+        }
+
+        onDragStart(event, block.id)
+      }}
+      className={[
+        'mb-[12px] h-[72px] w-[290px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white px-[16.5px] pt-[13.88px] transition',
+        available
+          ? 'cursor-grab hover:border-[#B8BAFF] hover:bg-[#FAFAFF] active:cursor-grabbing'
+          : 'cursor-not-allowed opacity-55',
+      ].join(' ')}
+    >
+      <div className="flex items-center">
+        <div
+          className={[
+            'h-[13px] w-[13px] shrink-0 rounded-[4px]',
+            stageStyle.dot,
+          ].join(' ')}
+        />
+
+        <p className="ml-[12px] min-w-0 flex-1 truncate text-[16px] font-bold">
+          {block.title}
+        </p>
+
+        <span
+          className={[
+            'ml-[8px] shrink-0 text-[12px] font-bold',
+            available
+              ? requirement.className
+              : 'rounded-[8px] bg-[#F0F0F3] px-[8px] py-[4px] text-[#9A9AA3]',
+          ].join(' ')}
+        >
+          {available ? requirement.label : '준비중'}
+        </span>
+      </div>
+
+      <p className="ml-[25px] mt-[2px] truncate text-[14px] text-[#9A9AA3]">
+        {block.description}
+      </p>
+    </div>
+  )
+}
+
+function ValidationRow({
+  check,
+  open,
+  onToggle,
+}: {
+  check: ValidationCheck
+  open: boolean
+  onToggle: () => void
+}) {
+  const statusStyle = validationStatusStyleMap[check.status]
+
+  return (
+    <div className="min-h-[54px] border-t-[1.5px] border-[#EEEEF1] px-[21px] pt-[10px]">
+      <div className="flex items-center">
+        <div
+          className={[
+            'h-[23px] w-[23px] shrink-0 rounded-full',
+            statusStyle.dot,
+          ].join(' ')}
+        />
+
+        <p className="ml-[13.5px] min-w-0 flex-1 text-[17px] font-bold">
+          {check.title}
+        </p>
+
+        <div className="flex items-center">
+          <span
+            className={[
+              'flex h-[22.5px] min-w-[44px] items-center justify-center rounded-[8px] px-[7px] text-[12.5px] font-bold',
+              statusStyle.badge,
+            ].join(' ')}
+          >
+            {statusStyle.label}
+          </span>
+
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={`${check.title} 상세 ${open ? '닫기' : '열기'}`}
+            className="ml-[13.5px] mt-[-4px] text-[19.5px] text-[#9A9AA3]"
+          >
+            {open ? '⌃' : '⌄'}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="mb-[19px] mt-[10px] pl-[36.5px] pr-[8px] text-[14.5px] font-bold leading-[23px]">
+          <p>
+            채점 기준
+            <span className="font-normal text-[#52525B]">
+              · {check.criterion}
+            </span>
+          </p>
+
+          <p className="mt-[8px]">
+            확인 결과
+            <span className="font-normal text-[#52525B]">
+              · {check.result}
+            </span>
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function Stdio_create1() {
   const navigate = useNavigate()
@@ -108,14 +357,18 @@ export function Stdio_create1() {
       locationState?.validationResult ?? null,
     )
 
-    console.log("Flow 저장 성공:", response);
-    console.log("저장된 flowId:", response.result.flowId);
-    console.log("저장 상태:", response.result.status);
+  /*
+   * API 연동 전 라우트 연결 단계에서는 location.state로 넘겨진
+   * 노드와 연결선을 초기값으로 재사용합니다.
+   * 전달된 값이 없으면 기존 요구사항대로 노드 0개로 시작합니다.
+   */
+  const studio = useStudioEditor({
+    initialNodes: locationState?.nodes ?? [],
+    initialEdges: locationState?.edges ?? [],
+  })
 
-  } catch (error) {
-    console.error("Flow 저장 실패:", error);
-  }
-};
+  const selectedNode =
+    studio.nodes.find((node) => node.selected) ?? null
 
     const selectedNodeConnectionInfo =
   useMemo<StudioInspectorConnectionInfo>(
@@ -207,7 +460,9 @@ export function Stdio_create1() {
   const filteredBlocks = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
 
-  const accessToken = localStorage.getItem("accessToken");
+    if (!keyword) {
+      return studioBlockCatalog
+    }
 
     return studioBlockCatalog.filter(
       (block) =>
@@ -323,22 +578,35 @@ export function Stdio_create1() {
             '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
           result: '검증을 실행하면 저장 가능 여부가 표시됩니다.',
         },
-        resolvedContext: {},
-      })),
-    };
+      ]
+    }
 
-    console.log("검증 요청 flowId:", flowId);
-    console.log("검증 요청 body:", verifyPayload);
+    const missingRequiredByStage = (stage: StudioStage) =>
+      validationResult.issues.filter(
+        (issue) =>
+          issue.stage === stage &&
+          issue.type === 'missing-required-block',
+      )
 
-    const response = await verifyFlow(
-      Number(flowId),
-      verifyPayload,
-      accessToken ?? ""
-    );
+    const inputIssues = missingRequiredByStage('INPUT')
+    const processIssues = missingRequiredByStage('PROCESS')
+    const outputIssues = missingRequiredByStage('OUTPUT')
 
-    console.log("검증 성공:", response);
-    console.log("전체 검증 상태:", response.result.totalStatus);
-    console.log("검증 결과:", response.result.results);
+    const slotIssues = validationResult.issues.filter(
+      (issue) =>
+        issue.type === 'missing-required-slot-value' ||
+        issue.type === 'invalid-required-slot' ||
+        issue.type === 'required-slot-warning',
+    )
+
+    const slotErrorIssues = slotIssues.filter(
+      (issue) => issue.severity === 'error',
+    )
+
+    const buildStageResult = (issues: StudioValidationIssue[]) =>
+      issues.length === 0
+        ? '필수 블록이 모두 포함되어 있습니다.'
+        : `누락: ${getIssueBlockTitles(issues)}`
 
     return [
       {
@@ -438,504 +706,337 @@ export function Stdio_create1() {
     studio.validateWorkflow()
     setValidationResult(result)
   }
-};
 
+  const buildNavigationState = (): StudioNavigationState => ({
+    mode:
+      locationState?.mode ??
+      (workflowId ? 'edit' : 'create'),
+    tutorialId: locationState?.tutorialId,
+    copiedLibraryItemId: locationState?.copiedLibraryItemId,
+    workflowId:
+      locationState?.workflowId ??
+      (workflowId ? Number(workflowId) : undefined),
+    nodes: studio.nodes,
+    edges: studio.edges,
+    validationResult,
+  })
 
-const handleReviewSave = async () => {
-  if (!flowId) {
-    console.error("flowId가 없습니다.");
-    return;
+  const handleOpenExample = () => {
+    navigate('/workflows/draft/preview?view=example', {
+      state: buildNavigationState(),
+    })
   }
 
-  const accessToken = localStorage.getItem("accessToken");
+  const handleOpenPreview = async () => {
+    try{
+      const flowId=8;
+      // TODO: 로그인 API 머지 후 실제 accessToken으로 교체
+      const accessToken = "여기에_나중에_실제_accessToken";
+      const data=await FlowPreviewResponse(
+        flowId,
+        accessToken,
+      );
+      console.log("불러온 Flow:", data);
+      navigate(
+        `/studio/create?mode=copied&flowId=${flowId}`,
+      {
+        state: {
+          mode: "preview",
+          flowId: flowId,
+          flowData: data,
+        },
+      },
+    );
+    } catch (error) {
+    console.error("Flow 불러오기 실패:", error);
+  }
+  }
+const buildFlowSavePayload = (): FlowSavePayload => ({
+  title: '새 흐름',
+  summary: '자동 생성된 요약',
+  purpose: '사용자 정의 흐름',
+  difficulty: 'BEGINNER',
+  categoryIds: [],
+  visibility: 'PRIVATE',
+  status: 'COMPLETED',
+  authorNote: '',
+  exampleInput: '',
+  exampleResult: '',
+  blocks: studio.nodes.map((node, index) => ({
+    blockId: index + 1,
+    blockOrder: index,
+    options: {
+      title: node.data.node.title,
+      stage: node.data.node.stage,
+      id: node.data.node.id,
+    },
+    promptTemplateId: 0,
+  })),
+})
+
+const handleStartSave = async () => {
+  if (!validationResult?.valid) {
+    return
+  }
 
   try {
-    const previewPayload: PreviewFlowRequest = {
-      blocks: nodes.map((node, index) => ({
-        blockId: Number(node.data.blockId),
-        blockOrder: index,
-        input: {},
-        options: {
-          ...node.data,
-        },
-        resolvedContext: {},
-      })),
-    };
+    const flowIdNum = workflowId ? Number(workflowId) : undefined
+    if (!flowIdNum) return
 
-    console.log("미리보기 요청 flowId:", flowId);
-    console.log("미리보기 요청 body:", previewPayload);
+    const { result } = await saveFlow(flowIdNum, buildFlowSavePayload())
 
-    const response = await previewFlow(
-      Number(flowId),
-      previewPayload,
-      accessToken ?? ""
-    );
-
-    console.log("미리보기 생성 성공:", response);
-    console.log("예시 결과:", response.result.resultText);
-    console.log("결과 출처:", response.result.resultSource);
-    console.log("사용 모델:", response.result.modelName);
-
-        navigate("/studio/preview", {
-            state: {
-                flowId: Number(flowId),
-                resultText: response.result.resultText,
-                resultSource: response.result.resultSource,
-                modelName: response.result.modelName,
-            },
-        });
-
+    navigate('/studio/save/review', {
+      state: { ...buildNavigationState(), saveResult: result },
+    })
   } catch (error) {
-    console.error("미리보기 생성 실패:", error);
+    // 에러 코드별 분기 (FLOW400xx, AUTH401xx, FLOW403xx, FLOW404xx)
   }
-};
+}
 
+  return (
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
+      <div className="shrink-0">
+        <Header />
+      </div>
 
-    return (
-        <>
-            <Header />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* 블록 팔레트 */}
+        <aside className="relative z-30 flex min-h-0 w-[326px] shrink-0 flex-col border-r-[1.5px] border-[#E4E4E7] bg-white">
+          <div className="relative flex h-[122px] shrink-0 items-center justify-center gap-[14px] border-b-[1.5px] border-[#E4E4E7]">
+            <p className="text-[22px] font-bold">
+              블록 팔레트
+            </p>
 
-            <div className=" flex min-h-screen text-[#27272A]">
+            <img
+              src={dashed}
+              alt=""
+              className="absolute left-[155px] h-[80px] w-[158px]"
+            />
 
-                {/* w-[1920px] min-h-[2528px] */}
+            <div className="relative z-10 w-[150px] py-[4px] pl-[14px] text-[15px] text-[#9A9AA3]">
+              📱모바일 미지원 -
+              <br />
+              블록 스튜디오는
+              <br />
+              데스크톱 전용
+            </div>
+          </div>
 
-                {/*블록 팔레트 */}
-                <div className="relative z-30 w-[360px] min-h-[2350px] bg-white flex flex-col border-r-[1.5px] border-slate-200 items-center">
+          <div className="shrink-0 px-[16px] pb-[10px] pt-[13px]">
+            <div className="relative flex items-center text-[19px] text-[#9A9AA3]">
+              <input
+                type="search"
+                value={searchText}
+                onChange={(event) =>
+                  setSearchText(event.target.value)
+                }
+                placeholder="블록 검색"
+                className="h-[50px] w-[296px] rounded-[50px] border-[1.5px] border-[#E4E4E7] bg-white pl-[60px] pr-[18px] text-[#52525B] outline-none placeholder:text-[#9A9AA3] focus:border-[#6366F1]"
+              />
 
-                    {/*블록 팔레트 텍스트 section */}
-                    <div className="h-[136px] flex items-center justify-center gap-[16.2px] border-b-[1.5px] border-slate-200">
-                        <p className="text-[25.5px] font-bold">
-                            블록 팔레트
-                        </p>
+              <img
+                src={searchRound}
+                alt=""
+                className="pointer-events-none absolute left-[24px] h-[21px] w-[21px]"
+              />
 
-                        <div className="flex items-center justify-center py-[12.6px] px-[14.25px] rounded-[8px] border-dashed border-[1.5px] border-slate-200 w-[176px] text-[16.5px] text-[#9A9AA3]">
-                            📱모바일 미지원 -
-                            <br />
-                            블록 스튜디오는
-                            <br />
-                            데스크톱 전용
-                        </div>
-                    </div>
+              <img
+                src={searchStick}
+                alt=""
+                className="pointer-events-none absolute left-[40px] top-[27px] h-[8.4px] w-[10px]"
+              />
+            </div>
+          </div>
 
-                    {/*블록 팔레트 텍스트 하단 section */}
-                    <div className="w-full flex flex-col items-center">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[32px]">
+            {STUDIO_STAGE_ORDER.map((stage) => {
+              const blocks = filteredBlocks.filter(
+                (block) => block.stage === stage,
+              )
 
-                        {/*블록 검색 */}
-                        <div className="pl-[24px] mt-[16.5px] flex items-center w-[321px] h-[52.5px] border-[1.5px] border-[#E4E4E7] rounded-[50px]
-                        text-[21px] text-[#9A9AA3]">
-                            <div>
-                                <img
-                                    src={searchRound}
-                                    className="mr-[10px] mt-[6px] w-[21px] h-[21px]"
-                                />
-                                <img
-                                    src={searchStick}
-                                    className="ml-[18px] mt-[-5px] w-[8.4px] h-[8.4px]"
-                                />
-                            </div>
+              if (blocks.length === 0) {
+                return null
+              }
 
-                            블록 검색
-                        </div>
+              const stageStyle = stageStyleMap[stage]
 
-                        {/*입력 section */}
-                        <div className="flex flex-col justify-center">
-                            <div className="w-[316px] flex items-center mt-[31.2px] mb-[15.5px]">
-                                <div className="w-[13.5px] h-[13.5px] bg-[#4A5E8A] rounded-[4px]" />
-                                <p className="ml-[10.5px] flex-1 text-[16.5px] text-[#9A9AA3] font-bold">
-                                    입력
-                                </p>
-                                <p className="text-[16.5px] text-[#9A9AA3] font-bold">
-                                    INPUT
-                                </p>
-                            </div>
+              return (
+                <section key={stage}>
+                  <div className="flex w-[290px] items-center pb-[15.5px] pt-[18px]">
+                    <div
+                      className={[
+                        'h-[13px] w-[13px] rounded-[4px]',
+                        stageStyle.dot,
+                      ].join(' ')}
+                    />
 
-                            {inPut.map((box) => (
-                                <div
-                                    key={box.id}
-                                    className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200"
-                                >
-                                    <div className="flex items-center">
-                                        <div className="w-[13.5px] h-[13.5px] bg-[#4A5E8A] rounded-[4px]" />
+                    <p className="ml-[10.5px] flex-1 text-[13.5px] font-bold text-[#9A9AA3]">
+                      {studioStageLabelMap[stage]}
+                    </p>
 
-                                        <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                            {box.title}
-                                        </p>
+                    <p className="text-[13.5px] font-bold text-[#9A9AA3]">
+                      {stage}
+                    </p>
+                  </div>
 
-                                        <p className="text-[14.25px] text-[#6366F1] font-bold">
-                                            {box.state}
-                                        </p>
-                                    </div>
+                  {blocks.map((block) => (
+                    <PaletteBlockCard
+                      key={block.id}
+                      block={block}
+                      onDragStart={studio.onBlockDragStart}
+                    />
+                  ))}
+                </section>
+              )
+            })}
 
-                                    <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                        {box.content}
-                                    </p>
-                                </div>
-                            ))}
+            {filteredBlocks.length === 0 && (
+              <div className="flex min-h-[220px] items-center justify-center text-center">
+                <p className="text-[14px] text-[#9A9AA3]">
+                  검색 결과가 없습니다.
+                </p>
+              </div>
+            )}
+          </div>
+        </aside>
 
-                            <div className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200">
-                                <div className="flex items-center">
-                                    <div className="w-[13.5px] h-[13.5px] bg-[#4A5E8A] rounded-[4px]" />
+        {/* 메인 캔버스 */}
+        <main className="relative z-10 min-h-0 min-w-0 flex-1 overflow-hidden bg-[#F7F7F9]">
+          <ReactFlow<StudioFlowNodeInstance, Edge>
+            nodes={studio.nodes}
+            edges={studio.edges}
+            nodeTypes={studioNodeTypes}
+            onNodesChange={studio.onNodesChange}
+            onEdgesChange={studio.onEdgesChange}
+            onConnect={studio.onConnect}
+            isValidConnection={studio.isValidConnection}
+            onInit={studio.onInit}
+            onDragOver={studio.onDragOver}
+            onDrop={studio.onDrop}
+            onNodeClick={(_event, node) =>
+              studio.selectNode(node.id)
+            }
+            onPaneClick={studio.clearSelection}
+            zoomOnScroll={false}
+            zoomOnPinch={false}
+            zoomOnDoubleClick={false}
+            panOnScroll={false}
+            panOnDrag
+            nodesDraggable
+            nodesConnectable
+            elementsSelectable
+            deleteKeyCode={['Backspace', 'Delete']}
+            snapToGrid={studio.snapToGrid}
+            snapGrid={studio.snapGrid}
+            defaultViewport={{
+              x: 0,
+              y: 0,
+              zoom: 1,
+            }}
+            defaultEdgeOptions={{
+              type: 'smoothstep',
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+              },
+              style: {
+                stroke: '#6366F1',
+                strokeWidth: 2,
+              },
+            }}
+            connectionLineStyle={{
+              stroke: '#6366F1',
+              strokeWidth: 2,
+            }}
+            className="h-full w-full"
+          />
+        </main>
 
-                                    <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                        파일 업로드 받기
-                                    </p>
+        {/* 인스펙터와 검증 결과 */}
+        <aside className="relative z-30 flex min-h-0 w-[406px] shrink-0 flex-col border-l-[1.5px] border-[#E4E4E7] bg-white">
+          <div className="flex h-[78px] shrink-0 items-center border-b-[1.5px] border-[#E4E4E7] pl-[20px] text-[22px] font-bold">
+            인스펙터
+          </div>
 
-                                    <div>
-                                        <p className="w-[43.21px] h-[24.38px] bg-[#EEF4EE] rounded-[8px] font-bold text-[14.25px] text-[#3C7A52] text-center">
-                                            권장
-                                        </p>
-                                    </div>
-                                </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {!selectedNode && (
+              <div className="flex min-h-[510px] flex-col border-b-[1.5px] border-[#E4E4E7]">
+                <div className="flex h-[180px] items-center justify-center border-b-[1.5px] border-[#E4E4E7] px-[30px] text-center">
+                  <div>
+                    <p className="text-[18px] font-bold text-[#52525B]">
+                      선택된 노드가 없습니다.
+                    </p>
 
-                                <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                    문서·이미지를 업로드합니다
-                                </p>
-                            </div>
-                        </div>
-
-                        {/*컨텍스트 section */}
-                        <div className="flex flex-col justify-center">
-                            <div className="w-[316px] flex items-center mt-[32.7px] mb-[15.5px]">
-                                <div className="w-[13.5px] h-[13.5px] bg-[#2F8190] rounded-[4px]" />
-
-                                <p className="ml-[10.5px] flex-1 text-[16.5px] text-[#9A9AA3] font-bold">
-                                    컨텍스트
-                                </p>
-
-                                <p className="text-[16.5px] text-[#9A9AA3] font-bold">
-                                    CONTEXT
-                                </p>
-                            </div>
-
-                            {conText.map((box) => (
-                                <div
-                                    key={box.id}
-                                    className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200"
-                                >
-                                    <div className="flex items-center">
-                                        <div className="w-[13.5px] h-[13.5px] bg-[#2F8190] rounded-[4px]" />
-
-                                        <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                            {box.title}
-                                        </p>
-
-                                        <p className="text-[14.25px] text-[#6366F1] font-bold">
-                                            {box.state}
-                                        </p>
-                                    </div>
-
-                                    <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                        {box.content}
-                                    </p>
-                                </div>
-                            ))}
-
-                            <div className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200">
-                                <div className="flex items-center">
-                                    <div className="w-[13.5px] h-[13.5px] bg-[#2F8190] rounded-[4px]" />
-
-                                    <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                        제약조건 입력하기
-                                    </p>
-
-                                    <div>
-                                        <p className="w-[43.21px] h-[24.38px] bg-[#EEF4EE] rounded-[8px] font-bold text-[14.25px] text-[#3C7A52] text-center">
-                                            권장
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                    분량·톤·금지사항 설정
-                                </p>
-                            </div>
-
-                            <div className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200">
-                                <div className="flex items-center">
-                                    <div className="w-[13.5px] h-[13.5px] bg-[#2F8190] rounded-[4px]" />
-
-                                    <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                        용어 사전 제공하기
-                                    </p>
-
-                                    <div>
-                                        <p className="w-[55.8px] h-[24.38px] bg-[#F0F0F3] rounded-[8px] font-bold text-[14.25px] text-[#9A9AA3] text-center">
-                                            준비중
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                    고유 용어·약어 정의
-                                </p>
-                            </div>
-                        </div>
-
-                        {/*프로세스 section */}
-                        <div className="flex flex-col justify-center">
-                            <div className="w-[316px] flex items-center mt-[32.7px] mb-[15.5px]">
-                                <div className="w-[13.5px] h-[13.5px] bg-[#6366F1] rounded-[4px]" />
-
-                                <p className="ml-[10.5px] flex-1 text-[16.5px] text-[#9A9AA3] font-bold">
-                                    프로세스
-                                </p>
-
-                                <p className="text-[16.5px] text-[#9A9AA3] font-bold">
-                                    PROCESS
-                                </p>
-                            </div>
-
-                            {proCess.map((box) => (
-                                <div
-                                    key={box.id}
-                                    className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200"
-                                >
-                                    <div className="flex items-center">
-                                        <div className="w-[13.5px] h-[13.5px] bg-[#6366F1] rounded-[4px]" />
-
-                                        <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                            {box.title}
-                                        </p>
-
-                                        <p className="text-[14.25px] text-[#6366F1] font-bold">
-                                            {box.state}
-                                        </p>
-                                    </div>
-
-                                    <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                        {box.content}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/*검토 section */}
-                        <div className="flex flex-col justify-center">
-                            <div className="w-[316px] flex items-center mt-[32.7px] mb-[15.5px]">
-                                <div className="w-[13.5px] h-[13.5px] bg-[#B07A2E] rounded-[4px]" />
-
-                                <p className="ml-[10.5px] flex-1 text-[16.5px] text-[#9A9AA3] font-bold">
-                                    검토
-                                </p>
-
-                                <p className="text-[16.5px] text-[#9A9AA3] font-bold">
-                                    REVIEW
-                                </p>
-                            </div>
-
-                            {review.map((box) => (
-                                <div
-                                    key={box.id}
-                                    className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200"
-                                >
-                                    <div className="flex items-center">
-                                        <div className="w-[13.5px] h-[13.5px] bg-[#B07A2E] rounded-[4px]" />
-
-                                        <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                            {box.title}
-                                        </p>
-
-                                        <p className="text-[14.25px] text-[#6366F1] font-bold">
-                                            {box.state}
-                                        </p>
-                                    </div>
-
-                                    <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                        {box.content}
-                                    </p>
-                                </div>
-                            ))}
-
-                            <div className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200">
-                                <div className="flex items-center">
-                                    <div className="w-[13.5px] h-[13.5px] bg-[#B07A2E] rounded-[4px]" />
-
-                                    <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                        누락 확인하기
-                                    </p>
-
-                                    <div>
-                                        <p className="w-[43.21px] h-[24.38px] bg-[#EEF4EE] rounded-[8px] font-bold text-[14.25px] text-[#3C7A52] text-center">
-                                            권장
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                    빠진 항목점검합니다
-                                </p>
-                            </div>
-                        </div>
-
-                        {/*결과 section */}
-                        <div className="flex flex-col justify-center">
-                            <div className="w-[316px] flex items-center mt-[32.7px] mb-[15.5px]">
-                                <div className="w-[13.5px] h-[13.5px] bg-[#3C7A52] rounded-[4px]" />
-
-                                <p className="ml-[10.5px] flex-1 text-[16.5px] text-[#9A9AA3] font-bold">
-                                    결과
-                                </p>
-
-                                <p className="text-[16.5px] text-[#9A9AA3] font-bold">
-                                    OUTPUT
-                                </p>
-                            </div>
-
-                            {result.map((box) => (
-                                <div
-                                    key={box.id}
-                                    className="pt-[13.88px] pl-[16.5px] pr-[21.6px] mb-[12px] w-[316.5px] h-[82px] rounded-[12px] border-[1.5px] border-slate-200"
-                                >
-                                    <div className="flex items-center">
-                                        <div className="w-[13.5px] h-[13.5px] bg-[#3C7A52] rounded-[4px]" />
-
-                                        <p className="ml-[12px] flex-1 text-[18.75px] font-bold">
-                                            {box.title}
-                                        </p>
-
-                                        <p className="text-[14.25px] text-[#6366F1] font-bold">
-                                            {box.state}
-                                        </p>
-                                    </div>
-
-                                    <p className="ml-[26px] mt-[2px] text-[16.5px] text-[#9A9AA3]">
-                                        {box.content}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <p className="mt-[8px] text-[14px] leading-[21px] text-[#9A9AA3]">
+                      왼쪽 팔레트의 블록을
+                      캔버스에 추가한 뒤
+                      <br />
+                      노드를 선택하세요.
+                    </p>
+                  </div>
                 </div>
 
-                {/*메인 화면 */}
-                <div className="flex-1 z-10">
+                <div className="flex flex-1 items-center justify-center px-[30px] text-center text-[14px] text-[#9A9AA3]">
+                  노드 설정은 선택 후 표시됩니다.
+                </div>
+              </div>
+            )}
 
-                    {/* <ReactFlow nodes={nodes} edges={edges}
-                        zoomOnScroll={false}
-                        zoomOnPinch={false}
-                        zoomOnDoubleClick={false}
-                        panOnScroll={false}
-                        panOnDrag={true}
-                        nodesDraggable={true}
-                        className="w-[54px] h-[105px] bg-pink-300 rounded-[12px]"
-                    /> */}
+            {selectedNode && (
+              <div className="border-b-[1.5px] border-[#E4E4E7]">
+                <div className="border-b-[1.5px] border-[#E4E4E7] px-[21px] py-[14px]">
+                  <div className="flex items-center">
+                    <p
+                      className={[
+                        'flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[12px] text-[18px] font-bold text-white',
+                        stageStyleMap[selectedNode.data.node.stage].dot,
+                      ].join(' ')}
+                    >
+                      {selectedNode.data.node.order}
+                    </p>
 
-                    <div className="flex flex-col mx-[20px] my-[20px] px-[19.5px] pt-[21.45px] w-[375px] h-[274.5px] bg-white border-[1.5px] border-slate-200 rounded-[20px]">
-                        <div className="flex items-center">
+                    <div className="ml-[14px] min-w-0 flex-1">
+                      <p className="truncate text-[19px] font-bold">
+                        {selectedNode.data.node.title} 노드
+                      </p>
 
-                            <div className="w-[34.5px] h-[34.5px] bg-[#4A5E8A] rounded-[12px] flex items-center justify-center text-white font-bold text-[18px]">
-                                1
-                            </div>
-
-                            <div className="flex flex-col flex-1 gap-[6px] ml-[13.5px]">
-                                <p className="font-bold text-[20.25px]">
-                                    입력
-                                </p>
-
-                                <p className="text-[#9A9AA3] text-[13.5px]">
-                                    INPUT
-                                </p>
-                            </div>
-
-                            <div className="w-[74.6px] h-[28.5px] bg-[#EEF4EE] rounded-[8px] flex items-center justify-center text-[#2F7D52] text-[15px] font-bold">
-                                필수 2/2
-                            </div>
-                        </div>
-
-                        <div className="mt-[33.58px] w-[342px] h-[48px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white flex items-center justify-center">
-                            <div className="ml-[13.5px] w-[10.5px] h-[10.5px] bg-[#4A5E8A] rounded-[4px]" />
-
-                            <p className="ml-[10.5px] flex-1 font-bold">
-                                텍스트 입력
-                            </p>
-
-                            <p className="mr-[13.32px] text-[#9A9AA3] text-[16.5px]">
-                                리뷰 100건
-                            </p>
-                        </div>
-
-                        <div className="mt-[9.75px] w-[342px] h-[48px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white flex items-center justify-center">
-
-                            <div className="ml-[13.5px] w-[10.5px] h-[10.5px] bg-[#4A5E8A] rounded-[4px]" />
-
-                            <p className="ml-[10.5px] flex-1 font-bold">
-                                필요한 스킬
-                            </p>
-
-                            <p className="mr-[13.32px] text-[#9A9AA3] text-[16.5px]">
-                                요약
-                            </p>
-                        </div>
-
-                        <div className="mt-[15px] ml-[-20px] border-dashed w-[372px] border-[1.5px] border-[#E4E4E7]" />
-
-                        <div className="mt-[13.2px] mb-[17.8px] flex items-center justify-between text-[#4A5E8A] text-[16.5px] font-bold">
-                            <p>다음 단계로 전달</p>
-                            <p>→</p>
-                        </div>
+                      <p className="mt-[2px] truncate text-[13px] text-[#9A9AA3]">
+                        {selectedNode.data.node.stage}
+                        {selectedNode.data.node.slots[0]
+                          ? ` · ${selectedNode.data.node.slots[0].label}`
+                          : ''}
+                      </p>
                     </div>
 
-                    <div className="flex flex-col mx-[20px] my-[20px] px-[19.5px] pt-[21.45px] w-[375px] h-[274.5px] bg-white border-[1.5px] border-slate-200 rounded-[20px]">
+                    {selectedNode.data.node.stage === 'PROCESS' && (
+                      <div className="flex h-[33px] w-[132px] items-center justify-center rounded-[8px] border-[1.5px] border-dashed border-[#E4E4E7] text-[15px] font-bold text-[#52525B]">
+                        AI Optional
+                      </div>
+                    )}
+                  </div>
 
-                        <div className="flex items-center">
-
-                            <div className="w-[34.5px] h-[34.5px] bg-[#2F8190] rounded-[12px] flex items-center justify-center text-white font-bold text-[18px]">
-                                2
-                            </div>
-
-                            <div className="flex flex-col flex-1 gap-[6px] ml-[13.5px]">
-
-                                <p className="font-bold text-[20.25px]">
-                                    컨텍스트
-                                </p>
-
-                                <p className="text-[#9A9AA3] text-[13.5px]">
-                                    CONTEXT
-                                </p>
-                            </div>
-
-                            <div className="w-[74.6px] h-[28.5px] bg-[#EEF4EE] rounded-[8px] flex items-center justify-center text-[#2F7D52] text-[15px] font-bold">
-                                필수 1/1
-                            </div>
-                        </div>
-
-                        <div className="mt-[33.58px] w-[342px] h-[48px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white flex items-center justify-center">
-
-                            <div className="ml-[13.5px] w-[10.5px] h-[10.5px] bg-[#2F8190] rounded-[4px]" />
-
-                            <p className="ml-[10.5px] flex-1 font-bold">
-                                역할 부여
-                            </p>
-
-                            <p className="mr-[13.32px] text-[#9A9AA3] text-[16.5px]">
-                                리뷰 분석가
-                            </p>
-                        </div>
-
-                        <div className="mt-[9.75px] w-[342px] h-[48px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white flex items-center justify-center">
-
-                            <div className="ml-[13.5px] w-[10.5px] h-[10.5px] bg-[#2F8190] rounded-[4px]" />
-
-                            <p className="ml-[10.5px] flex-1 font-bold">
-                                제약 조건
-                            </p>
-
-                            <p className="mr-[13.32px] text-[#9A9AA3] text-[16.5px]">
-                                짧게
-                            </p>
-                        </div>
-
-                        <div className="mt-[15px] ml-[-20px] border-dashed w-[372px] border-[1.5px] border-[#E4E4E7]" />
-
-                        <div className="mt-[13.2px] mb-[17.8px] flex items-center justify-between text-[#2F8190] text-[16.5px] font-bold">
-                            <p>다음 단계로 전달</p>
-                            <p>→</p>
-                        </div>
+                  <div className="mt-[14px] flex items-center gap-[10px] text-[13px] font-bold text-[#52525B]">
+                    <div className="flex h-[29px] min-w-[78px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] bg-[#F0F0F3] px-[9px]">
+                      필수 {selectedCompletedRequiredSlots}/
+                      {selectedRequiredSlots.length}
                     </div>
+
+                    <div className="flex h-[29px] min-w-[78px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] bg-[#F0F0F3] px-[9px]">
+                      슬롯 {selectedNode.data.node.slots.length}
+                    </div>
+                  </div>
+
+                  <p className="mt-[11px] text-[14px] leading-[20px] text-[#9A9AA3]">
+                    이 노드는 컨테이너입니다. 아래
+                    컴포넌트(블록)마다 도구·프롬프트 강도·옵션을
+                    따로 설정하세요.
+                  </p>
                 </div>
 
-                {/*인스펙터 */}
-                <div className="relative z-30 w-[450px] min-h-[2350px] bg-white flex flex-col border-l-[1.5px] border-slate-200">
+                <div className="min-h-[330px] px-[18px] pt-[12px]">
+                  <div className="flex items-center justify-between font-bold text-[#9A9AA3]">
+                    <p className="text-[14px]">
+                      컴포넌트
+                    </p>
 
                     <p className="text-[13px]">
                       {selectedNode.data.node.slots.length}개 · 노드에 부착된 블록
@@ -974,33 +1075,7 @@ const handleReviewSave = async () => {
                   </div>
                                   </div>
 
-                        {openId === 3 && (
-                            <div className="mt-[16px] mb-[24.5px] text-[16px] font-bold pl-[39px]">
-
-                                <p>
-                                    채점 기준
-                                    <span className="text-[#52525B] font-normal">
-                                        · 결과 단계에 필수 블록 1개 이상이
-                                        <br />
-                                        포함되어야 합니다.
-                                    </span>
-                                </p>
-
-                                <p className="mt-[13px]">
-                                    확인 결과
-                                    <span className="text-[#52525B] font-normal">
-                                        · "텍스트 출력” 블록이 연결되어
-                                        <br />
-                                        있습니다.
-                                    </span>
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="min-h-[54px] px-[21px] pt-[14px] border-t-[1.5px] border-[#EEEEF1]">
-
-                        <div className="flex items-center">
+                <div className="my-[14px] border-t-[1.5px] border-[#EEEEF1]" />
 
                 <div className="flex items-center justify-center pb-[14px]">
                   <button
@@ -1010,48 +1085,69 @@ const handleReviewSave = async () => {
                     설정 저장
                   </button>
                 </div>
-            </div>
+              </div>
+            )}
 
-            {/* footer */}
-            <div className="w-[1920px] h-[94.5px] bg-white pl-[27px] flex items-center justify-between text-[20px] border-t-[1.5px] border-[#E4E4E7]">
+            {/* 검증 결과 */}
+            <div>
+              <div className="flex h-[96px] items-center justify-between border-t-[1.5px] border-[#E4E4E7] px-[21px]">
+                <div className="flex items-center">
+                  <div
+                    className={[
+                      'flex h-[64px] w-[64px] items-center justify-center rounded-[12px] border-[1.5px] text-[25px] font-bold',
+                      overallValidationStatus === 'pass'
+                        ? 'border-[#CFE2D5] bg-[#EEF4EE] text-[#2F7D52]'
+                        : overallValidationStatus === 'fail'
+                          ? 'border-[#E9C9C9] bg-[#FBF1F0] text-[#B4453A]'
+                          : 'border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
+                    ].join(' ')}
+                  >
+                    {validationSummary.passCount}
 
-                <p className="text-[#9A9AA3] text-[16.5px]">
-                    자유 제작 · 노드 5 · 입력→컨텍스트→프로세스→검토→결과
-                </p>
+                    <span className="mt-[10px] text-[14px] text-[#9A9AA3]">
+                      /5
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-[19px]">
-
-                    <p 
-                        onClick={() => {
-                            void handleVertifySave()
-                        }}
-                        className="hover:text-white hover:bg-[#6366F1] cursor-pointer w-[86px] h-[57px] flex items-center justify-center border-[1.5px] border-[#E4E4E7] rounded-[8px] text-[20px] font-bold">
-                        검증
+                  <div className="ml-[16.5px] flex flex-col">
+                    <p className="text-[18px] font-bold">
+                      검증 결과
                     </p>
 
-                    <p onClick={() => {
-                            void handleReviewSave();
-                        }}className="hover:text-white hover:bg-[#6366F1] cursor-pointer w-[125px] h-[57px] flex items-center justify-center border-[1.5px] border-[#E4E4E7] rounded-[8px] text-[20px] font-bold">
-                        예시 결과
+                    <p className="text-[14px] text-[#9A9AA3]">
+                      통과 {validationSummary.passCount} · 미흡{' '}
+                      {validationSummary.insufficientCount} · 대기{' '}
+                      {validationSummary.pendingCount}
                     </p>
-
-                    <p 
-                        onClick={() => {
-                            void handleReviewSave();
-                        }}
-                        className="hover:text-white hover:bg-[#6366F1] cursor-pointer w-[119px] h-[57px] flex items-center justify-center border-[1.5px] border-[#E4E4E7] rounded-[8px] text-[20px] font-bold">
-                        미리보기
-                    </p>
-
-                    <p
-                        onClick={() => {
-                            void handleStartSave()
-                        }}
-                        className="hover:text-white hover:bg-[#6366F1] cursor-pointer w-[86px] h-[57px] flex items-center justify-center border-[1.5px] border-[#E4E4E7] rounded-[8px] text-[20px] font-bold"
-                    >
-                        저장
-                    </p>
+                  </div>
                 </div>
+
+                <div
+                  className={[
+                    'flex h-[33px] min-w-[70px] items-center justify-center rounded-[8px] border-[1.5px] px-[9px] text-[14px] font-bold',
+                    overallValidationStatus === 'pass'
+                      ? 'border-[#CFE2D5] bg-[#EEF4EE] text-[#2F7D52]'
+                      : overallValidationStatus === 'fail'
+                        ? 'border-[#E9C9C9] bg-[#FBF1F0] text-[#B4453A]'
+                        : 'border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
+                  ].join(' ')}
+                >
+                  {validationStatusStyleMap[overallValidationStatus].label}
+                </div>
+              </div>
+
+              {validationChecks.map((check) => (
+                <ValidationRow
+                  key={check.id}
+                  check={check}
+                  open={openValidationId === check.id}
+                  onToggle={() =>
+                    setOpenValidationId((current) =>
+                      current === check.id ? null : check.id,
+                    )
+                  }
+                />
+              ))}
             </div>
           </div>
         </aside>
