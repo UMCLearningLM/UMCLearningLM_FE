@@ -15,18 +15,21 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom'
 
 import { Header } from '../components/layout/Header'
 import searchRound from '../assets/searchRound.svg'
 import searchStick from '../assets/searchStick.svg'
 import dashed from '../assets/dashed.png'
-import { Slider } from '../components/ui/Slider'
-
 import {
   studioNodeTypes,
   type StudioFlowNodeInstance,
 } from '../features/studio/components/node/StudioFlowNode'
+
+import {
+  StudioBlockInspector,
+} from '../features/studio/components/inspector/StudioBlockInspector'
 
 import {
   STUDIO_STAGE_ORDER,
@@ -52,7 +55,21 @@ import type {
   StudioWorkflowValidationResult,
 } from '../features/studio/types/studioValidation'
 
+import type {
+  StudioSaveDraft,
+  StudioSaveMode,
+  StudioSaveNavigationState,
+} from '../features/studio/types/studioSave'
+
+import {
+  hydrateStudioFlowFromApi,
+} from '../features/studio/utils/hydrateStudioFlow'
+
 import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
+
+import {
+  getFlow,
+} from './api/StudioApi'
 
 type ValidationCheckStatus =
   | 'pass'
@@ -68,14 +85,50 @@ type ValidationCheck = {
   result: string
 }
 
-type StudioNavigationState = {
-  mode?: 'guided' | 'create' | 'copied' | 'edit'
-  tutorialId?: number
-  copiedLibraryItemId?: number
-  workflowId?: number
-  nodes?: StudioFlowNodeInstance[]
-  edges?: Edge[]
-  validationResult?: StudioWorkflowValidationResult | null
+function parseFlowId(
+  value: string | number | null | undefined,
+): number | undefined {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return undefined
+  }
+
+  const parsed = Number(value)
+
+  return Number.isInteger(parsed) && parsed > 0
+    ? parsed
+    : undefined
+}
+
+function parseStudioMode(
+  value: string | null,
+): StudioSaveMode | undefined {
+  if (
+    value === 'guided' ||
+    value === 'create' ||
+    value === 'copied' ||
+    value === 'edit' ||
+    value === 'preview'
+  ) {
+    return value
+  }
+
+  return undefined
+}
+
+function getAccessToken() {
+  return (
+    localStorage.getItem(
+      'accessToken',
+    ) ??
+    sessionStorage.getItem(
+      'accessToken',
+    ) ??
+    undefined
+  )
 }
 
 const stageStyleMap: Record<
@@ -330,13 +383,38 @@ function ValidationRow({
 export function Stdio_create1() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { workflowId } = useParams()
+  const { flowId: routeFlowId } =
+    useParams<{ flowId?: string }>()
+  const [searchParams] = useSearchParams()
 
   const locationState =
-    (location.state as StudioNavigationState | null) ?? null
+    (
+      location.state as
+        | StudioSaveNavigationState
+        | null
+    ) ?? null
+
+  const flowId =
+    parseFlowId(
+      searchParams.get('flowId'),
+    ) ??
+    parseFlowId(routeFlowId) ??
+    parseFlowId(
+      locationState?.flowId,
+    )
+
+  const mode =
+    locationState?.mode ??
+    parseStudioMode(
+      searchParams.get('mode'),
+    ) ??
+    (
+      flowId
+        ? 'edit'
+        : 'create'
+    )
 
   const [searchText, setSearchText] = useState('')
-  const [strength, setStrength] = useState(0.7)
   const [openInspectorSlotId, setOpenInspectorSlotId] =
     useState<string | null>(null)
   const [openValidationId, setOpenValidationId] =
@@ -346,10 +424,35 @@ export function Stdio_create1() {
       locationState?.validationResult ?? null,
     )
 
+  const [
+    loadedSaveDraft,
+    setLoadedSaveDraft,
+  ] =
+    useState<StudioSaveDraft | undefined>(
+      locationState?.saveDraft,
+    )
+
+  const [
+    isHydratingFlow,
+    setIsHydratingFlow,
+  ] =
+    useState(false)
+
+  const [
+    hydrationError,
+    setHydrationError,
+  ] =
+    useState<string | null>(
+      null,
+    )
+
   /*
-   * API 연동 전 라우트 연결 단계에서는 location.state로 넘겨진
-   * 노드와 연결선을 초기값으로 재사용합니다.
-   * 전달된 값이 없으면 기존 요구사항대로 노드 0개로 시작합니다.
+   * 같은 페이지에서 저장 검토/미리보기에서 돌아온 경우에는
+   * location.state의 React Flow 상태를 즉시 재사용합니다.
+   *
+   * 브라우저 새로고침 또는 내 저장소에서 편집으로 진입해
+   * state가 없는 경우에는 아래 hydration effect가
+   * GET /flows/{flowId} 응답으로 캔버스를 복원합니다.
    */
   const studio = useStudioEditor({
     initialNodes: locationState?.nodes ?? [],
@@ -358,6 +461,147 @@ export function Stdio_create1() {
 
   const selectedNode =
     studio.nodes.find((node) => node.selected) ?? null
+
+  useEffect(
+    () => {
+      /*
+       * 자유 제작 CREATE는 서버에 빈 DRAFT Flow를 먼저 만들기 때문에
+       * blockFlow가 없는 것이 정상입니다.
+       *
+       * 반대로 edit/copied/guided 또는 /studio/:flowId/edit 직접 진입은
+       * 서버에 저장된 Flow를 복원해야 합니다.
+       */
+      const hasNavigationNodes =
+        (
+          locationState?.nodes
+            ?.length ??
+          0
+        ) > 0
+
+      const shouldHydrate =
+        Boolean(
+          flowId,
+        ) &&
+        !hasNavigationNodes &&
+        (
+          Boolean(
+            routeFlowId,
+          ) ||
+          mode !==
+            'create'
+        )
+
+      if (
+        !shouldHydrate ||
+        !flowId
+      ) {
+        return
+      }
+
+      let cancelled =
+        false
+
+      const hydrate =
+        async () => {
+          setIsHydratingFlow(
+            true,
+          )
+
+          setHydrationError(
+            null,
+          )
+
+          try {
+            const response =
+              await getFlow(
+                flowId,
+                getAccessToken(),
+              )
+
+            if (
+              !response.success ||
+              !response.result
+            ) {
+              throw new Error(
+                response.message ||
+                  '저장된 흐름을 불러오지 못했습니다.',
+              )
+            }
+
+            const hydrated =
+              hydrateStudioFlowFromApi(
+                response.result,
+              )
+
+            if (
+              cancelled
+            ) {
+              return
+            }
+
+            studio.setNodes(
+              hydrated.nodes,
+            )
+
+            studio.setEdges(
+              hydrated.edges,
+            )
+
+            setLoadedSaveDraft(
+              hydrated.saveDraft,
+            )
+
+            setValidationResult(
+              null,
+            )
+
+            window.requestAnimationFrame(
+              () => {
+                studio.fitView()
+              },
+            )
+          } catch (error) {
+            if (
+              cancelled
+            ) {
+              return
+            }
+
+            console.error(
+              'Studio Flow 복원 실패:',
+              error,
+            )
+
+            setHydrationError(
+              error instanceof Error
+                ? error.message
+                : '저장된 흐름을 Studio로 복원하지 못했습니다.',
+            )
+          } finally {
+            if (
+              !cancelled
+            ) {
+              setIsHydratingFlow(
+                false,
+              )
+            }
+          }
+        }
+
+      void hydrate()
+
+      return () => {
+        cancelled =
+          true
+      }
+    },
+    [
+      flowId,
+      locationState?.nodes,
+      mode,
+      routeFlowId,
+    ],
+  )
 
   const filteredBlocks = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
@@ -383,6 +627,7 @@ export function Stdio_create1() {
               slot.value ?? '',
               slot.state ?? '',
               slot.required ? '1' : '0',
+              JSON.stringify(slot.config ?? {}),
             ].join(':'),
           )
           .sort()
@@ -569,6 +814,92 @@ export function Stdio_create1() {
   const selectedCompletedRequiredSlots =
     selectedRequiredSlots.filter(hasSlotValue).length
 
+  const selectedConnectionInfo =
+    useMemo(() => {
+      if (!selectedNode) {
+        return undefined
+      }
+
+      const toConnectedNode = (
+        nodeId: string,
+      ) => {
+        const node =
+          studio.nodes.find(
+            (item) =>
+              item.id === nodeId,
+          )
+
+        if (!node) {
+          return null
+        }
+
+        return {
+          id: node.id,
+          title:
+            node.data.node.title,
+          stage:
+            node.data.node.stage,
+          slots:
+            node.data.node.slots,
+        }
+      }
+
+      const incomingNodes =
+        studio.edges
+          .filter(
+            (edge) =>
+              edge.target ===
+              selectedNode.id,
+          )
+          .map(
+            (edge) =>
+              toConnectedNode(
+                edge.source,
+              ),
+          )
+          .filter(
+            (
+              node,
+            ): node is NonNullable<
+              ReturnType<
+                typeof toConnectedNode
+              >
+            > => node !== null,
+          )
+
+      const outgoingNodes =
+        studio.edges
+          .filter(
+            (edge) =>
+              edge.source ===
+              selectedNode.id,
+          )
+          .map(
+            (edge) =>
+              toConnectedNode(
+                edge.target,
+              ),
+          )
+          .filter(
+            (
+              node,
+            ): node is NonNullable<
+              ReturnType<
+                typeof toConnectedNode
+              >
+            > => node !== null,
+          )
+
+      return {
+        incomingNodes,
+        outgoingNodes,
+      }
+    }, [
+      selectedNode,
+      studio.edges,
+      studio.nodes,
+    ])
+
   const handleValidate = () => {
     const result = validateStudioWorkflow({
       nodes: studio.nodes,
@@ -579,30 +910,64 @@ export function Stdio_create1() {
     setValidationResult(result)
   }
 
-  const buildNavigationState = (): StudioNavigationState => ({
-    mode:
-      locationState?.mode ??
-      (workflowId ? 'edit' : 'create'),
-    tutorialId: locationState?.tutorialId,
-    copiedLibraryItemId: locationState?.copiedLibraryItemId,
-    workflowId:
-      locationState?.workflowId ??
-      (workflowId ? Number(workflowId) : undefined),
-    nodes: studio.nodes,
-    edges: studio.edges,
-    validationResult,
-  })
+  const buildNavigationState =
+    (): StudioSaveNavigationState => ({
+      mode,
+
+      flowId,
+
+      tutorialId:
+        locationState?.tutorialId,
+
+      originFlowId:
+        locationState?.originFlowId,
+
+      copiedLibraryItemId:
+        locationState?.copiedLibraryItemId,
+
+      nodes:
+        studio.nodes,
+
+      edges:
+        studio.edges,
+
+      validationResult,
+
+      saveDraft:
+        loadedSaveDraft ??
+        locationState?.saveDraft,
+    })
 
   const handleOpenExample = () => {
-    navigate('/workflows/draft/preview?view=example', {
-      state: buildNavigationState(),
-    })
+    if (!flowId) {
+      window.alert(
+        '예시 결과를 생성할 flowId가 없습니다.',
+      )
+      return
+    }
+
+    navigate(
+      `/workflows/${flowId}/preview?view=example`,
+      {
+        state: buildNavigationState(),
+      },
+    )
   }
 
   const handleOpenPreview = () => {
-    navigate('/workflows/draft/preview', {
-      state: buildNavigationState(),
-    })
+    if (!flowId) {
+      window.alert(
+        '미리보기에 사용할 flowId가 없습니다.',
+      )
+      return
+    }
+
+    navigate(
+      `/workflows/${flowId}/preview`,
+      {
+        state: buildNavigationState(),
+      },
+    )
   }
 
   const handleStartSave = () => {
@@ -771,6 +1136,30 @@ export function Stdio_create1() {
             }}
             className="h-full w-full"
           />
+
+          {isHydratingFlow && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
+              <div className="rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[22px] text-center shadow-sm">
+                <div className="mx-auto h-[38px] w-[38px] animate-spin rounded-full border-[4px] border-[#E4E4E7] border-t-[#6366F1]" />
+
+                <p className="mt-[14px] text-[15px] font-bold text-[#52525B]">
+                  저장된 흐름을 불러오는 중입니다.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {hydrationError && !isHydratingFlow && (
+            <div className="absolute left-1/2 top-[22px] z-20 w-[min(620px,calc(100%-40px))] -translate-x-1/2 rounded-[12px] border-[1.5px] border-[#E9C9C9] bg-[#FBF1F0] px-[18px] py-[14px] text-center shadow-sm">
+              <p className="text-[14px] font-bold text-[#B4453A]">
+                저장된 흐름을 불러오지 못했습니다.
+              </p>
+
+              <p className="mt-[4px] text-[13px] leading-[20px] text-[#8C5A55]">
+                {hydrationError}
+              </p>
+            </div>
+          )}
         </main>
 
         {/* 인스펙터와 검증 결과 */}
@@ -912,59 +1301,36 @@ export function Stdio_create1() {
 
                           {isOpen && (
                             <div className="mt-[12px] border-t border-[#EEEEF1] pt-[12px]">
-                              {slot.id === 'process-extract-core' ? (
-                                <>
-                                  <p className="text-[15.5px] font-bold text-[#52525B]">
-                                    추출 강도
-                                  </p>
-
-                                  <div className="mt-[8px] flex items-center gap-[12px]">
-                                    <Slider
-                                      value={strength}
-                                      showValue={false}
-                                      onChange={setStrength}
-                                      min={0}
-                                      max={1}
-                                      step={0.1}
-                                      className="flex-1"
-                                    />
-
-                                    <p className="shrink-0 text-[14px] text-[#9A9AA3]">
-                                      {strength} · 적극적
-                                    </p>
-                                  </div>
-
-                                  <p className="mt-[14px] text-[15px] font-bold text-[#52525B]">
-                                    추출 단위
-                                  </p>
-
-                                  <div className="mt-[8px] flex h-[41px] items-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[14px] font-bold">
-                                    <span className="flex h-full flex-1 items-center justify-center border-r-[1.5px] border-[#E4E4E7]">
-                                      문장
-                                    </span>
-
-                                    <span className="flex h-full flex-1 items-center justify-center border-r-[1.5px] border-[#E4E4E7] text-[#6366F1]">
-                                      요점
-                                    </span>
-
-                                    <span className="flex h-full flex-1 items-center justify-center">
-                                      주제
-                                    </span>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <p className="text-[14px] font-bold text-[#52525B]">
-                                    설정값
-                                  </p>
-
-                                  <p className="mt-[6px] text-[14px] leading-[20px] text-[#9A9AA3]">
-                                    {slot.value?.trim()
-                                      ? slot.value
-                                      : '아직 설정된 값이 없습니다.'}
-                                  </p>
-                                </>
-                              )}
+                              <StudioBlockInspector
+                                nodeId={selectedNode.id}
+                                slot={slot}
+                                connectionInfo={selectedConnectionInfo}
+                                onConfigChange={(
+                                  patch,
+                                  options,
+                                ) => {
+                                  studio.updateBlockConfig({
+                                    nodeId:
+                                      selectedNode.id,
+                                    slotId:
+                                      slot.id,
+                                    patch,
+                                    summaryValue:
+                                      options?.summaryValue,
+                                    state:
+                                      options?.state,
+                                  })
+                                }}
+                                onValueChange={(value) => {
+                                  studio.updateSlotValue({
+                                    nodeId:
+                                      selectedNode.id,
+                                    slotId:
+                                      slot.id,
+                                    value,
+                                  })
+                                }}
+                              />
                             </div>
                           )}
                         </div>

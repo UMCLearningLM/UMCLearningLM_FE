@@ -17,6 +17,15 @@ import {
   type StudioSaveVisibility,
 } from '../features/studio/types/studioSave'
 
+import {
+  buildStudioFlowUpdateRequest,
+} from '../features/studio/utils/studioFlowPersistence'
+
+import {
+  getStudioBlocks,
+  saveFlow,
+} from './api/StudioApi'
+
 const difficultyLabelMap = {
   BEGINNER: '입문',
   BASIC: '기초',
@@ -54,6 +63,20 @@ export function Studio_create_review_publish1() {
     setIsSaveModalOpen,
   ] =
     useState(false)
+
+  const [
+    isSaving,
+    setIsSaving,
+  ] =
+    useState(false)
+
+  const [
+    savedAt,
+    setSavedAt,
+  ] =
+    useState<string | null>(
+      null,
+    )
 
   const [
     saveError,
@@ -186,7 +209,7 @@ export function Studio_create_review_publish1() {
     }
 
   const handleSaveClick =
-    () => {
+    async () => {
       if (!flowId) {
         setSaveError(
           '저장할 flowId가 없습니다.',
@@ -224,8 +247,12 @@ export function Studio_create_review_publish1() {
         return
       }
 
+      const nodes =
+        navigationState.nodes ??
+        []
+
       if (
-        nodeCount ===
+        nodes.length ===
         0
       ) {
         setSaveError(
@@ -234,19 +261,105 @@ export function Studio_create_review_publish1() {
         return
       }
 
+      const accessToken =
+        localStorage.getItem(
+          'accessToken',
+        ) ??
+        sessionStorage.getItem(
+          'accessToken',
+        ) ??
+        undefined
+
+      setIsSaving(
+        true,
+      )
+
       setSaveError(
         null,
       )
 
-      /*
-       * 이 단계에서는 상세정보 + 공개범위 state 연결까지만 완료합니다.
-       *
-       * 실제 PUT /flows/{flowId} 호출은
-       * 다음 단계에서 blockId 매핑과 함께 연결합니다.
-       */
-      setIsSaveModalOpen(
-        true,
-      )
+      try {
+        /*
+         * FE 문자열 block id를 숫자로 임의 생성하지 않고
+         * 서버의 실제 blockId를 GET /blocks로 조회합니다.
+         */
+        const blockResponse =
+          await getStudioBlocks(
+            {
+              ...(navigationState.tutorialId
+                ? {
+                    tutorialId:
+                      navigationState.tutorialId,
+                  }
+                : {}),
+            },
+            accessToken,
+          )
+
+        if (
+          !blockResponse.success ||
+          !blockResponse.result
+        ) {
+          throw new Error(
+            blockResponse.message ||
+              '블록 정보를 불러오지 못했습니다.',
+          )
+        }
+
+        const saveDraft =
+          buildSaveDraft()
+
+        const payload =
+          buildStudioFlowUpdateRequest(
+            {
+              nodes,
+
+              saveDraft,
+
+              blockPalette:
+                blockResponse.result,
+            },
+          )
+
+        const response =
+          await saveFlow(
+            flowId,
+            payload,
+            accessToken,
+          )
+
+        if (
+          !response.success
+        ) {
+          throw new Error(
+            response.message ||
+              '워크플로우 저장에 실패했습니다.',
+          )
+        }
+
+        setSavedAt(
+          response.result.updatedAt,
+        )
+
+        setIsSaveModalOpen(
+          true,
+        )
+      } catch (error) {
+        console.error(
+          'Flow 최종 저장 실패:',
+          error,
+        )
+
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : '워크플로우 저장 중 오류가 발생했습니다.',
+        )
+      } finally {
+        setIsSaving(
+          false,
+        )
+      }
     }
 
   return (
@@ -684,12 +797,25 @@ export function Studio_create_review_publish1() {
 
           <button
             type="button"
-            onClick={
-              handleSaveClick
+            disabled={
+              isSaving
             }
-            className="ml-[16px] flex h-[50px] w-[186px] cursor-pointer items-center justify-center rounded-[12px] bg-[#6366F1] text-[17.5px] font-bold text-white hover:bg-[#3A3DC2]"
+            onClick={() => {
+              void handleSaveClick()
+            }}
+            className={[
+              'ml-[16px] flex h-[50px] w-[186px] items-center justify-center rounded-[12px] text-[17.5px] font-bold text-white',
+
+              isSaving
+                ? 'cursor-not-allowed bg-[#A5A6F6]'
+                : 'cursor-pointer bg-[#6366F1] hover:bg-[#3A3DC2]',
+            ].join(
+              ' ',
+            )}
           >
-            저장 · 내 저장소에
+            {isSaving
+              ? '저장 중...'
+              : '저장 · 내 저장소에'}
           </button>
         </div>
       </footer>
@@ -725,7 +851,7 @@ export function Studio_create_review_publish1() {
                 id="studio-save-complete-title"
                 className="ml-[15px] text-[22px] font-bold"
               >
-                저장 정보 확인
+                저장 완료
               </p>
             </div>
 
@@ -743,7 +869,7 @@ export function Studio_create_review_publish1() {
                   &quot;
                 </span>
 
-                의 저장 정보가 준비되었습니다.
+                을(를) 내 저장소에 저장했습니다.
                 <br />
 
                 공개 범위는{' '}
@@ -760,7 +886,10 @@ export function Studio_create_review_publish1() {
             </div>
 
             <p className="mt-[16px] text-[14px] leading-[22px] text-[#9A9AA3]">
-              실제 서버 저장은 다음 단계에서 blockId와 categoryId를 실제 API 데이터에 연결한 뒤 활성화합니다.
+              서버 저장이 완료되었습니다.
+              {savedAt
+                ? ` · ${savedAt}`
+                : ''}
             </p>
 
             <div className="mt-[24px] flex items-center justify-end gap-[12px]">
