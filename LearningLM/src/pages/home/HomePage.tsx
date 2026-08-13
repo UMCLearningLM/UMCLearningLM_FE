@@ -46,6 +46,10 @@ import {
 } from '../../components/ui/Badge'
 
 import {
+  getTutorialLevelBadgeVariant,
+} from '../../features/tutorial/utils/tutorialLevelStyle'
+
+import {
   Card,
   CardBody,
   CardFooter,
@@ -79,34 +83,94 @@ const values = [
   },
 ]
 
-const levelMap: Record<string, { label: string; variant: 'green' | 'blue' | 'pink' }> = {
-  BEGINNER: { label: '입문', variant: 'green' },
-  BASIC: { label: '기초', variant: 'blue' },
-  INTERMEDIATE: { label: '응용', variant: 'pink' },
-  '입문': { label: '입문', variant: 'green' },
-  '기초': { label: '기초', variant: 'blue' },
-  '응용': { label: '응용', variant: 'pink' },
+const levelMap: Record<
+  string,
+  {
+    label: string
+    variant:
+      | 'green'
+      | 'blue'
+      | 'pink'
+  }
+> = {
+  BEGINNER: {
+    label: '입문',
+    variant: 'green',
+  },
+
+  BASIC: {
+    label: '기초',
+    variant: 'blue',
+  },
+
+  INTERMEDIATE: {
+    label: '응용',
+    variant: 'pink',
+  },
+
+  입문: {
+    label: '입문',
+    variant: 'green',
+  },
+
+  기초: {
+    label: '기초',
+    variant: 'blue',
+  },
+
+  응용: {
+    label: '응용',
+    variant: 'pink',
+  },
 }
 
-function getLevel(difficulty: string) {
-  return levelMap[difficulty] ?? { label: difficulty, variant: 'gray' as const }
+function getLevel(
+  difficulty: string,
+) {
+  return (
+    levelMap[difficulty] ?? {
+      label: difficulty,
+      variant: 'gray' as const,
+    }
+  )
 }
 
-function formatSavedAt(savedAt: string) {
-  const date = new Date(savedAt)
+function formatSavedAt(
+  savedAt: string,
+) {
+  const date =
+    new Date(savedAt)
 
-  if (Number.isNaN(date.getTime())) return '저장됨'
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return '저장됨'
+  }
 
-  return `${date.toLocaleDateString('ko-KR')} 저장`
+  return `${date.toLocaleDateString(
+    'ko-KR',
+  )} 저장`
 }
 
 export function HomePage() {
   const navigate =
     useNavigate()
-  // API에서 받은 홈 데이터를 저장
-  const [home, setHome] = useState<HomeResponse | null>(null)
-  // 오류 메시지를 저장
-  const [error, setError] = useState('')
+
+  // API에서 받은 홈 데이터
+  const [
+    home,
+    setHome,
+  ] = useState<HomeResponse | null>(
+    null,
+  )
+
+  // 홈 API 오류
+  const [
+    error,
+    setError,
+  ] = useState('')
 
   // 화면이 처음 열릴 때 홈 API 호출
   useEffect(() => {
@@ -114,134 +178,267 @@ export function HomePage() {
 
     getHome()
       .then((result) => {
-        if (isMounted) setHome(result)
-      })
-      .catch((requestError: unknown) => {
-        if (!isMounted) return
+        if (!isMounted) {
+          return
+        }
 
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : '홈 화면을 불러오지 못했습니다.',
-        )
+        setHome(result)
       })
+      .catch(
+        (
+          requestError:
+            unknown,
+        ) => {
+          if (!isMounted) {
+            return
+          }
+
+          setError(
+            requestError instanceof
+              Error
+              ? requestError.message
+              : '홈 화면을 불러오지 못했습니다.',
+          )
+        },
+      )
 
     return () => {
       isMounted = false
     }
   }, [])
 
+  // 이어서 학습하기 데이터
   const continueLearning =
     home?.continueLearning
       ? {
-        tutorialId: home.continueLearning.tutorialId,
-        flowId: home.continueLearning.flowId,
-        title: home.continueLearning.title,
-        difficulty: home.continueLearning.difficulty,
-        level: getLevel(home.continueLearning.difficulty,).label,
-        levelVariant: getLevel(home.continueLearning.difficulty,).variant,
-        currentStep: home.continueLearning.currentStepOrder,
-        totalSteps: home.continueLearning.totalSteps,
-        completedStepCount: home.continueLearning.completedStepCount,
-        progressRate: home.continueLearning.progressRate,
-        status: home.continueLearning.status,
-        thumbnailUrl: home.continueLearning.thumbnailUrl,
-        updatedAt: home.continueLearning.updatedAt,
-      }
+          tutorialId:
+            home.continueLearning
+              .tutorialId,
+
+          flowId:
+            home.continueLearning
+              .flowId,
+
+          title:
+            home.continueLearning
+              .title,
+
+          difficulty:
+            home.continueLearning
+              .difficulty,
+
+          level:
+            getLevel(
+              home
+                .continueLearning
+                .difficulty,
+            ).label,
+
+          currentStep:
+            home.continueLearning
+              .currentStepOrder,
+
+          totalSteps:
+            home.continueLearning
+              .totalSteps,
+
+          completedStepCount:
+            home.continueLearning
+              .completedStepCount,
+
+          progressRate:
+            home.continueLearning
+              .progressRate,
+
+          status:
+            home.continueLearning
+              .status,
+
+          thumbnailUrl:
+            home.continueLearning
+              .thumbnailUrl,
+
+          updatedAt:
+            home.continueLearning
+              .updatedAt,
+        }
       : null
-  // 완료 단계와 전체 단계로 진행률 계산
+
+  // 완료 단계 / 전체 단계 진행률
   const progress =
     continueLearning &&
-      continueLearning.totalSteps > 0
+    continueLearning.totalSteps >
+      0
       ? (
-        continueLearning.completedStepCount /
-        continueLearning.totalSteps
-      ) * 100
+          continueLearning
+            .completedStepCount /
+          continueLearning
+            .totalSteps
+        ) * 100
       : 0
-  // 다른 데이터 변환
+
+  // 목적별 카테고리
   const categories =
-    (home?.categories ?? []).map(
+    (
+      home?.categories ??
+      []
+    ).map(
       (category) => ({
-        id: category.categoryId,
-        code: category.code,
-        icon: category.name.slice(0, 1),
-        title: category.name,
-        description: '튜토리얼 · 공개 흐름',
-      })
+        id:
+          category.categoryId,
+
+        code:
+          category.code,
+
+        icon:
+          category.name.slice(
+            0,
+            1,
+          ),
+
+        title:
+          category.name,
+
+        description:
+          '튜토리얼 · 공개 흐름',
+      }),
     )
 
-  // 서버 추천 튜토리얼을 기존 카드 형식으로 변환
+  // 추천 공식 튜토리얼
   const tutorials =
-    (home?.recommendedTutorials ?? []).map(
+    (
+      home?.recommendedTutorials ??
+      []
+    ).map(
       (tutorial) => ({
-        id: tutorial.tutorialId,
-        title: tutorial.title,
-        description: tutorial.summary,
-        level: getLevel(tutorial.difficulty).label,
-        levelVariant: getLevel(tutorial.difficulty).variant,
-        tags: tutorial.categories.map((category) => category.name),
-        bookmarks: tutorial.blockCount,
-        minutes: tutorial.estimatedMinutes,
-        thumbnailUrl: tutorial.thumbnailUrl,
-      })
-    )
-  // 서버 인기 흐름을 기존 카드 형식으로 변환
-  const workflows =
-    (home?.popularFlows ?? []).map(
-      (workflow) => ({
-        id: workflow.flowId,
-        author: workflow.author.nickname,
-        title: workflow.title,
-        description: workflow.summary,
-        category: workflow.categories[0]?.name ?? '기타',
-        level: getLevel(workflow.difficulty).label,
-        levelVariant: getLevel(workflow.difficulty).variant,
-        saves: workflow.likeCount,
-        copies: workflow.copyCount,
-        comments: workflow.commentCount,
-      })
+        id:
+          tutorial.tutorialId,
+
+        title:
+          tutorial.title,
+
+        description:
+          tutorial.summary,
+
+        level:
+          getLevel(
+            tutorial.difficulty,
+          ).label,
+
+        tags:
+          tutorial.categories.map(
+            (category) =>
+              category.name,
+          ),
+
+        bookmarks:
+          tutorial.blockCount,
+
+        minutes:
+          tutorial.estimatedMinutes,
+
+        thumbnailUrl:
+          tutorial.thumbnailUrl,
+      }),
     )
 
-  // 최근 저장한 항목을 튜토리얼과 공개 흐름으로 구분
+  // 인기 공개 워크플로우
+  const workflows =
+    (
+      home?.popularFlows ??
+      []
+    ).map(
+      (workflow) => ({
+        id:
+          workflow.flowId,
+
+        author:
+          workflow.author
+            .nickname,
+
+        title:
+          workflow.title,
+
+        description:
+          workflow.summary,
+
+        category:
+          workflow.categories[0]
+            ?.name ?? '기타',
+
+        level:
+          getLevel(
+            workflow.difficulty,
+          ).label,
+
+        saves:
+          workflow.likeCount,
+
+        copies:
+          workflow.copyCount,
+
+        comments:
+          workflow.commentCount,
+      }),
+    )
+
+  // 최근 저장한 항목
   const savedItems =
-    (home?.recentSavedItems ?? []).map(
-      (item) => {
-        const isTutorial =
-          item.tutorialId !== undefined
-        const itemId = isTutorial
+    (
+      home?.recentSavedItems ??
+      []
+    ).map((item) => {
+      const isTutorial =
+        item.tutorialId !==
+        undefined
+
+      const itemId =
+        isTutorial
           ? item.tutorialId
           : item.flowId
-        const level =
-          getLevel(item.difficulty)
-        return {
-          id: `${item.itemType}-${itemId}`,
-          title: item.title,
 
-          typeLabel: isTutorial
+      const level =
+        getLevel(
+          item.difficulty,
+        )
+
+      return {
+        id: `${item.itemType}-${itemId}`,
+
+        title:
+          item.title,
+
+        typeLabel:
+          isTutorial
             ? '튜토리얼'
             : '공개 흐름',
 
-          level: level.label,
-          levelVariant: level.variant,
+        level:
+          level.label,
 
-          meta: `${item.originalAuthor?.nickname
+        meta: `${
+          item.originalAuthor
+            ?.nickname
             ? `${item.originalAuthor.nickname} 님의 흐름 · `
             : ''
-            }${formatSavedAt(item.savedAt)}`,
+        }${formatSavedAt(
+          item.savedAt,
+        )}`,
 
-          thumbnailUrl:
-            item.thumbnailUrl,
+        thumbnailUrl:
+          item.thumbnailUrl,
 
-          action: isTutorial
+        action:
+          isTutorial
             ? '이어가기'
             : '열기',
 
-          path: isTutorial
+        path:
+          isTutorial
             ? `/official-tutorials/${itemId}`
             : `/my-storage/workflows/${itemId}`,
-        }
       }
-    )
+    })
 
   const goToTutorials =
     () => {
@@ -278,11 +475,13 @@ export function HomePage() {
           </div>
         )}
 
+        {/* Hero */}
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm lg:p-10">
           <div className="grid gap-10 lg:grid-cols-[1fr_520px] lg:items-center">
             <div>
               <p className="text-sm font-bold text-slate-400">
-                AI 활용 학습 플랫폼
+                AI 활용 학습
+                플랫폼
               </p>
 
               <h1 className="mt-8 text-4xl font-black leading-tight tracking-tight text-slate-950 md:text-5xl">
@@ -293,11 +492,12 @@ export function HomePage() {
               </h1>
 
               <p className="mt-8 max-w-xl text-base leading-7 text-slate-500">
-                공식 튜토리얼을 따라
-                하며 실제 업무에
-                사용하는 AI 활용
-                과정을 직접 구성하고
-                저장할 수 있습니다.
+                공식 튜토리얼을
+                따라 하며 실제
+                업무에 사용하는 AI
+                활용 과정을 직접
+                구성하고 저장할 수
+                있습니다.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
@@ -306,8 +506,10 @@ export function HomePage() {
                   onClick={
                     goToTutorials
                   }
+                  className="cursor-pointer"
                 >
-                  튜토리얼 시작하기
+                  튜토리얼
+                  시작하기
                 </Button>
 
                 <Button
@@ -316,6 +518,7 @@ export function HomePage() {
                   onClick={
                     goToPublicLibrary
                   }
+                  className="cursor-pointer"
                 >
                   공개 활용 흐름
                   둘러보기
@@ -328,6 +531,7 @@ export function HomePage() {
                   event,
                 ) => {
                   event.preventDefault()
+
                   goToTutorials()
                 }}
               >
@@ -351,6 +555,7 @@ export function HomePage() {
           </div>
         </section>
 
+        {/* 서비스 특징 */}
         <Card className="overflow-hidden">
           <div className="grid divide-y divide-slate-200 md:grid-cols-4 md:divide-x md:divide-y-0">
             {values.map(
@@ -362,7 +567,9 @@ export function HomePage() {
                   className="p-6"
                 >
                   <h3 className="font-bold text-slate-950">
-                    {item.title}
+                    {
+                      item.title
+                    }
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -376,16 +583,20 @@ export function HomePage() {
           </div>
         </Card>
 
+        {/* 이어서 학습하기 */}
         {home &&
           !home.isGuest &&
           continueLearning && (
             <Section title="이어서 학습하기">
               <Card>
                 <CardBody className="flex flex-col gap-5 md:flex-row md:items-center">
-                  {continueLearning?.thumbnailUrl ? (
-                    // 이미지 주소가 있을 때
+                  {continueLearning
+                    .thumbnailUrl ? (
                     <img
-                      src={continueLearning.thumbnailUrl}
+                      src={
+                        continueLearning
+                          .thumbnailUrl
+                      }
                       alt={`${continueLearning.title} 썸네일`}
                       className="h-24 w-full rounded-xl object-cover md:w-32"
                     />
@@ -399,31 +610,41 @@ export function HomePage() {
 
                   <div className="flex-1">
                     <div className="mb-2 flex items-center gap-2">
-
                       <Badge
-                        variant={
-                          continueLearning.levelVariant
-                        }
+                        variant={getTutorialLevelBadgeVariant(
+                          continueLearning.level,
+                        )}
                       >
                         {
-                          continueLearning.level
+                          continueLearning
+                            .level
                         }
                       </Badge>
 
                       <span className="text-xs font-semibold text-slate-400">
-                        {continueLearning.currentStep}
+                        {
+                          continueLearning
+                            .currentStep
+                        }
                         {' / '}
-                        {continueLearning.totalSteps}
+                        {
+                          continueLearning
+                            .totalSteps
+                        }
                         {' 단계'}
                       </span>
                     </div>
 
                     <h3 className="font-bold text-slate-950">
-                      {continueLearning.title}
+                      {
+                        continueLearning
+                          .title
+                      }
                     </h3>
-                    {/* 학습 진행률 표시 */}
+
                     <div className="mt-4 h-2 w-full max-w-sm overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full w-3/4 rounded-full bg-indigo-500"
+                      <div
+                        className="h-full rounded-full bg-indigo-500"
                         style={{
                           width: `${progress}%`,
                         }}
@@ -437,6 +658,7 @@ export function HomePage() {
                         `/official-tutorials/${continueLearning.tutorialId}`,
                       )
                     }}
+                    className="cursor-pointer"
                   >
                     이어가기
                   </Button>
@@ -445,25 +667,24 @@ export function HomePage() {
             </Section>
           )}
 
+        {/* 목적별 탐색 */}
         <Section title="목적별로 둘러보기">
           <div className="grid gap-4 md:grid-cols-3">
             {categories.map(
               (category) => (
                 <button
                   key={
-                    category.title
+                    category.id
                   }
                   type="button"
-                  className="text-left"
-                  onClick={
-                    () => {
-                      navigate(
-                        `/official-tutorials?category=${encodeURIComponent(
-                          category.code,
-                        )}`,
-                      )
-                    }
-                  }
+                  className="cursor-pointer text-left"
+                  onClick={() => {
+                    navigate(
+                      `/official-tutorials?category=${encodeURIComponent(
+                        category.code,
+                      )}`,
+                    )
+                  }}
                 >
                   <Card className="h-full transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md">
                     <CardBody className="flex items-center gap-4">
@@ -494,6 +715,7 @@ export function HomePage() {
           </div>
         </Section>
 
+        {/* 추천 공식 튜토리얼 */}
         <Section
           title="추천 공식 튜토리얼"
           actionLabel="전체 보기"
@@ -512,14 +734,14 @@ export function HomePage() {
                 >
                   <CardHeader>
                     {tutorial.thumbnailUrl ? (
-                      // 이미지 주소가 있을 때
                       <img
-                        src={tutorial.thumbnailUrl}
+                        src={
+                          tutorial.thumbnailUrl
+                        }
                         alt={`${tutorial.title} 썸네일`}
                         className="h-32 w-full rounded-xl object-cover"
                       />
                     ) : (
-                      // null일 때
                       <ThumbnailBox
                         variant="tutorial"
                         label="튜토리얼 썸네일"
@@ -536,9 +758,9 @@ export function HomePage() {
                       </h3>
 
                       <Badge
-                        variant={
-                          tutorial.levelVariant
-                        }
+                        variant={getTutorialLevelBadgeVariant(
+                          tutorial.level,
+                        )}
                       >
                         {
                           tutorial.level
@@ -573,8 +795,11 @@ export function HomePage() {
                     <div className="flex items-center gap-3 text-xs text-slate-400">
                       <span className="inline-flex items-center gap-1">
                         <Bookmark
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           tutorial.bookmarks
                         }
@@ -582,8 +807,11 @@ export function HomePage() {
 
                       <span className="inline-flex items-center gap-1">
                         <Clock
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           tutorial.minutes
                         }
@@ -598,6 +826,7 @@ export function HomePage() {
                           `/official-tutorials/${tutorial.id}`,
                         )
                       }}
+                      className="cursor-pointer"
                     >
                       시작하기
                     </Button>
@@ -608,6 +837,7 @@ export function HomePage() {
           </div>
         </Section>
 
+        {/* 인기 공개 워크플로우 */}
         <Section
           title="인기 공개 워크플로우"
           actionLabel="라이브러리"
@@ -654,9 +884,9 @@ export function HomePage() {
                       </h3>
 
                       <Badge
-                        variant={
-                          workflow.levelVariant
-                        }
+                        variant={getTutorialLevelBadgeVariant(
+                          workflow.level,
+                        )}
                       >
                         {
                           workflow.level
@@ -672,7 +902,7 @@ export function HomePage() {
 
                     <button
                       type="button"
-                      className="mt-5 text-sm font-bold text-indigo-500"
+                      className="mt-5 cursor-pointer text-sm font-bold text-indigo-500"
                       onClick={
                         goToPublicLibrary
                       }
@@ -687,8 +917,11 @@ export function HomePage() {
                     <div className="flex items-center gap-3 text-xs text-slate-400">
                       <span className="inline-flex items-center gap-1">
                         <Bookmark
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           workflow.saves
                         }
@@ -696,8 +929,11 @@ export function HomePage() {
 
                       <span className="inline-flex items-center gap-1">
                         <Copy
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         복사{' '}
                         {
                           workflow.copies
@@ -706,8 +942,11 @@ export function HomePage() {
 
                       <span className="inline-flex items-center gap-1">
                         <MessageCircle
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           workflow.comments
                         }
@@ -728,6 +967,7 @@ export function HomePage() {
                           `/public-library/${workflow.id}`,
                         )
                       }}
+                      className="cursor-pointer"
                     >
                       복사해서 시작
                     </Button>
@@ -737,10 +977,12 @@ export function HomePage() {
             )}
           </div>
         </Section>
+
         {/* 로그인했고 최근 저장 데이터가 있을 때만 표시 */}
         {home &&
           !home.isGuest &&
-          savedItems.length > 0 && (
+          savedItems.length >
+            0 && (
             <Section
               title="최근 저장한 항목"
               actionLabel="내 저장소"
@@ -751,7 +993,11 @@ export function HomePage() {
               <div className="grid gap-5 md:grid-cols-2">
                 {savedItems.map(
                   (item) => (
-                    <Card key={item.id}>
+                    <Card
+                      key={
+                        item.id
+                      }
+                    >
                       <CardBody className="flex flex-col gap-5 sm:flex-row sm:items-center">
                         {item.thumbnailUrl ? (
                           <img
@@ -759,7 +1005,7 @@ export function HomePage() {
                               item.thumbnailUrl
                             }
                             alt={`${item.title} 썸네일`}
-                            className="h-24 w-full sm:w-24"
+                            className="h-24 w-full rounded-xl object-cover sm:w-24"
                           />
                         ) : (
                           <ThumbnailBox
@@ -772,25 +1018,32 @@ export function HomePage() {
                         <div className="flex-1">
                           <div className="mb-2 flex flex-wrap gap-2">
                             <Badge variant="blue">
-                              {item.typeLabel}
+                              {
+                                item.typeLabel
+                              }
                             </Badge>
 
                             <Badge
-                              variant={
-                                item.levelVariant
-                              }
+                              variant={getTutorialLevelBadgeVariant(
+                                item.level,
+                              )}
                             >
-                              {item.level}
+                              {
+                                item.level
+                              }
                             </Badge>
-
                           </div>
 
                           <h3 className="font-bold text-slate-950">
-                            {item.title}
+                            {
+                              item.title
+                            }
                           </h3>
 
                           <p className="mt-1 text-sm text-slate-400">
-                            {item.meta}
+                            {
+                              item.meta
+                            }
                           </p>
                         </div>
 
@@ -798,7 +1051,9 @@ export function HomePage() {
                           variant="link"
                           rightIcon={
                             <ArrowRight
-                              size={15}
+                              size={
+                                15
+                              }
                             />
                           }
                           onClick={() => {
@@ -806,8 +1061,11 @@ export function HomePage() {
                               item.path,
                             )
                           }}
+                          className="cursor-pointer"
                         >
-                          {item.action}
+                          {
+                            item.action
+                          }
                         </Button>
                       </CardBody>
                     </Card>
@@ -816,6 +1074,8 @@ export function HomePage() {
               </div>
             </Section>
           )}
+
+        {/* 초보자 가이드 */}
         <Card>
           <CardBody className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
@@ -825,14 +1085,15 @@ export function HomePage() {
 
               <div>
                 <h3 className="font-bold text-slate-950">
-                  처음이신가요? 3분
-                  안내 가이드
+                  처음이신가요?
+                  3분 안내 가이드
                 </h3>
 
                 <p className="mt-1 text-sm text-slate-500">
                   블록이 무엇인지,
-                  흐름을 어떻게 만드는지
-                  빠르게 살펴보세요.
+                  흐름을 어떻게
+                  만드는지 빠르게
+                  살펴보세요.
                 </p>
               </div>
             </div>
@@ -842,6 +1103,7 @@ export function HomePage() {
               onClick={
                 goToTutorials
               }
+              className="cursor-pointer"
             >
               안내 가이드 보기
             </Button>

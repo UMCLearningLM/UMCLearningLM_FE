@@ -105,6 +105,7 @@ export function SavedTutorialCard({
             <Button
               size="sm"
               onClick={() => onContinue(tutorial.id)}
+              className="cursor-pointer"
             >
               이어하기
             </Button>
@@ -114,6 +115,7 @@ export function SavedTutorialCard({
               size="sm"
               disabled={isRemoving}
               onClick={() => onRemove(tutorial.id)}
+              className="cursor-pointer"
             >
               {isRemoving ? '해제 중...' : '저장 해제'}
             </Button>

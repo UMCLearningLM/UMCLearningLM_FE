@@ -20,19 +20,70 @@ const MAX_LEVEL_FILTER_COUNT = 2
 const MAX_CATEGORY_FILTER_COUNT = 3
 const ITEMS_PER_PAGE = 6
 
-const levelButtonClassMap: Record<TutorialLevel, string> = {
-  입문: 'border-emerald-500 bg-emerald-50 text-emerald-600',
-  기초: 'border-blue-500 bg-blue-50 text-blue-600',
-  응용: 'border-rose-500 bg-rose-50 text-rose-600',
+const levelButtonStyleMap: Record<
+  TutorialLevel,
+  {
+    base: string
+    selected: string
+  }
+> = {
+  입문: {
+    /*
+     * 선택 전:
+     * 흰 배경 + 녹색 테두리와 글자
+     */
+    base:
+      'border-[#5FAA81] bg-white text-[#5FAA81] hover:bg-[#F5FBF7]',
+
+    /*
+     * 선택 후:
+     * 연한 녹색 배경
+     */
+    selected:
+      'border-[#5FAA81] bg-[#DFF2DF] text-[#5FAA81]',
+  },
+
+  기초: {
+    /*
+     * 선택 전 와이어프레임은
+     * #A9BDD4보다 진한 남색 계열입니다.
+     */
+    base:
+      'border-[#4A5E8A] bg-white text-[#4A5E8A] hover:bg-[#F5F6FA]',
+
+    /*
+     * 선택 후:
+     * 사용자가 지정한 #ECEEFF + #A9BDD4 조합
+     */
+    selected:
+      'border-[#A9BDD4] bg-[#ECEEFF] text-[#A9BDD4]',
+  },
+
+  응용: {
+    /*
+     * 선택 전:
+     * 흰 배경 + 분홍색 테두리와 글자
+     */
+    base:
+      'border-[#EF8888] bg-white text-[#EF8888] hover:bg-[#FFF7F7]',
+
+    /*
+     * 응용은 별도 선택 배경색이 지정되지 않았으므로
+     * 옅은 분홍 배경으로만 선택 상태를 구분합니다.
+     */
+    selected:
+      'border-[#EF8888] bg-[#FFF1F1] text-[#EF8888]',
+  },
 }
 
 const selectedCategoryButtonClassName =
-  'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-sm'
+  'border-[#6366F1] bg-[#ECEEFF] text-[#6366F1]'
 
 interface FilterButtonProps {
   label: string
   isSelected: boolean
   onClick: () => void
+  baseClassName?: string
   selectedClassName?: string
 }
 
@@ -40,6 +91,7 @@ function FilterButton({
   label,
   isSelected,
   onClick,
+  baseClassName,
   selectedClassName,
 }: FilterButtonProps) {
   return (
@@ -47,10 +99,20 @@ function FilterButton({
       type="button"
       onClick={onClick}
       className={[
-        'rounded-lg border px-3 py-1.5 text-sm font-black transition',
+        /*
+        * 와이어프레임 기준:
+        * - 테두리 2px
+        * - 기존보다 넓은 좌우 여백
+        * - 15px 크기의 굵은 글자
+        * - 조금 더 둥근 모서리
+        */
+        'rounded-[11px] border-2 px-4 py-2 text-[15px] font-black leading-none transition-colors',
+
         isSelected
-          ? selectedClassName || 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-sm'
-          : 'border-slate-700 bg-white text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-500',
+          ? selectedClassName ||
+          'border-[#6366F1] bg-[#ECEEFF] text-[#6366F1]'
+          : baseClassName ||
+          'border-[#656568] bg-white text-[#52525B] hover:bg-[#F7F7F8]',
       ].join(' ')}
     >
       {label}
@@ -273,15 +335,32 @@ export function OfficialTutorialPage() {
                       </span>
                     </span>
 
-                    {tutorialLevels.map((level) => (
-                      <FilterButton
-                        key={level}
-                        label={level}
-                        isSelected={selectedLevels.includes(level)}
-                        selectedClassName={levelButtonClassMap[level]}
-                        onClick={() => toggleLevel(level)}
-                      />
-                    ))}
+                    {tutorialLevels.map(
+                      (level) => (
+                        <FilterButton
+                          key={level}
+                          label={level}
+                          isSelected={
+                            selectedLevels.includes(
+                              level,
+                            )
+                          }
+                          baseClassName={
+                            levelButtonStyleMap[
+                              level
+                            ].base
+                          }
+                          selectedClassName={
+                            levelButtonStyleMap[
+                              level
+                            ].selected
+                          }
+                          onClick={() =>
+                            toggleLevel(level)
+                          }
+                        />
+                      ),
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
@@ -361,7 +440,7 @@ export function OfficialTutorialPage() {
                 type="button"
                 aria-label="이전 튜토리얼 페이지"
                 onClick={goPrevPage}
-                className="absolute -left-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
+                className="cursor-pointer absolute -left-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
               >
                 <ArrowLeft size={42} strokeWidth={3} />
               </button>
@@ -372,7 +451,7 @@ export function OfficialTutorialPage() {
                 type="button"
                 aria-label="다음 튜토리얼 페이지"
                 onClick={goNextPage}
-                className="absolute -right-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
+                className="cursor-pointer absolute -right-12 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
               >
                 <ArrowRight size={42} strokeWidth={3} />
               </button>

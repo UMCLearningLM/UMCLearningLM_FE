@@ -1,10 +1,28 @@
-import { Blocks, Clock } from 'lucide-react'
+import {
+  Blocks,
+  Clock,
+} from 'lucide-react'
+
 import type {
   TutorialCategory,
   TutorialLevel,
 } from '../data/tutorials'
-import { Button } from '../../../components/ui/Button'
-import { Card } from '../../../components/ui/Card'
+
+import {
+  Button,
+} from '../../../components/ui/Button'
+
+import {
+  Badge,
+} from '../../../components/ui/Badge'
+
+import {
+  Card,
+} from '../../../components/ui/Card'
+
+import {
+  getTutorialLevelBadgeVariant,
+} from '../utils/tutorialLevelStyle'
 
 export interface TutorialCardData {
   id: number
@@ -21,12 +39,6 @@ interface TutorialCardProps {
   onStart?: (tutorialId: number) => void
 }
 
-const levelClassMap: Record<TutorialLevel, string> = {
-  입문: 'border-emerald-200 bg-emerald-50 text-emerald-600',
-  기초: 'border-blue-200 bg-blue-50 text-blue-600',
-  응용: 'border-rose-200 bg-rose-50 text-rose-600',
-}
-
 function WireframeThumbnail() {
   return (
     <div className="relative h-24 overflow-hidden rounded-t-2xl border-b border-slate-300 bg-white">
@@ -38,7 +50,10 @@ function WireframeThumbnail() {
   )
 }
 
-export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
+export function TutorialCard({
+  tutorial,
+  onStart,
+}: TutorialCardProps) {
   return (
     <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
       <WireframeThumbnail />
@@ -53,23 +68,26 @@ export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <span
-            className={[
-              'inline-flex items-center rounded-lg border px-3 py-1 text-xs font-bold',
-              levelClassMap[tutorial.level],
-            ].join(' ')}
+          <Badge
+            variant={getTutorialLevelBadgeVariant(
+              tutorial.level,
+            )}
+            size="sm"
+            className="px-3"
           >
             {tutorial.level}
-          </span>
+          </Badge>
 
-          {tutorial.categories.slice(0, 2).map((category) => (
-            <span
-              key={category}
-              className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
-            >
-              {category}
-            </span>
-          ))}
+          {tutorial.categories
+            .slice(0, 2)
+            .map((category) => (
+              <span
+                key={category}
+                className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
+              >
+                {category}
+              </span>
+            ))}
         </div>
 
         <div className="mt-7 flex items-end justify-between gap-4">
@@ -85,7 +103,13 @@ export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
             </span>
           </div>
 
-          <Button size="sm" onClick={() => onStart?.(tutorial.id)}>
+          <Button
+            size="sm"
+            onClick={() =>
+              onStart?.(tutorial.id)
+            }
+            className="cursor-pointer"
+          >
             시작하기
           </Button>
         </div>

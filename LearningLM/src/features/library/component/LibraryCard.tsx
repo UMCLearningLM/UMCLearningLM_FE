@@ -101,7 +101,7 @@ export function LibraryCard({
         <button
           type="button"
           onClick={() => onClick(item.id)}
-          className="text-sm font-black text-indigo-500 transition hover:text-indigo-600"
+          className="cursor-pointer text-sm font-black text-indigo-500 transition hover:text-indigo-600"
         >
           복사해서 시작 →
         </button>

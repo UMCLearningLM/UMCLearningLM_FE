@@ -353,7 +353,7 @@ export function LibraryDetailPage() {
                   className={[
                     'rounded-lg border px-3 py-1.5 text-xs font-black',
                     levelClassMap[
-                      libraryItem.level
+                    libraryItem.level
                     ],
                   ].join(' ')}
                 >
@@ -389,6 +389,7 @@ export function LibraryDetailPage() {
                 onClick={() =>
                   setIsBookmarked((previous) => !previous)
                 }
+                className="cursor-pointer"
               >
                 <Bookmark
                   size={16}
@@ -407,6 +408,7 @@ export function LibraryDetailPage() {
               <Button
                 onClick={handleCopyWorkflow}
                 disabled={isCopying}
+                className="cursor-pointer disabled:cursor-not-allowed" 
               >
                 <Copy size={16} />
                 복사해서 시작
@@ -441,11 +443,11 @@ export function LibraryDetailPage() {
                     {index <
                       libraryItem.flowSteps
                         .length -
-                        1 && (
-                      <span className="text-lg font-bold text-slate-500">
-                        →
-                      </span>
-                    )}
+                      1 && (
+                        <span className="text-lg font-bold text-slate-500">
+                          →
+                        </span>
+                      )}
                   </div>
                 ),
               )}
@@ -496,7 +498,7 @@ export function LibraryDetailPage() {
                 setIsLiked((previous) => !previous)
               }
               className={[
-                'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-black transition',
+                'cursor-pointer inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-black transition',
                 isLiked
                   ? 'border-indigo-300 bg-indigo-50 text-indigo-500'
                   : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-500',
@@ -540,7 +542,7 @@ export function LibraryDetailPage() {
 
             <div className="mt-6 space-y-6">
               {libraryItem.commentItems.length >
-              0 ? (
+                0 ? (
                 libraryItem.commentItems.map(
                   (commentItem) => (
                     <div

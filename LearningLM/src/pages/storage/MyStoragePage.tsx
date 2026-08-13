@@ -437,7 +437,7 @@ function MyStoragePage() {
                   type="button"
                   onClick={() => setSelectedTab(tab.id)}
                   className={[
-                    'flex items-center gap-2 border-b-2 px-5 py-4 text-sm font-black transition',
+                    'cursor-pointer flex items-center gap-2 border-b-2 px-5 py-4 text-sm font-black transition',
                     isSelected
                       ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-slate-500 hover:text-slate-800',
@@ -543,7 +543,7 @@ function MyStoragePage() {
                 type="button"
                 aria-label="이전 페이지"
                 onClick={handlePreviousPage}
-                className="absolute -left-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
+                className="cursor-pointer absolute -left-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
               >
                 <ArrowLeft size={40} strokeWidth={3} />
               </button>
@@ -556,7 +556,7 @@ function MyStoragePage() {
                   type="button"
                   aria-label="다음 페이지"
                   onClick={handleNextPage}
-                  className="absolute -right-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
+                  className="cursor-pointer absolute -right-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
                 >
                   <ArrowRight size={40} strokeWidth={3} />
                 </button>

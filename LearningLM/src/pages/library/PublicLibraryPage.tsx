@@ -66,7 +66,7 @@ function FilterButton({
         'rounded-lg border px-3 py-1.5 text-sm font-black transition',
         isSelected
           ? selectedClassName ||
-            selectedCategoryButtonClassName
+          selectedCategoryButtonClassName
           : 'border-slate-700 bg-white text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-500',
       ].join(' ')}
     >
@@ -260,7 +260,7 @@ export function PublicLibraryPage() {
 
   const totalPages = Math.ceil(
     filteredLibraryItems.length /
-      ITEMS_PER_PAGE,
+    ITEMS_PER_PAGE,
   )
 
   const startIndex =
@@ -475,31 +475,31 @@ export function PublicLibraryPage() {
             )}
 
             {totalPages > 1 && currentPage > 0 && (
-                <button
-                  type="button"
-                  aria-label="이전 페이지"
-                  onClick={handlePreviousPage}
-                  className="absolute -left-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
-                >
-                  <ArrowLeft
-                    size={40}
-                    strokeWidth={3}
-                  />
-                </button>
+              <button
+                type="button"
+                aria-label="이전 페이지"
+                onClick={handlePreviousPage}
+                className="cursor-pointer absolute -left-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:-translate-x-1 xl:block"
+              >
+                <ArrowLeft
+                  size={40}
+                  strokeWidth={3}
+                />
+              </button>
             )}
 
             {totalPages > 1 && currentPage < totalPages - 1 && (
-                <button
-                  type="button"
-                  aria-label="다음 페이지"
-                  onClick={handleNextPage}
-                  className="absolute -right-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
-                >
-                  <ArrowRight
-                    size={40}
-                    strokeWidth={3}
-                  />
-                </button>
+              <button
+                type="button"
+                aria-label="다음 페이지"
+                onClick={handleNextPage}
+                className="cursor-pointer absolute -right-14 top-1/2 hidden -translate-y-1/2 text-indigo-500 transition hover:translate-x-1 xl:block"
+              >
+                <ArrowRight
+                  size={40}
+                  strokeWidth={3}
+                />
+              </button>
             )}
           </div>
 
