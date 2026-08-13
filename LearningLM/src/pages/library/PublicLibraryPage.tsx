@@ -10,11 +10,14 @@ import { Header } from '../../components/layout/Header'
 import { Footer } from '../../components/layout/Footer'
 import { PageContainer } from '../../components/layout/PageContainer'
 
-import { LibraryCard } from '../../features/library/component/LibraryCard'
+import {
+  LibraryCard,
+  type LibraryCardItem,
+} from '../../features/library/component/LibraryCard'
+import { getLibraryFlows } from '../../api/library'
 
 import {
   libraryCategories,
-  libraryItems,
   libraryLevels,
 } from '../../features/library/data/libraryData'
 
@@ -90,6 +93,57 @@ export function PublicLibraryPage() {
   ] = useState<LibraryCategory[]>([])
 
   const [currentPage, setCurrentPage] = useState(0)
+  const [libraryItems, setLibraryItems] =
+    useState<LibraryCardItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  // 공개 라이브러리 화면이 처음 열릴 때 서버 목록 조회
+  useEffect(() => {
+    let isMounted = true
+
+    getLibraryFlows()
+      .then((result) => {
+        if (!isMounted) return
+
+        const levelMap: Record<string, LibraryLevel> = {
+          BEGINNER: '입문',
+          BASIC: '기초',
+          ADVANCED: '응용',
+        }
+
+        setLibraryItems(
+          result.items.map((item) => ({
+            id: item.flowId,
+            authorName: item.author.nickname,
+            authorInitial: item.author.nickname.slice(0, 1),
+            title: item.title,
+            description: item.summary,
+            level: levelMap[item.difficulty] ?? '입문',
+            categories: item.categories.map((category) => category.name),
+            saves: item.likeCount,
+            copies: item.copyCount,
+            comments: item.commentCount,
+            isLiked: item.isLiked,
+          })),
+        )
+      })
+      .catch((requestError: unknown) => {
+        if (!isMounted) return
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : '공개 흐름을 불러오지 못했습니다.',
+        )
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleLevelClick = (
     level: LibraryLevel,
@@ -165,7 +219,9 @@ export function PublicLibraryPage() {
       const matchesCategory =
         selectedCategories.length === 0 ||
         item.categories.some((category) =>
-          selectedCategories.includes(category),
+          selectedCategories.some(
+            (selectedCategory) => selectedCategory === category,
+          ),
         )
 
       return (
@@ -363,7 +419,18 @@ export function PublicLibraryPage() {
           )}
 
           <div className="relative mt-12">
-            {visibleLibraryItems.length > 0 ? (
+            {isLoading ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-slate-500">
+                공개 흐름을 불러오는 중입니다.
+              </div>
+            ) : error ? (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm font-semibold text-red-700"
+              >
+                {error}
+              </div>
+            ) : visibleLibraryItems.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {visibleLibraryItems.map(
                   (item) => (
@@ -384,7 +451,9 @@ export function PublicLibraryPage() {
                     ? '해당 검색어와 옵션에 부합하는 워크플로우가 없습니다.'
                     : hasSubmittedKeyword
                       ? `“${searchKeyword.trim()}”에 대한 워크플로우가 없습니다.`
-                      : '해당 옵션에 맞는 워크플로우가 없습니다.'}
+                      : hasSelectedOptions
+                        ? '해당 옵션에 맞는 워크플로우가 없습니다.'
+                        : '공개된 워크플로우가 없습니다.'}
                 </p>
 
                 <p className="mt-2 text-sm font-medium text-slate-400">

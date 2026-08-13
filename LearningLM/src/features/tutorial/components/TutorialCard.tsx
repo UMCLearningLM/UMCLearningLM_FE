@@ -4,7 +4,8 @@ import {
 } from 'lucide-react'
 
 import type {
-  Tutorial,
+  TutorialCategory,
+  TutorialLevel,
 } from '../data/tutorials'
 
 import {
@@ -23,8 +24,18 @@ import {
   getTutorialLevelBadgeVariant,
 } from '../utils/tutorialLevelStyle'
 
+export interface TutorialCardData {
+  id: number
+  title: string
+  description: string
+  level: TutorialLevel
+  categories: TutorialCategory[]
+  blockCount: number
+  estimatedMinutes: number
+}
+
 interface TutorialCardProps {
-  tutorial: Tutorial
+  tutorial: TutorialCardData
   onStart?: (tutorialId: number) => void
 }
 
@@ -39,7 +50,10 @@ function WireframeThumbnail() {
   )
 }
 
-export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
+export function TutorialCard({
+  tutorial,
+  onStart,
+}: TutorialCardProps) {
   return (
     <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
       <WireframeThumbnail />
@@ -55,25 +69,25 @@ export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Badge
-            variant={
-              getTutorialLevelBadgeVariant(
-                tutorial.level,
-              )
-            }
+            variant={getTutorialLevelBadgeVariant(
+              tutorial.level,
+            )}
             size="sm"
             className="px-3"
           >
             {tutorial.level}
           </Badge>
 
-          {tutorial.categories.slice(0, 2).map((category) => (
-            <span
-              key={category}
-              className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
-            >
-              {category}
-            </span>
-          ))}
+          {tutorial.categories
+            .slice(0, 2)
+            .map((category) => (
+              <span
+                key={category}
+                className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
+              >
+                {category}
+              </span>
+            ))}
         </div>
 
         <div className="mt-7 flex items-end justify-between gap-4">
@@ -89,8 +103,13 @@ export function TutorialCard({ tutorial, onStart }: TutorialCardProps) {
             </span>
           </div>
 
-          <Button size="sm" onClick={() => onStart?.(tutorial.id)}
-            className="cursor-pointer">
+          <Button
+            size="sm"
+            onClick={() =>
+              onStart?.(tutorial.id)
+            }
+            className="cursor-pointer"
+          >
             시작하기
           </Button>
         </div>

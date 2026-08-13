@@ -21,6 +21,7 @@ import { OfficialTutorialPage } from '../pages/tutorial/OfficialTutorialPage'
 import { TutorialDetailPage } from '../pages/tutorial/TutorialDetailPage'
 
 import { StudioNodeCardTestPage } from '../pages/dev/StudioNodeCardTestPage'
+import { ProcessTestPage } from '../pages/dev/ProcessTestPage'
 
 import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
@@ -29,6 +30,7 @@ import { PwFind } from '../pages/PwFind'
 import GoogleLoginLoading from '../pages/auth/GoogleLogin'
 import GoogleLoginSuccess from '../pages/auth/GoogleLoginSuccess'
 import GoogleLoginError from '../pages/auth/GoogleLoginError'
+import { MyProfile } from '../pages/auth/MyProfile'
 
 export const router = createBrowserRouter([
   /**
@@ -118,6 +120,20 @@ export const router = createBrowserRouter([
   {
     path: '/official-tutorials/:tutorialId',
     element: <TutorialDetailPage />,
+  },
+
+  /**
+   * 마이 프로필
+   *
+   * 로그인 필요
+   */
+  {
+    path: '/myProfile',
+    element: (
+      <ProtectedRoute>
+        <MyProfile />
+      </ProtectedRoute>
+    ),
   },
 
   /**
@@ -216,6 +232,19 @@ export const router = createBrowserRouter([
     ),
   },
 
+  {
+    /**
+     * 내가 만든 흐름 카드의
+     * 미리보기 / 저장 전 검토 화면
+     */
+    path: '/my-storage/workflows/:workflowId/preview',
+    element: (
+      <ProtectedRoute>
+        <Studio_create_review1 />
+      </ProtectedRoute>
+    ),
+  },
+
   /**
    * 공개 라이브러리
    *
@@ -237,6 +266,11 @@ export const router = createBrowserRouter([
   {
     path: '/studionodecardtestpage',
     element: <StudioNodeCardTestPage />,
+  },
+
+  {
+    path: '/process-test',
+    element: <ProcessTestPage />,
   },
 
   /**
