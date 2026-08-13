@@ -29,6 +29,7 @@ import { PwFind } from '../pages/PwFind'
 import GoogleLoginLoading from '../pages/auth/GoogleLogin'
 import GoogleLoginSuccess from '../pages/auth/GoogleLoginSuccess'
 import GoogleLoginError from '../pages/auth/GoogleLoginError'
+import { SessionCheck } from '../pages/auth/SessionCheck'
 
 export const router = createBrowserRouter([
   /**
@@ -56,7 +57,10 @@ export const router = createBrowserRouter([
     path: '/login',
     element: <Login />,
   },
-
+  {
+    path: '/login-loading',
+    element: <SessionCheck />,
+  },
   {
     path: '/register',
     element: <Register />,
