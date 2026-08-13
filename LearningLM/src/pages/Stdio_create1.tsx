@@ -21,11 +21,7 @@ import { Header } from '../components/layout/Header'
 import searchRound from '../assets/searchRound.svg'
 import searchStick from '../assets/searchStick.svg'
 import dashed from '../assets/dashed.png'
-
-import {
-  StudioBlockInspector,
-  type StudioInspectorConnectionInfo,
-} from '../features/studio/components/inspector/StudioBlockInspector'
+import { Slider } from '../components/ui/Slider'
 
 import {
   studioNodeTypes,
@@ -57,13 +53,6 @@ import type {
 } from '../features/studio/types/studioValidation'
 
 import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
-import { useRef } from 'react'
-
-import {
-  getFlow,
-  saveFlow,
-  type FlowUpdateRequest,
-} from './api/StudioApi'
 
 type ValidationCheckStatus =
   | 'pass'
@@ -88,9 +77,6 @@ type StudioNavigationState = {
   edges?: Edge[]
   validationResult?: StudioWorkflowValidationResult | null
 }
-
-
-
 
 const stageStyleMap: Record<
   StudioStage,
@@ -350,6 +336,9 @@ export function Stdio_create1() {
     (location.state as StudioNavigationState | null) ?? null
 
   const [searchText, setSearchText] = useState('')
+  const [strength, setStrength] = useState(0.7)
+  const [openInspectorSlotId, setOpenInspectorSlotId] =
+    useState<string | null>(null)
   const [openValidationId, setOpenValidationId] =
     useState<number | null>(null)
   const [validationResult, setValidationResult] =
@@ -370,93 +359,6 @@ export function Stdio_create1() {
   const selectedNode =
     studio.nodes.find((node) => node.selected) ?? null
 
-    const selectedNodeConnectionInfo =
-  useMemo<StudioInspectorConnectionInfo>(
-    () => {
-      if (!selectedNode) {
-        return {
-          incomingNodes: [],
-          outgoingNodes: [],
-        }
-      }
-
-      const incomingNodeIds =
-        new Set(
-          studio.edges
-            .filter(
-              (edge) =>
-                edge.target ===
-                selectedNode.id,
-            )
-            .map(
-              (edge) =>
-                edge.source,
-            ),
-        )
-
-      const outgoingNodeIds =
-        new Set(
-          studio.edges
-            .filter(
-              (edge) =>
-                edge.source ===
-                selectedNode.id,
-            )
-            .map(
-              (edge) =>
-                edge.target,
-            ),
-        )
-
-      const toConnectedNode = (
-        node: StudioFlowNodeInstance,
-      ) => ({
-        id:
-          node.id,
-
-        title:
-          node.data.node.title,
-
-        stage:
-          node.data.node.stage,
-
-        slots:
-          node.data.node.slots,
-      })
-
-      return {
-        incomingNodes:
-          studio.nodes
-            .filter(
-              (node) =>
-                incomingNodeIds.has(
-                  node.id,
-                ),
-            )
-            .map(
-              toConnectedNode,
-            ),
-
-        outgoingNodes:
-          studio.nodes
-            .filter(
-              (node) =>
-                outgoingNodeIds.has(
-                  node.id,
-                ),
-            )
-            .map(
-              toConnectedNode,
-            ),
-      }
-    },
-    [
-      selectedNode,
-      studio.edges,
-      studio.nodes,
-    ],
-  )
-
   const filteredBlocks = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
 
@@ -471,69 +373,38 @@ export function Stdio_create1() {
     )
   }, [searchText])
 
-    const workflowStructureSignature =
-  useMemo(() => {
-    const nodeSignature =
-      studio.nodes
-        .map((node) => {
-          const slots =
-            node.data.node.slots
-              .map((slot) =>
-                [
-                  slot.id,
-                  slot.value ??
-                    '',
-                  slot.state ??
-                    '',
-                  slot.required
-                    ? '1'
-                    : '0',
-                  JSON.stringify(
-                    slot.config ??
-                      {},
-                  ),
-                ].join(':'),
-              )
-              .sort()
-              .join(',')
-
-          return [
-            node.id,
-            node.data.node.stage,
-            slots,
-          ].join('|')
-        })
-        .sort()
-        .join('||')
-
-    const edgeSignature =
-      studio.edges
-        .map(
-          (edge) =>
+  const workflowStructureSignature = useMemo(() => {
+    return studio.nodes
+      .map((node) => {
+        const slots = node.data.node.slots
+          .map((slot) =>
             [
-              edge.source,
-              edge.target,
-              edge.sourceHandle ??
-                '',
-              edge.targetHandle ??
-                '',
-            ].join('>'),
-        )
-        .sort()
-        .join('||')
+              slot.id,
+              slot.value ?? '',
+              slot.state ?? '',
+              slot.required ? '1' : '0',
+            ].join(':'),
+          )
+          .sort()
+          .join(',')
 
-    return [
-      nodeSignature,
-      edgeSignature,
-    ].join('###')
-  }, [
-    studio.nodes,
-    studio.edges,
-  ])
+        return [
+          node.id,
+          node.data.node.stage,
+          slots,
+        ].join('|')
+      })
+      .sort()
+      .join('||')
+  }, [studio.nodes])
 
   useEffect(() => {
     setValidationResult(null)
   }, [workflowStructureSignature])
+
+  useEffect(() => {
+    setOpenInspectorSlotId(null)
+  }, [selectedNode?.id])
 
   const validationChecks = useMemo<ValidationCheck[]>(() => {
     if (!validationResult) {
@@ -652,10 +523,11 @@ export function Stdio_create1() {
           '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
         result: validationResult.valid
           ? '저장 조건을 충족했습니다.'
-          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${slotErrorIssues.length > 0
-            ? ' 필수 슬롯 설정을 확인하세요.'
-            : ''
-          }`,
+          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
+              slotErrorIssues.length > 0
+                ? ' 필수 슬롯 설정을 확인하세요.'
+                : ''
+            }`,
       },
     ]
   }, [validationResult])
@@ -727,96 +599,21 @@ export function Stdio_create1() {
     })
   }
 
-const handleOpenPreview = async () => {
-  const flowId =
-    locationState?.workflowId ??
-    (workflowId
-      ? Number(workflowId)
-      : undefined)
-
-  if (!flowId) {
-    console.error(
-      '미리보기에 사용할 flowId가 없습니다.',
-    )
-    return
+  const handleOpenPreview = () => {
+    navigate('/workflows/draft/preview', {
+      state: buildNavigationState(),
+    })
   }
 
-  const accessToken =
-    localStorage.getItem(
-      'accessToken',
-    ) ?? undefined
-
-  try {
-    const data =
-      await getFlow(
-        flowId,
-        accessToken,
-      )
-
-    console.log(
-      '불러온 Flow:',
-      data,
-    )
-
-    navigate(
-      `/studio/create?mode=copied&flowId=${flowId}`,
-      {
-        state: {
-          mode: 'preview',
-          flowId,
-          flowData:
-            data.result,
-        },
-      },
-    )
-  } catch (error) {
-    console.error(
-      'Flow 불러오기 실패:',
-      error,
-    )
-  }
-}
-const buildFlowSavePayload = (): FlowUpdateRequest => ({
-  title: '새 흐름',
-  summary: '자동 생성된 요약',
-  purpose: '사용자 정의 흐름',
-  difficulty: 'BEGINNER',
-  categoryIds: [],
-  visibility: 'PRIVATE',
-  status: 'COMPLETED',
-  authorNote: '',
-  exampleInput: '',
-  exampleResult: '',
-  blocks: studio.nodes.map((node, index) => ({
-    blockId: index + 1,
-    blockOrder: index,
-    options: {
-      title: node.data.node.title,
-      stage: node.data.node.stage,
-      id: node.data.node.id,
-    },
-    promptTemplateId: 0,
-  })),
-})
-
-const handleStartSave = async () => {
-  if (!validationResult?.valid) {
-    return
-  }
-
-  try {
-    const flowIdNum = workflowId ? Number(workflowId) : undefined
-    if (!flowIdNum) return
-
-    const { result } = await saveFlow(flowIdNum, buildFlowSavePayload())
+  const handleStartSave = () => {
+    if (!validationResult?.valid) {
+      return
+    }
 
     navigate('/studio/save/review', {
-      state: { ...buildNavigationState(), saveResult: result },
+      state: buildNavigationState(),
     })
-  } catch (error) {
-    // 에러 코드별 분기 (FLOW400xx, AUTH401xx, FLOW403xx, FLOW404xx)
   }
-}
 
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
@@ -1068,43 +865,120 @@ const handleStartSave = async () => {
                     </p>
                   </div>
 
-                                    <div className="mt-[14px] flex flex-col gap-[8px]">
-                    {selectedNode.data.node.slots.map((slot) => (
-                          <StudioBlockInspector
-                            key={slot.id}
-                            nodeId={selectedNode.id}
-                            slot={slot}
-                            connectionInfo={
-                              selectedNodeConnectionInfo
-                            }
-                            onConfigChange={(patch, options) => {
-                              studio.updateBlockConfig({
-                                nodeId: selectedNode.id,
-                                slotId: slot.id,
-                                patch,
-                                summaryValue:
-                                  options?.summaryValue,
-                                state:
-                                  options?.state,
-                              })
-                            }}
-                            onValueChange={(value) => {
-                              studio.updateSlotValue({
-                                nodeId: selectedNode.id,
-                                slotId: slot.id,
-                                value,
-                              })
-                            }}
-                          />
-                        ))}
-                  </div>
+                  <div className="mt-[14px] flex flex-col gap-[8px]">
+                    {selectedNode.data.node.slots.map((slot) => {
+                      const isOpen = openInspectorSlotId === slot.id
+
+                      return (
+                        <div
+                          key={slot.id}
+                          className="rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white px-[14px] py-[13px]"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className={[
+                                'h-[21px] w-[21px] shrink-0 rounded-[8px]',
+                                stageStyleMap[selectedNode.data.node.stage].dot,
+                              ].join(' ')}
+                            />
+
+                            <p className="ml-[12px] min-w-0 flex-1 truncate text-[16.5px] font-bold">
+                              {slot.label}
+                            </p>
+
+                            <span
+                              className={[
+                                'text-[11.5px] font-bold',
+                                slot.required
+                                  ? 'text-[#6366F1]'
+                                  : 'rounded-[6px] bg-[#F0F0F3] px-[7px] py-[3px] text-[#9A9AA3]',
+                              ].join(' ')}
+                            >
+                              {slot.required ? '필수' : '선택'}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenInspectorSlotId(
+                                  isOpen ? null : slot.id,
+                                )
+                              }
+                              className="ml-[22px] mt-[-6px] text-[18px] text-[#9A9AA3]"
+                            >
+                              {isOpen ? '⌃' : '⌄'}
+                            </button>
+                          </div>
+
+                          {isOpen && (
+                            <div className="mt-[12px] border-t border-[#EEEEF1] pt-[12px]">
+                              {slot.id === 'process-extract-core' ? (
+                                <>
+                                  <p className="text-[15.5px] font-bold text-[#52525B]">
+                                    추출 강도
+                                  </p>
+
+                                  <div className="mt-[8px] flex items-center gap-[12px]">
+                                    <Slider
+                                      value={strength}
+                                      showValue={false}
+                                      onChange={setStrength}
+                                      min={0}
+                                      max={1}
+                                      step={0.1}
+                                      className="flex-1"
+                                    />
+
+                                    <p className="shrink-0 text-[14px] text-[#9A9AA3]">
+                                      {strength} · 적극적
+                                    </p>
                                   </div>
+
+                                  <p className="mt-[14px] text-[15px] font-bold text-[#52525B]">
+                                    추출 단위
+                                  </p>
+
+                                  <div className="mt-[8px] flex h-[41px] items-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[14px] font-bold">
+                                    <span className="flex h-full flex-1 items-center justify-center border-r-[1.5px] border-[#E4E4E7]">
+                                      문장
+                                    </span>
+
+                                    <span className="flex h-full flex-1 items-center justify-center border-r-[1.5px] border-[#E4E4E7] text-[#6366F1]">
+                                      요점
+                                    </span>
+
+                                    <span className="flex h-full flex-1 items-center justify-center">
+                                      주제
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-[14px] font-bold text-[#52525B]">
+                                    설정값
+                                  </p>
+
+                                  <p className="mt-[6px] text-[14px] leading-[20px] text-[#9A9AA3]">
+                                    {slot.value?.trim()
+                                      ? slot.value
+                                      : '아직 설정된 값이 없습니다.'}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
 
                 <div className="my-[14px] border-t-[1.5px] border-[#EEEEF1]" />
 
                 <div className="flex items-center justify-center pb-[14px]">
                   <button
                     type="button"
+                    onClick={() => setOpenInspectorSlotId(null)}
                     className="flex h-[53px] w-[374px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
                   >
                     설정 저장
@@ -1189,7 +1063,7 @@ const handleStartSave = async () => {
           <button
             type="button"
             onClick={handleValidate}
-            className="cursor-pointer flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             검증
           </button>
@@ -1197,7 +1071,7 @@ const handleStartSave = async () => {
           <button
             type="button"
             onClick={handleOpenExample}
-            className="cursor-pointer flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             예시 결과
           </button>
@@ -1205,7 +1079,7 @@ const handleStartSave = async () => {
           <button
             type="button"
             onClick={handleOpenPreview}
-            className="cursor-pointer flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             미리보기
           </button>
@@ -1217,7 +1091,7 @@ const handleStartSave = async () => {
             className={[
               'flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] text-[17px] font-bold',
               validationResult?.valid
-                ? 'cursor-pointer border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
+                ? 'border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
                 : 'cursor-not-allowed border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
             ].join(' ')}
           >
