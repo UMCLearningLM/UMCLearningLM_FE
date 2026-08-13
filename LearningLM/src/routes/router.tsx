@@ -160,7 +160,7 @@ export const router = createBrowserRouter([
   },
 
   {
-    path: '/studio/:workflowId/edit',
+    path: '/studio/:flowId/edit',
     element: (
       <ProtectedRoute>
         <Stdio_create1 />
@@ -201,7 +201,7 @@ export const router = createBrowserRouter([
    * 현재 사용자 Workflow 미리보기이므로 로그인 필요
    */
   {
-    path: '/workflows/:workflowId/preview',
+    path: '/workflows/:flowId/preview',
     element: (
       <ProtectedRoute>
         <Studio_create_review1 />
@@ -224,7 +224,7 @@ export const router = createBrowserRouter([
   },
 
   {
-    path: '/my-storage/workflows/:workflowId',
+    path: '/my-storage/workflows/:flowId',
     element: (
       <ProtectedRoute>
         <WorkflowDetailPage />
@@ -237,7 +237,7 @@ export const router = createBrowserRouter([
      * 내가 만든 흐름 카드의
      * 미리보기 / 저장 전 검토 화면
      */
-    path: '/my-storage/workflows/:workflowId/preview',
+    path: '/my-storage/workflows/:flowId/preview',
     element: (
       <ProtectedRoute>
         <Studio_create_review1 />
