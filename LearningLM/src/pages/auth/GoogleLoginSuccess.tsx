@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 import {
   useEffect,
   useRef,
@@ -10,6 +12,11 @@ import {
 } from 'react-router-dom'
 
 import api from '../../api/api'
+
+import {
+  clearAuthStorage,
+  saveAuthSession,
+} from '../../api/authStorage'
 
 interface GoogleTokenResult {
   userId: number
@@ -26,58 +33,111 @@ interface GoogleTokenExchangeResponse {
   success: boolean
 }
 
+interface BackendErrorResponse {
+  code?: string
+  message?: string
+  success?: boolean
+}
+
 type ExchangeStatus =
   | 'processing'
   | 'success'
   | 'error'
 
-function clearPreviousAuthStorage() {
-  localStorage.removeItem(
-    'accessToken',
-  )
-  localStorage.removeItem(
-    'refreshToken',
-  )
-  localStorage.removeItem(
-    'user',
-  )
+function getGoogleTokenErrorDetails(
+  error: unknown,
+): {
+  code: string
+  message: string
+} {
+  if (
+    axios.isAxiosError<BackendErrorResponse>(
+      error,
+    )
+  ) {
+    const backendCode =
+      error.response
+        ?.data
+        ?.code
 
-  sessionStorage.removeItem(
-    'accessToken',
-  )
-  sessionStorage.removeItem(
-    'refreshToken',
-  )
-  sessionStorage.removeItem(
-    'user',
+    const backendMessage =
+      error.response
+        ?.data
+        ?.message
+
+    return {
+      /*
+       * 서버가 실제 에러 코드를 보냈다면 AUTH40107 등
+       * 해당 값을 그대로 보존합니다.
+       *
+       * 서버 응답 자체가 없거나 코드가 없는 경우에만
+       * TOKEN_EXCHANGE_FAILED를 fallback으로 사용합니다.
+       */
+      code:
+        backendCode ||
+        'TOKEN_EXCHANGE_FAILED',
+
+      message:
+        backendMessage ||
+        error.message ||
+        'Google 로그인 처리에 실패했습니다.',
+    }
+  }
+
+  return {
+    code:
+      'TOKEN_EXCHANGE_FAILED',
+
+    message:
+      error instanceof Error
+        ? error.message
+        : 'Google 로그인 처리에 실패했습니다.',
+  }
+}
+
+function getGoogleRememberMe():
+  boolean {
+  return (
+    sessionStorage.getItem(
+      'googleLoginRememberMe',
+    ) ===
+    'true'
   )
 }
 
-function saveGoogleLoginResult(
-  result: GoogleTokenResult,
-) {
-  clearPreviousAuthStorage()
+function getSafeGoogleRedirect():
+  string {
+  const redirectPath =
+    sessionStorage.getItem(
+      'googleLoginRedirect',
+    )
 
-  localStorage.setItem(
-    'accessToken',
-    result.accessToken,
+  if (
+    redirectPath &&
+    redirectPath.startsWith(
+      '/',
+    ) &&
+    !redirectPath.startsWith(
+      '//',
+    )
+  ) {
+    return redirectPath
+  }
+
+  return '/'
+}
+
+function clearGoogleFlowState() {
+  sessionStorage.removeItem(
+    'googleLoginPending',
   )
 
-  localStorage.setItem(
-    'refreshToken',
-    result.refreshToken,
+  sessionStorage.removeItem(
+    'googleLoginRememberMe',
   )
 
-  localStorage.setItem(
-    'user',
-    JSON.stringify({
-      userId:
-        result.userId,
-      email:
-        result.email,
-      nickname:
-        result.nickname,
-    }),
+  sessionStorage.removeItem(
+    'googleLoginRedirect',
   )
 }
 
@@ -130,7 +190,9 @@ export default function GoogleLoginSuccess() {
               'googleLoginPending',
             )
 
-            setStatus('error')
+            setStatus(
+              'error',
+            )
 
             setErrorMessage(
               'Google 인증 코드가 없습니다.',
@@ -139,9 +201,10 @@ export default function GoogleLoginSuccess() {
             window.setTimeout(
               () => {
                 navigate(
-                  '/auth/google/error?error=OAUTH_CODE_MISSING',
+                  '/auth/google/error?error=OAUTH_CODE_MISSING&message=Google%20인증%20코드가%20없습니다.',
                   {
-                    replace: true,
+                    replace:
+                      true,
                   },
                 )
               },
@@ -150,6 +213,14 @@ export default function GoogleLoginSuccess() {
 
             return
           }
+
+          /*
+           * 코드 교환 전에 이전 인증정보를 정리합니다.
+           *
+           * request interceptor도 /auth/google/token에서 Authorization을
+           * 제거하므로 이중 방어가 됩니다.
+           */
+          clearAuthStorage()
 
           try {
             const response =
@@ -161,41 +232,74 @@ export default function GoogleLoginSuccess() {
               )
 
             const result =
-              response.data?.result
+              response.data
+                ?.result
 
             if (
-              !response.data?.success ||
-              !result?.accessToken ||
-              !result?.refreshToken
+              !response.data
+                ?.success ||
+              !result
+                ?.accessToken ||
+              !result
+                ?.refreshToken
             ) {
               throw new Error(
-                response.data?.message ||
+                response.data
+                  ?.message ||
                   'Google 로그인 토큰 응답이 올바르지 않습니다.',
               )
             }
 
-            saveGoogleLoginResult(
-              result,
+            const rememberMe =
+              getGoogleRememberMe()
+
+            const redirectPath =
+              getSafeGoogleRedirect()
+
+            saveAuthSession(
+              {
+                accessToken:
+                  result.accessToken,
+
+                refreshToken:
+                  result.refreshToken,
+
+                user: {
+                  userId:
+                    result.userId,
+
+                  email:
+                    result.email,
+
+                  nickname:
+                    result.nickname,
+                },
+              },
+
+              rememberMe,
             )
 
-            sessionStorage.removeItem(
-              'googleLoginPending',
-            )
+            clearGoogleFlowState()
 
-            setStatus('success')
+            setStatus(
+              'success',
+            )
 
             window.setTimeout(
               () => {
                 navigate(
-                  '/',
+                  redirectPath,
                   {
-                    replace: true,
+                    replace:
+                      true,
                   },
                 )
               },
               900,
             )
-          } catch (error) {
+          } catch (
+            error
+          ) {
             console.error(
               'Google 인증 코드 교환 실패:',
               error,
@@ -205,18 +309,34 @@ export default function GoogleLoginSuccess() {
               'googleLoginPending',
             )
 
-            setStatus('error')
+            const {
+              code:
+                errorCode,
+              message,
+            } =
+              getGoogleTokenErrorDetails(
+                error,
+              )
+
+            setStatus(
+              'error',
+            )
 
             setErrorMessage(
-              'Google 로그인 처리에 실패했습니다.',
+              `${errorCode} · ${message}`,
             )
 
             window.setTimeout(
               () => {
                 navigate(
-                  '/auth/google/error?error=TOKEN_EXCHANGE_FAILED',
+                  `/auth/google/error?error=${encodeURIComponent(
+                    errorCode,
+                  )}&message=${encodeURIComponent(
+                    message,
+                  )}`,
                   {
-                    replace: true,
+                    replace:
+                      true,
                   },
                 )
               },
@@ -234,10 +354,12 @@ export default function GoogleLoginSuccess() {
   )
 
   const success =
-    status === 'success'
+    status ===
+    'success'
 
   const failed =
-    status === 'error'
+    status ===
+    'error'
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[#F5F5F7] px-[24px]">
@@ -285,7 +407,7 @@ export default function GoogleLoginSuccess() {
 
               <p className="text-center text-[18px] text-[#52525B]">
                 {success
-                  ? '로그인되었습니다. 홈으로 이동합니다.'
+                  ? '로그인되었습니다. 이동합니다.'
                   : failed
                     ? errorMessage
                     : '인증 코드를 확인하고 로그인 정보를 생성하고 있습니다.'}
@@ -295,22 +417,28 @@ export default function GoogleLoginSuccess() {
             <div
               className={[
                 'flex min-h-[73px] w-full items-center justify-center rounded-[12px] border-2 px-[29px] text-center text-[18px]',
+
                 success
                   ? 'border-[#5FAA81] bg-[#DFF2DF]'
                   : failed
                     ? 'border-[#E9C9C9] bg-[#FBF1F0]'
                     : 'border-[#E4E4E7] bg-[#F5F5F7]',
-              ].join(' ')}
+              ].join(
+                ' ',
+              )}
             >
               <span
                 className={[
                   'font-bold',
+
                   success
                     ? 'text-[#2F7D52]'
                     : failed
                       ? 'text-[#EF8888]'
                       : 'text-[#6366F1]',
-                ].join(' ')}
+                ].join(
+                  ' ',
+                )}
               >
                 {success
                   ? '인증 성공'
@@ -327,9 +455,11 @@ export default function GoogleLoginSuccess() {
             <span>
               © 2026 LearningLM
             </span>
+
             <span>
               이용약관
             </span>
+
             <span>
               개인정보처리방침
             </span>

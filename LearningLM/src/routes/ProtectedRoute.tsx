@@ -11,6 +11,11 @@ import {
 
 import api from '../api/api'
 
+import {
+  clearAuthStorage,
+  getAccessToken,
+} from '../api/authStorage'
+
 interface ProtectedRouteProps {
   children: ReactNode
 }
@@ -21,50 +26,18 @@ type AuthStatus =
   | 'guest'
   | 'error'
 
-function getAccessToken() {
-  return (
-    localStorage.getItem(
-      'accessToken',
-    ) ??
-    sessionStorage.getItem(
-      'accessToken',
-    )
-  )
-}
-
-function clearAuthStorage() {
-  localStorage.removeItem(
-    'accessToken',
-  )
-
-  localStorage.removeItem(
-    'refreshToken',
-  )
-
-  localStorage.removeItem(
-    'user',
-  )
-
-  sessionStorage.removeItem(
-    'accessToken',
-  )
-
-  sessionStorage.removeItem(
-    'refreshToken',
-  )
-
-  sessionStorage.removeItem(
-    'user',
-  )
-}
-
 function getHttpStatus(
   error: unknown,
 ): number | undefined {
   if (
-    typeof error !== 'object' ||
-    error === null ||
-    !('response' in error)
+    typeof error !==
+      'object' ||
+    error ===
+      null ||
+    !(
+      'response' in
+      error
+    )
   ) {
     return undefined
   }
@@ -110,11 +83,9 @@ export function ProtectedRoute({
           const accessToken =
             getAccessToken()
 
-          /*
-           * localStorage와 sessionStorage 어디에도
-           * Access Token이 없으면 서버 요청 없이 guest 처리합니다.
-           */
-          if (!accessToken) {
+          if (
+            !accessToken
+          ) {
             if (
               !cancelled
             ) {
@@ -131,11 +102,6 @@ export function ProtectedRoute({
           )
 
           try {
-            /*
-             * 공용 api.ts가 Authorization 헤더를 자동으로 넣고,
-             * Access Token 만료 시 Refresh Token 재발급 후
-             * /auth/me 요청을 자동 재시도합니다.
-             */
             await api.get(
               '/auth/me',
             )
@@ -149,7 +115,9 @@ export function ProtectedRoute({
             setAuthStatus(
               'authenticated',
             )
-          } catch (error) {
+          } catch (
+            error
+          ) {
             if (
               cancelled
             ) {
@@ -166,16 +134,11 @@ export function ProtectedRoute({
                 error,
               )
 
-            /*
-             * 인증 자체가 거부된 경우에만 저장된 인증정보를 제거합니다.
-             *
-             * 5xx, 네트워크 단절, 백엔드 재배포 중 장애까지
-             * 로그아웃으로 처리하면 사용자가 불필요하게 세션을 잃으므로
-             * 일시적인 서버 오류는 별도 error 상태로 둡니다.
-             */
             if (
-              status === 401 ||
-              status === 403
+              status ===
+                401 ||
+              status ===
+                403
             ) {
               clearAuthStorage()
 
@@ -243,7 +206,8 @@ export function ProtectedRoute({
                 (
                   current,
                 ) =>
-                  current + 1,
+                  current +
+                  1,
               )
             }}
             className="mt-[20px] h-[42px] rounded-[10px] bg-[#6366F1] px-[22px] text-[14px] font-bold text-white hover:bg-[#5558DB]"

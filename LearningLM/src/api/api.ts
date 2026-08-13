@@ -3,6 +3,13 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 
+import {
+  clearAuthStorage,
+  getAccessToken,
+  getRefreshToken,
+  saveReissuedAuthTokens,
+} from './authStorage'
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL
 
@@ -16,9 +23,8 @@ if (!API_BASE_URL) {
  * LearningLM 공용 Axios 인스턴스입니다.
  *
  * Content-Type을 전역에서 application/json으로 고정하지 않습니다.
- * 일반 객체 요청은 Axios가 JSON으로 처리하고,
- * 이후 프로필 이미지처럼 FormData를 전송할 때는
- * multipart boundary를 Axios가 자동으로 설정할 수 있게 둡니다.
+ * JSON은 Axios가 자동 처리하고,
+ * FormData는 multipart boundary를 Axios가 자동으로 설정하게 둡니다.
  */
 const api = axios.create({
   baseURL:
@@ -44,90 +50,132 @@ let reissuePromise:
   Promise<string> | null =
     null
 
-function getAccessToken() {
+/**
+ * 기존 Access Token이 절대로 붙으면 안 되는 공개 인증 API입니다.
+ *
+ * exact:
+ * 정확히 해당 endpoint만 공개
+ *
+ * prefix:
+ * 하위 경로까지 모두 공개
+ */
+const PUBLIC_AUTH_EXACT_PATHS = [
+  '/auth/login',
+  '/auth/signup',
+  '/auth/reissue',
+  '/auth/password',
+  '/auth/email/request',
+  '/auth/email/verify',
+]
+
+const PUBLIC_AUTH_PREFIX_PATHS = [
+  '/auth/google',
+  '/auth/oauth2',
+]
+
+function getRequestPath(
+  requestUrl: string,
+): string {
+  try {
+    const normalizedBase =
+      API_BASE_URL.endsWith(
+        '/',
+      )
+        ? API_BASE_URL
+        : `${API_BASE_URL}/`
+
+    return new URL(
+      requestUrl,
+      normalizedBase,
+    ).pathname
+  } catch {
+    return requestUrl.split(
+      '?',
+    )[0]
+  }
+}
+
+function matchesExactApiPath(
+  pathname: string,
+  targetPath: string,
+): boolean {
   return (
-    localStorage.getItem(
-      'accessToken',
-    ) ??
-    sessionStorage.getItem(
-      'accessToken',
+    pathname ===
+      targetPath ||
+    pathname.endsWith(
+      targetPath,
     )
   )
 }
 
-function getRefreshToken() {
-  return (
-    localStorage.getItem(
-      'refreshToken',
-    ) ??
-    sessionStorage.getItem(
-      'refreshToken',
+function matchesApiPathPrefix(
+  pathname: string,
+  targetPrefix: string,
+): boolean {
+  const index =
+    pathname.indexOf(
+      targetPrefix,
     )
-  )
-}
 
-function usesLocalStorageAuth() {
-  return (
-    localStorage.getItem(
-      'refreshToken',
-    ) !== null
-  )
-}
-
-function saveReissuedTokens(
-  accessToken: string,
-  refreshToken: string,
-) {
   if (
-    usesLocalStorageAuth()
+    index === -1
   ) {
-    localStorage.setItem(
-      'accessToken',
-      accessToken,
-    )
-
-    localStorage.setItem(
-      'refreshToken',
-      refreshToken,
-    )
-
-    return
+    return false
   }
 
-  sessionStorage.setItem(
-    'accessToken',
-    accessToken,
-  )
+  const remainder =
+    pathname.slice(
+      index +
+        targetPrefix.length,
+    )
 
-  sessionStorage.setItem(
-    'refreshToken',
-    refreshToken,
+  return (
+    remainder ===
+      '' ||
+    remainder.startsWith(
+      '/',
+    )
   )
 }
 
-function clearAuthStorage() {
-  localStorage.removeItem(
-    'accessToken',
-  )
+/**
+ * 공개 인증 API 여부를 request/response interceptor 양쪽에서
+ * 동일한 기준으로 사용합니다.
+ *
+ * 이렇게 해야
+ * "Authorization은 붙이지 않지만 401 refresh는 시도하는"
+ * 식의 정책 불일치가 생기지 않습니다.
+ */
+export function isPublicAuthRequest(
+  requestUrl: string,
+): boolean {
+  const pathname =
+    getRequestPath(
+      requestUrl,
+    )
 
-  localStorage.removeItem(
-    'refreshToken',
-  )
+  if (
+    PUBLIC_AUTH_EXACT_PATHS.some(
+      (
+        path,
+      ) =>
+        matchesExactApiPath(
+          pathname,
+          path,
+        ),
+    )
+  ) {
+    return true
+  }
 
-  localStorage.removeItem(
-    'user',
-  )
-
-  sessionStorage.removeItem(
-    'accessToken',
-  )
-
-  sessionStorage.removeItem(
-    'refreshToken',
-  )
-
-  sessionStorage.removeItem(
-    'user',
+  return PUBLIC_AUTH_PREFIX_PATHS.some(
+    (
+      prefix,
+    ) =>
+      matchesApiPathPrefix(
+        pathname,
+        prefix,
+      ),
   )
 }
 
@@ -143,56 +191,42 @@ function redirectToLogin() {
 }
 
 /**
- * 여기 포함된 인증 API에서 401이 발생했을 때는
- * Refresh Token 재발급을 다시 시도하지 않습니다.
+ * 요청 인터셉터
  *
- * 특히 /auth/reissue 자체가 401인데 다시 /auth/reissue를 호출하면
- * 무한 재시도 구조가 생길 수 있으므로 반드시 제외합니다.
- */
-const reissueExcludedPaths = [
-  '/auth/login',
-  '/auth/signup',
-  '/auth/reissue',
-  '/auth/google',
-  '/auth/google/token',
-  '/auth/oauth2',
-  '/auth/email/request',
-  '/auth/email/verify',
-  '/auth/password',
-]
-
-function isReissueExcludedRequest(
-  requestUrl: string,
-) {
-  return reissueExcludedPaths.some(
-    (path) =>
-      requestUrl.startsWith(
-        path,
-      ),
-  )
-}
-
-/**
- * 모든 공용 API 요청에 현재 저장된 Access Token을 붙입니다.
+ * 공개 인증 API:
+ * 기존 Authorization을 명시적으로 제거합니다.
  *
- * 로그인 상태 유지:
- * localStorage
- *
- * 로그인 상태 유지 안 함:
- * sessionStorage
+ * 보호 API:
+ * 현재 Access Token이 존재할 때만 Authorization을 추가합니다.
  */
 api.interceptors.request.use(
   (config) => {
+    const requestUrl =
+      config.url ??
+      ''
+
+    if (
+      isPublicAuthRequest(
+        requestUrl,
+      )
+    ) {
+      /*
+       * 혹시 개별 호출부에서 Authorization을 직접 넣었더라도
+       * 공개 인증 API에서는 제거합니다.
+       */
+      config.headers.delete(
+        'Authorization',
+      )
+
+      return config
+    }
+
     const accessToken =
       getAccessToken()
 
     if (
       accessToken
     ) {
-      /*
-       * InternalAxiosRequestConfig.headers는 AxiosHeaders 기반 타입이므로
-       * 단순 객체를 새로 할당하지 않고 set()을 사용합니다.
-       */
       config.headers.set(
         'Authorization',
         `Bearer ${accessToken}`,
@@ -209,11 +243,13 @@ api.interceptors.request.use(
 )
 
 /**
- * Access Token 만료 시 Refresh Token으로 토큰을 재발급하고
- * 실패했던 원래 요청을 한 번만 다시 실행합니다.
+ * 응답 인터셉터
  *
- * 동시에 여러 API가 401을 받아도 reissuePromise 하나만 공유하여
- * /auth/reissue 요청이 여러 번 중복되지 않게 합니다.
+ * 보호 API에서 Access Token이 만료되어 401이 발생한 경우에만
+ * Refresh Token으로 재발급 후 원래 요청을 한 번 재시도합니다.
+ *
+ * 로그인, Google OAuth, 코드 교환 같은 공개 인증 API의 401은
+ * 재발급 대상으로 처리하지 않고 호출부에 그대로 전달합니다.
  */
 api.interceptors.response.use(
   (response) =>
@@ -246,7 +282,7 @@ api.interceptors.response.use(
     if (
       status !== 401 ||
       originalRequest._retry ||
-      isReissueExcludedRequest(
+      isPublicAuthRequest(
         requestUrl,
       )
     ) {
@@ -276,6 +312,11 @@ api.interceptors.response.use(
       if (
         !reissuePromise
       ) {
+        /*
+         * raw axios를 사용해 /auth/reissue를 호출합니다.
+         * 따라서 공용 api interceptor를 다시 타지 않고,
+         * Access Token도 포함되지 않습니다.
+         */
         reissuePromise =
           axios
             .post<ReissueResponse>(
@@ -313,7 +354,7 @@ api.interceptors.response.use(
                   )
                 }
 
-                saveReissuedTokens(
+                saveReissuedAuthTokens(
                   newAccessToken,
                   newRefreshToken,
                 )
@@ -332,19 +373,6 @@ api.interceptors.response.use(
       const newAccessToken =
         await reissuePromise
 
-      /*
-       * 기존 코드:
-       *
-       * originalRequest.headers =
-       *   originalRequest.headers ?? {}
-       *
-       * Axios 1.x의 InternalAxiosRequestConfig.headers는
-       * AxiosRequestHeaders/AxiosHeaders이기 때문에
-       * 빈 객체 {}를 대입하면 TS2322가 발생합니다.
-       *
-       * headers는 이미 존재하므로 AxiosHeaders.set()으로
-       * 갱신하면 해당 타입 오류 없이 재시도할 수 있습니다.
-       */
       originalRequest.headers.set(
         'Authorization',
         `Bearer ${newAccessToken}`,

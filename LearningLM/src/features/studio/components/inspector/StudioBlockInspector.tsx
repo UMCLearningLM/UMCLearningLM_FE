@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+  ExpandableSettingBlockEnvironmentProvider,
+} from '../../../Block/components/layouts/ExpandableSettingBlock'
+
+import {
   getStudioBlockDefinition,
   type StudioBlockId,
 } from '../../data/studioBlockCatalog'
@@ -34,11 +38,14 @@ import {
   BackgroundContextInspector,
   DirectContextInputInspector,
   ExclusionContextInspector,
-  ProjectDocumentInspector,
   ReferenceScopeInspector,
   RoleAssignmentInspector,
   UploadedDocumentInspector,
 } from './context/ContextBlockInspectors'
+
+import {
+  ProjectDocumentInspector,
+} from './context/ProjectDocumentInspector'
 
 import {
   ConditionCheckInspector,
@@ -71,41 +78,18 @@ import {
   SummaryInspector,
 } from './process/ProcessCoreInspectors'
 
-import {
-  ClassifyItemsInspector,
-  CompareInspector,
-  OrderInspector,
-} from './process/Process03To05Inspectors'
-
-import {
-  DecomposeFunctionsInspector,
-  FindExceptionsInspector,
-  LinkPolicyInspector,
-} from './process/Process06To08Inspectors'
-
-import {
-  ChecklistTransformInspector,
-  DraftInspector,
-  TableTransformInspector,
-} from './process/Process09To11Inspectors'
-
-import {
-  CallSkillInspector,
-  PromptComposeInspector,
-  QuestionListInspector,
-} from './process/Process12To14Inspectors'
-
-import {
-  PromptFillBlanksInspector,
-  SummaryPromptLayoutInspector,
-} from './process/Process15To16Inspectors'
-
 
 export interface StudioInspectorConfigUpdateOptions {
   summaryValue?: string
   state?: StudioSlotState
 }
 
+/**
+ * 현재 선택된 Stage Node와 연결된 다른 Stage Node의 요약 정보입니다.
+ *
+ * Stdio_create1.tsx의 selectedConnectionInfo가 만드는 데이터 구조와
+ * 동일하게 유지합니다.
+ */
 export interface StudioInspectorConnectedNode {
   id: string
   title: string
@@ -113,6 +97,13 @@ export interface StudioInspectorConnectedNode {
   slots: StudioNodeSlot[]
 }
 
+/**
+ * Inspector에서 이전/다음 연결 노드가 필요한 블록을 위해
+ * 전달하는 연결 정보입니다.
+ *
+ * 연결 정보가 필요하지 않은 Inspector도 같은 공통 Props 타입을
+ * 사용하므로 optional로 둡니다.
+ */
 export interface StudioInspectorConnectionInfo {
   incomingNodes: StudioInspectorConnectedNode[]
   outgoingNodes: StudioInspectorConnectedNode[]
@@ -248,48 +239,6 @@ const studioBlockInspectorRegistry:
     'process-summary':
       SummaryInspector,
     
-    'process-classify-items':
-      ClassifyItemsInspector,
-
-    'process-compare':
-      CompareInspector,
-
-    'process-order':
-      OrderInspector,
-
-    'process-decompose-functions':
-      DecomposeFunctionsInspector,
-
-    'process-link-policy':
-      LinkPolicyInspector,
-
-    'process-find-exceptions':
-      FindExceptionsInspector,
-
-    'process-draft':
-      DraftInspector,
-
-    'process-table':
-      TableTransformInspector,
-
-    'process-checklist':
-      ChecklistTransformInspector,
-
-    'process-question-list':
-      QuestionListInspector,
-
-    'process-call-skill':
-      CallSkillInspector,
-
-    'process-prompt-compose':
-      PromptComposeInspector,
-
-    'process-prompt-fill-blanks':
-      PromptFillBlanksInspector,
-
-    'process-summary-prompt-layout':
-      SummaryPromptLayoutInspector,
-
       /*
      * REVIEW
      */
@@ -560,6 +509,9 @@ export function StudioBlockInspector({
         slot={
           slot
         }
+        connectionInfo={
+          connectionInfo
+        }
         onConfigChange={
           onConfigChange
         }
@@ -571,19 +523,26 @@ export function StudioBlockInspector({
   }
 
   return (
-    <InspectorComponent
-      nodeId={
-        nodeId
-      }
-      slot={
-        slot
-      }
-      onConfigChange={
-        onConfigChange
-      }
-      onValueChange={
-        onValueChange
-      }
-    />
+    <ExpandableSettingBlockEnvironmentProvider
+      embeddedInStudioInspector
+    >
+      <InspectorComponent
+        nodeId={
+          nodeId
+        }
+        slot={
+          slot
+        }
+        connectionInfo={
+          connectionInfo
+        }
+        onConfigChange={
+          onConfigChange
+        }
+        onValueChange={
+          onValueChange
+        }
+      />
+    </ExpandableSettingBlockEnvironmentProvider>
   )
 }

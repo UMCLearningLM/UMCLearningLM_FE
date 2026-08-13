@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type DragEvent,
 } from 'react'
@@ -415,6 +416,10 @@ export function Stdio_create1() {
     )
 
   const [searchText, setSearchText] = useState('')
+
+  const inspectorScrollRef =
+    useRef<HTMLDivElement | null>(null)
+
   const [openInspectorSlotId, setOpenInspectorSlotId] =
     useState<string | null>(null)
   const [openValidationId, setOpenValidationId] =
@@ -461,6 +466,60 @@ export function Stdio_create1() {
 
   const selectedNode =
     studio.nodes.find((node) => node.selected) ?? null
+
+  /*
+   * Studio는 자체적으로 좌측 Palette / 중앙 Canvas / 우측 Inspector를
+   * 각각 스크롤하는 데스크톱 편집 화면입니다.
+   *
+   * 긴 Inspector가 열릴 때 body/document까지 높이가 늘어나면
+   * 브라우저 scroll anchoring 때문에 화면 전체가 위아래로 튈 수 있으므로
+   * Studio가 마운트된 동안 바깥 문서 스크롤을 잠급니다.
+   */
+  useEffect(() => {
+    const html =
+      document.documentElement
+
+    const body =
+      document.body
+
+    const previousHtmlOverflow =
+      html.style.overflow
+
+    const previousHtmlOverscrollBehavior =
+      html.style.overscrollBehavior
+
+    const previousBodyOverflow =
+      body.style.overflow
+
+    const previousBodyOverscrollBehavior =
+      body.style.overscrollBehavior
+
+    html.style.overflow =
+      'hidden'
+
+    html.style.overscrollBehavior =
+      'none'
+
+    body.style.overflow =
+      'hidden'
+
+    body.style.overscrollBehavior =
+      'none'
+
+    return () => {
+      html.style.overflow =
+        previousHtmlOverflow
+
+      html.style.overscrollBehavior =
+        previousHtmlOverscrollBehavior
+
+      body.style.overflow =
+        previousBodyOverflow
+
+      body.style.overscrollBehavior =
+        previousBodyOverscrollBehavior
+    }
+  }, [])
 
   useEffect(
     () => {
@@ -649,6 +708,11 @@ export function Stdio_create1() {
 
   useEffect(() => {
     setOpenInspectorSlotId(null)
+
+    inspectorScrollRef.current?.scrollTo({
+      top: 0,
+      behavior: 'auto',
+    })
   }, [selectedNode?.id])
 
   const validationChecks = useMemo<ValidationCheck[]>(() => {
@@ -981,7 +1045,7 @@ export function Stdio_create1() {
   }
 
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
+    <div className="fixed inset-0 flex h-[100dvh] w-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
       <div className="shrink-0">
         <Header />
       </div>
@@ -1035,7 +1099,7 @@ export function Stdio_create1() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[32px]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[32px] [overflow-anchor:none] [scrollbar-gutter:stable]">
             {STUDIO_STAGE_ORDER.map((stage) => {
               const blocks = filteredBlocks.filter(
                 (block) => block.stage === stage,
@@ -1163,12 +1227,15 @@ export function Stdio_create1() {
         </main>
 
         {/* 인스펙터와 검증 결과 */}
-        <aside className="relative z-30 flex min-h-0 w-[406px] shrink-0 flex-col border-l-[1.5px] border-[#E4E4E7] bg-white">
+        <aside className="relative z-30 flex min-h-0 w-[406px] shrink-0 flex-col overflow-hidden border-l-[1.5px] border-[#E4E4E7] bg-white">
           <div className="flex h-[78px] shrink-0 items-center border-b-[1.5px] border-[#E4E4E7] pl-[20px] text-[22px] font-bold">
             인스펙터
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div
+            ref={inspectorScrollRef}
+            className="min-h-0 flex-1 overflow-y-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
+          >
             {!selectedNode && (
               <div className="flex min-h-[510px] flex-col border-b-[1.5px] border-[#E4E4E7]">
                 <div className="flex h-[180px] items-center justify-center border-b-[1.5px] border-[#E4E4E7] px-[30px] text-center">
