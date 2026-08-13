@@ -203,7 +203,11 @@ function WorkflowDetailPage() {
   }
 
   const handleDelete = () => {
-    setIsDeleteModalOpen(true)
+  setIsDeleteModalOpen(true)
+  const handleConfirmDelete = async () => {
+  if (!workflowId) {
+    console.error("flowId가 없습니다.");
+    return;
   }
 
   const handleConfirmDelete = async () => {
@@ -222,6 +226,44 @@ function WorkflowDetailPage() {
       setIsDeleting(false)
     }
   }
+
+  const accessToken = localStorage.getItem("accessToken");
+
+  try {
+    const response = await deleteFlow(
+      flowId,
+      accessToken ?? ""
+    );
+
+    console.log("Flow 삭제 성공:", response);
+
+    setIsDeleteModalOpen(false);
+    navigate("/my-storage");
+
+  } catch (error) {
+    if (
+      axios.isAxiosError(error) &&
+      error.response?.status === 404
+    ) {
+      console.error(
+        `백엔드에 flowId ${flowId}가 존재하지 않습니다.`
+      );
+      return;
+    }
+
+    console.error("Flow 삭제 실패:", error);
+  }
+};
+}
+
+const handleConfirmDelete = () => {
+  if (!workflow) return;
+
+  console.log("mock 워크플로우 삭제:", workflow.id);
+
+  setIsDeleteModalOpen(false);
+  navigate('/my-storage');
+};
 
   return (
     <div className="min-h-screen bg-slate-50">

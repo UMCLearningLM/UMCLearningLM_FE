@@ -16,6 +16,7 @@ import {
   type TutorialListItem,
 } from '../../api/tutorial'
 
+
 const MAX_LEVEL_FILTER_COUNT = 2
 const MAX_CATEGORY_FILTER_COUNT = 3
 const ITEMS_PER_PAGE = 6
@@ -121,6 +122,8 @@ function FilterButton({
 }
 
 export function OfficialTutorialPage() {
+  
+
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)

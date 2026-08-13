@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 
 import {
-  useNavigate,
+  useNavigate, useLocation
 } from 'react-router-dom'
 
 import {
@@ -24,13 +24,13 @@ import {
   StudioSimulation,
 } from '../features/studio/simulation/components/StudioSimulation'
 
-import { createFlow } from "../pages/api/StudioApi";
-
+import { createFlow, getFlow } from "../pages/api/StudioApi";
 
 
 export function Studio1() {
   const navigate =
     useNavigate()
+  const location = useLocation();
 
   const [
     isSimulationOpen,
@@ -50,28 +50,31 @@ export function Studio1() {
   }
 
   // 1. 자유 제작 모드 (빈 캔버스 생성)
+// 1. 자유 제작 모드 (빈 캔버스 생성)
 const handleCreateMode = async () => {
+  const accessToken =
+    localStorage.getItem("accessToken") ?? undefined;
+
   try {
-    const accessToken = localStorage.getItem('accessToken') || '';
-    
-    // Swagger Body에 맞춰 mode: "CREATE" 전달
-    const data = await createFlow({
-      mode: "CREATE",
-      tutorialId: null,
-      originFlowId: null,
-    }, accessToken);
-
-    console.log("생성된 Flow:", data);
-
-    navigate(
-      `/studio/create?mode=create&flowId=${data.result.flowId}`,
+    const response = await createFlow(
       {
-        state: {
-          mode: "create",
-          flowId: data.result.flowId,
-        },
+        mode: "CREATE",
       },
+      accessToken
     );
+
+    const workflowId = response.result.flowId;
+
+    console.log("POST /flows 전체 응답:", response);
+    console.log("전달받은 workflowId:", workflowId);
+
+    navigate("/studio/create?mode=create", {
+      state: {
+        mode: "create",
+        workflowId: workflowId,
+      },
+    });
+
   } catch (error) {
     console.error("Flow 생성 실패:", error);
   }
@@ -80,61 +83,93 @@ const handleCreateMode = async () => {
 
 // 2. 복사한 워크플로우 이어 편집 (복사본 기반 생성)
 const handleContinueCopiedWorkflow = async () => {
-  try {
-    // TODO: 실제 원본 Flow ID를 UI선택값이나 Props에서 받아오도록 수정
-    const originFlowId = 7; 
-    const accessToken = "여기에_나중에_실제_accessToken";
+  const accessToken =
+    localStorage.getItem("accessToken") ?? undefined;
 
-    // 단순 조회(GET)가 아니라 복사본 생성(POST) API를 호출해야 함
-    const data = await createFlow({
-      mode: "COPY",
-      tutorialId: null,
-      originFlowId: originFlowId,
-    }, accessToken);
+  const workflowId = location.state?.workflowId;
 
-    console.log("생성된 복사본 Flow:", data);
+  console.log("Studio1이 받은 workflowId:", workflowId);
 
-    // 복사 결과로 새로 발급된 data.result.flowId 로 이동
-    navigate(
-      `/studio/create?mode=copied&flowId=${data.result.flowId}`,
-      {
-        state: {
-          mode: "copied",
-          flowId: data.result.flowId,
-        },
-      },
+  if (!workflowId) {
+    console.error(
+      "편집할 workflowId를 Studio1에서 전달받지 못했습니다."
     );
+    return;
+  }
+
+  try {
+    const response = await getFlow(
+      Number(workflowId),
+      accessToken
+    );
+
+    console.log("가져온 Flow:", response);
+    console.log("workflowId:", response.result.flowId);
+    console.log("status:", response.result.status);
+    console.log("blockFlow:", response.result.blockFlow);
+
+    navigate("/studio/create?mode=edit", {
+      state: {
+        mode: "edit",
+        workflowId: response.result.flowId,
+        flowData: response.result,
+      },
+    });
   } catch (error) {
-    console.error("복사본 Flow 생성 실패:", error);
+    console.error("Flow 가져오기 실패:", error);
   }
 };
-
-
 // 3. 시뮬레이션 진입 후 시작 (또는 가이드/튜토리얼 모드)
 const handleStartStudioFromSimulation = async () => {
+  const accessToken =
+    localStorage.getItem("accessToken") ?? undefined;
+
+  const tutorialId = location.state?.tutorialId;
+  const originFlowId = location.state?.originFlowId;
+
   try {
-    const accessToken = 'temporary-token';
+    const response = await createFlow(
+      {
+        mode: tutorialId ? "GUIDED" : "CREATE",
+        tutorialId: tutorialId
+          ? Number(tutorialId)
+          : null,
+        originFlowId: originFlowId
+          ? Number(originFlowId)
+          : null,
+      },
+      accessToken
+    );
 
-    // 튜토리얼/가이드 모드로 생성할 경우 mode: "TUTORIAL" 및 tutorialId 전달
-    const data = await createFlow({
-      mode: "TUTORIAL",
-      tutorialId: 5, // 필요에 따라 지정한 튜토리얼 ID
-      originFlowId: null,
-    }, accessToken);
+    const workflowId = response.result.flowId;
 
-    console.log("생성된 Flow:", data);
+    console.log("Flow 생성 응답:", response);
+    console.log("생성된 workflowId:", workflowId);
+    console.log("tutorialId:", tutorialId);
+    console.log("originFlowId:", originFlowId);
 
-    setIsSimulationOpen(false);
+    const mode = tutorialId
+      ? "guided"
+      : originFlowId
+        ? "copied"
+        : "create";
 
     navigate(
-      `/studio/create?mode=tutorial&flowId=${data.result.flowId}`,
+      `/studio/create?mode=${mode}`,
       {
         state: {
-          mode: "tutorial",
-          flowId: data.result.flowId,
+          mode,
+          workflowId,
+          tutorialId: tutorialId
+            ? Number(tutorialId)
+            : null,
+          originFlowId: originFlowId
+            ? Number(originFlowId)
+            : null,
         },
-      },
+      }
     );
+
   } catch (error) {
     console.error("Flow 생성 실패:", error);
   }
@@ -308,15 +343,14 @@ const handleStartStudioFromSimulation = async () => {
                     흐름 복사본
                   </p>
                 </div>
-
                 <button
                   type="button"
-                  onClick={
-                    handleContinueCopiedWorkflow
-                  }
+                  onClick={() => {
+                    void handleContinueCopiedWorkflow()
+                  }}
                   className="cursor-pointer ml-[24px] inline-flex h-[42px] shrink-0 items-center justify-center rounded-[7px] border border-[#D4D4D8] bg-white px-[18px] text-[13px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
-                >
-                  편집 계속하기
+                  >
+                    편집 계속하기
                 </button>
               </div>
             </section>
