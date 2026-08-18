@@ -34,6 +34,11 @@ import {
 } from '../features/studio/components/inspector/StudioBlockInspector'
 
 import {
+  RESEARCH_GUIDED_TUTORIAL_BLOCK_IDS,
+  ResearchGuidedTutorialPanel,
+} from '../features/studio/guided/ResearchGuidedTutorialPanel'
+
+import {
   STUDIO_STAGE_ORDER,
   getStudioBlockDefinition,
   studioBlockCatalog,
@@ -403,6 +408,16 @@ export function Stdio_create1() {
       locationState?.flowId,
     )
 
+  const tutorialId =
+    parseFlowId(
+      searchParams.get(
+        'tutorialId',
+      ),
+    ) ??
+    parseFlowId(
+      locationState?.tutorialId,
+    )
+
   const mode =
     locationState?.mode ??
     parseStudioMode(
@@ -413,6 +428,17 @@ export function Stdio_create1() {
         ? 'edit'
         : 'create'
     )
+
+  /*
+   * 제출용 공식 튜토리얼은 현재 하나만 지원하므로
+   * guided mode 전체를 자료조사 Guided Studio로 사용합니다.
+   *
+   * BE에서 tutorialId가 달라져도
+   * Guided UI가 사라지지 않도록 ID 자체에는 묶지 않습니다.
+   */
+  const isResearchGuidedTutorial =
+    mode ===
+    'guided'
 
   const [searchText, setSearchText] = useState('')
 
@@ -661,25 +687,50 @@ export function Stdio_create1() {
     ],
   )
 
-    const filteredBlocks = useMemo(() => {
+  const filteredBlocks =
+    useMemo(() => {
       const keyword =
-        searchText.trim().toLowerCase()
+        searchText
+          .trim()
+          .toLowerCase()
 
       /*
-      * 제출 시점에는 실제 Inspector가 완성된 블록만
-      * Palette에 노출합니다.
-      *
-      * Catalog 정의 자체는 유지하므로 저장된 Flow,
-      * block ID 및 다른 데이터 구조에는 영향을 주지 않습니다.
-      */
+       * 제출 시점에는 실제 Inspector가
+       * 완성된 블록만 Palette에 노출합니다.
+       */
       const usableBlocks =
         studioBlockCatalog.filter(
-          (block) =>
-            block.availability ===
-              'available' &&
-            hasStudioBlockInspector(
-              block.id,
-            ),
+          (
+            block,
+          ) => {
+            const hasInspector =
+              block.availability ===
+                'available' &&
+              hasStudioBlockInspector(
+                block.id,
+              )
+
+            if (
+              !hasInspector
+            ) {
+              return false
+            }
+
+            /*
+             * Guided mode에서는
+             * 현재 공식 튜토리얼에서 실제로 사용하는
+             * 5개 블록만 보여줍니다.
+             */
+            if (
+              isResearchGuidedTutorial
+            ) {
+              return RESEARCH_GUIDED_TUTORIAL_BLOCK_IDS.includes(
+                block.id,
+              )
+            }
+
+            return true
+          },
         )
 
       if (!keyword) {
@@ -687,7 +738,9 @@ export function Stdio_create1() {
       }
 
       return usableBlocks.filter(
-        (block) =>
+        (
+          block,
+        ) =>
           block.title
             .toLowerCase()
             .includes(
@@ -699,7 +752,10 @@ export function Stdio_create1() {
               keyword,
             ),
       )
-    }, [searchText])
+    }, [
+      isResearchGuidedTutorial,
+      searchText,
+    ])
 
   const workflowStructureSignature = useMemo(() => {
     return studio.nodes
@@ -1063,7 +1119,7 @@ export function Stdio_create1() {
       flowId,
 
       tutorialId:
-        locationState?.tutorialId,
+        tutorialId,
 
       originFlowId:
         locationState?.originFlowId,
@@ -1384,7 +1440,16 @@ export function Stdio_create1() {
             }}
             className="h-full w-full"
           />
-
+          {isResearchGuidedTutorial && (
+            <ResearchGuidedTutorialPanel
+              nodes={
+                studio.nodes
+              }
+              edges={
+                studio.edges
+              }
+            />
+          )}
           {isHydratingFlow && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
               <div className="rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[22px] text-center shadow-sm">
@@ -1674,18 +1739,25 @@ export function Stdio_create1() {
       {/* 하단 작업 바 */}
       <footer className="flex h-[85px] shrink-0 items-center justify-between border-t-[1.5px] border-[#E4E4E7] bg-white px-[27px] text-[20px]">
         <p className="text-[14px] text-[#9A9AA3]">
-          자유 제작 · 노드 {studio.nodes.length} ·
+          {isResearchGuidedTutorial
+            ? '가이드 모드 · AI로 자료조사 흐름 만들기'
+            : '자유 제작'}{' '}
+          · 노드 {studio.nodes.length} ·
           입력→컨텍스트→프로세스→검토→결과
         </p>
 
         <div className="flex items-center gap-[19px]">
-          <button
-            type="button"
-            onClick={handleValidate}
-            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
-          >
-            검증
-          </button>
+          {!isResearchGuidedTutorial && (
+            <button
+              type="button"
+              onClick={
+                handleValidate
+              }
+              className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            >
+              검증
+            </button>
+          )}
 
           <button
             type="button"
@@ -1702,15 +1774,17 @@ export function Stdio_create1() {
           >
             미리보기
           </button>
-          <button
-            type="button"
-            onClick={
-              handleStartSave
-            }
-            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white hover:bg-[#5558DB]"
-          >
-            저장
-          </button>
+          {!isResearchGuidedTutorial && (
+            <button
+              type="button"
+              onClick={
+                handleStartSave
+              }
+              className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white hover:bg-[#5558DB]"
+            >
+              저장
+            </button>
+          )}
         </div>
       </footer>
     </div>
