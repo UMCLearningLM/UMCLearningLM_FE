@@ -60,6 +60,10 @@ import {
   ThumbnailBox,
 } from '../../components/ui/ThumbnailBox'
 
+import {
+  StudioSimulation,
+} from '../../features/studio/simulation/components/StudioSimulation'
+
 const values = [
   {
     title: '튜토리얼 우선',
@@ -157,6 +161,11 @@ function formatSavedAt(
 export function HomePage() {
   const navigate =
     useNavigate()
+
+  const [
+    isSimulationOpen,
+    setIsSimulationOpen,
+  ] = useState(false)
 
   // API에서 받은 홈 데이터
   const [
@@ -1100,8 +1109,10 @@ export function HomePage() {
 
             <Button
               variant="secondary"
-              onClick={
-                goToTutorials
+              onClick={() =>
+                setIsSimulationOpen(
+                  true,
+                )
               }
               className="cursor-pointer"
             >
@@ -1112,6 +1123,25 @@ export function HomePage() {
       </PageContainer>
 
       <Footer />
+
+      <StudioSimulation
+        open={
+          isSimulationOpen
+        }
+        onClose={() =>
+          setIsSimulationOpen(
+            false,
+          )
+        }
+        onStartStudio={() => {
+          setIsSimulationOpen(
+            false,
+          )
+          navigate(
+            '/studio',
+          )
+        }}
+      />
     </div>
   )
 }
