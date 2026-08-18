@@ -345,7 +345,7 @@ export function Header() {
 
       // 로그인 페이지로 이동
       navigate(
-        '/login',
+        '/',
         {
           replace: true,
         },
