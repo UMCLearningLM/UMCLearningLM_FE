@@ -225,8 +225,9 @@ export function LibraryDetailPage() {
     }
 
     // 복사 API 응답으로 받은 새 flowId를 Studio에 전달합니다.
-    navigate(`/studio/create?flowId=${copiedFlowId}`, {
+    navigate(`/studio/create?mode=copied&flowId=${copiedFlowId}`, {
       state: {
+        mode: 'copied',
         flowId: copiedFlowId,
         originFlowId: libraryItem.id,
       },

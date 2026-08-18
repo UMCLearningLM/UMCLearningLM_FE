@@ -170,8 +170,11 @@ export async function createCopiedFlow(
   try {
     const { data } = await api.post<BaseResponse<CopiedFlowCreateResult>>(
       '/flows',
-      // 공개 흐름 복사는 원본 식별자만 전달합니다.
-      { originFlowId },
+      {
+        mode: 'CREATE',
+        tutorialId: null,
+        originFlowId,
+      },
       { headers: { Authorization: `Bearer ${accessToken}` } },
     )
 
