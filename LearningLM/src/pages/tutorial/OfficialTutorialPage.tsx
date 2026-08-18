@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Footer } from '../../components/layout/Footer'
 import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
@@ -122,15 +122,22 @@ function FilterButton({
 }
 
 export function OfficialTutorialPage() {
-  
-
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedCategory = searchParams.get('category')
+  const initialCategories: TutorialCategory[] =
+    requestedCategory &&
+    tutorialCategories.includes(
+      requestedCategory as TutorialCategory,
+    )
+      ? [requestedCategory as TutorialCategory]
+      : []
   const [keyword, setKeyword] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedLevels, setSelectedLevels] = useState<TutorialLevel[]>([])
   const [selectedCategories, setSelectedCategories] = useState<
     TutorialCategory[]
-  >([])
+  >(initialCategories)
   const [currentPage, setCurrentPage] = useState(0)
   // 서버에서 받은 튜토리얼 목록
   const [tutorialItems, setTutorialItems] = useState<TutorialListItem[]>([])
