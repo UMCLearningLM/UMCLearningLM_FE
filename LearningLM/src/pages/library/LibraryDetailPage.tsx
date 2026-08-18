@@ -18,6 +18,7 @@ import { PageContainer } from '../../components/layout/PageContainer'
 
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
+import { BookmarkFeatureModal } from '../../features/library/component/BookmarkFeatureModal'
 
 import type {
   LibraryFlowColor,
@@ -94,6 +95,9 @@ export function LibraryDetailPage() {
   const [errorMessage, setErrorMessage] = useState('')
 
   const [isBookmarked, setIsBookmarked] =
+    useState(false)
+
+  const [isBookmarkFeatureModalOpen, setIsBookmarkFeatureModalOpen] =
     useState(false)
 
   const [isLiked, setIsLiked] =
@@ -387,7 +391,9 @@ export function LibraryDetailPage() {
               <Button
                 variant="secondary"
                 onClick={() =>
-                  setIsBookmarked((previous) => !previous)
+                  setIsBookmarkFeatureModalOpen(
+                    true,
+                  )
                 }
                 className="cursor-pointer"
               >
@@ -613,6 +619,17 @@ export function LibraryDetailPage() {
       </PageContainer>
 
       <Footer />
+
+      <BookmarkFeatureModal
+        open={
+          isBookmarkFeatureModalOpen
+        }
+        onClose={() =>
+          setIsBookmarkFeatureModalOpen(
+            false,
+          )
+        }
+      />
 
       {isCopyModalOpen && (
         <div
