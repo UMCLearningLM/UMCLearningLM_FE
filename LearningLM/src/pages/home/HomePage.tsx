@@ -681,7 +681,7 @@ export function HomePage() {
                   onClick={() => {
                     navigate(
                       `/official-tutorials?category=${encodeURIComponent(
-                        category.code,
+                        category.title,
                       )}`,
                     )
                   }}
