@@ -1,10 +1,13 @@
 import axios from 'axios'
 
+import {
+  getAccessToken,
+} from './authStorage'
+
 import type {
   ApiErrorResponse,
   BaseResponse,
 } from './types'
-
 //튜토리얼 카테고리
 export interface TutorialCategory {
   categoryId: number
@@ -165,8 +168,7 @@ export async function getTutorialDetail(
 ): Promise<TutorialDetailResponse> {
   // 상세 조회는 선택 인증이므로 저장된 토큰이 있을 때만 사용한다.
   const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
+    getAccessToken()
 
   try {
     // URL의 tutorialId로 해당 튜토리얼 상세 정보를 요청한다.
@@ -199,7 +201,8 @@ export async function getTutorialDetail(
 export async function saveTutorial(
   tutorialId: number,
 ): Promise<TutorialProgress> {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken =
+    getAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 튜토리얼을 저장할 수 있습니다.')
