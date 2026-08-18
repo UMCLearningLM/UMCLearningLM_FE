@@ -231,6 +231,7 @@ export function PublicLibraryPage() {
       )
     })
   }, [
+    libraryItems,
     normalizedKeyword,
     selectedLevels,
     selectedCategories,

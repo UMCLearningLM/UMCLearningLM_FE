@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getAccessToken } from './authStorage'
 
 export interface LibraryCategoryResponse {
   categoryId: number
@@ -106,9 +107,7 @@ function getApiErrorMessage(error: unknown): string {
 
 // 공개된 흐름 목록 조회. 토큰이 있으면 사용자의 좋아요 여부도 반환됨
 export async function getLibraryFlows(): Promise<LibraryFlowsResponse> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
+  const accessToken = getAccessToken()
 
   try {
     const { data } = await api.get<BaseResponse<LibraryFlowsResponse>>(
@@ -136,9 +135,7 @@ export async function getLibraryFlows(): Promise<LibraryFlowsResponse> {
 export async function getLibraryFlowDetail(
   flowId: number,
 ): Promise<LibraryFlowDetail> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
+  const accessToken = getAccessToken()
 
   try {
     const { data } = await api.get<BaseResponse<LibraryFlowDetail>>(
@@ -164,9 +161,7 @@ export async function getLibraryFlowDetail(
 export async function createCopiedFlow(
   originFlowId: number,
 ): Promise<CopiedFlowCreateResult> {
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
+  const accessToken = getAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 흐름을 복사할 수 있습니다.')
@@ -175,8 +170,11 @@ export async function createCopiedFlow(
   try {
     const { data } = await api.post<BaseResponse<CopiedFlowCreateResult>>(
       '/flows',
-      // 공개 흐름 복사는 원본 식별자만 전달합니다.
-      { originFlowId },
+      {
+        mode: 'CREATE',
+        tutorialId: null,
+        originFlowId,
+      },
       { headers: { Authorization: `Bearer ${accessToken}` } },
     )
 
