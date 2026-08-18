@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+  ExpandableSettingBlockEnvironmentProvider,
+} from '../../../Block/components/layouts/ExpandableSettingBlock'
+
+import {
   getStudioBlockDefinition,
   type StudioBlockId,
 } from '../../data/studioBlockCatalog'
@@ -34,11 +38,14 @@ import {
   BackgroundContextInspector,
   DirectContextInputInspector,
   ExclusionContextInspector,
-  ProjectDocumentInspector,
   ReferenceScopeInspector,
   RoleAssignmentInspector,
   UploadedDocumentInspector,
 } from './context/ContextBlockInspectors'
+
+import {
+  ProjectDocumentInspector,
+} from './context/ProjectDocumentInspector'
 
 import {
   ConditionCheckInspector,
@@ -71,41 +78,18 @@ import {
   SummaryInspector,
 } from './process/ProcessCoreInspectors'
 
-import {
-  ClassifyItemsInspector,
-  CompareInspector,
-  OrderInspector,
-} from './process/Process03To05Inspectors'
-
-import {
-  DecomposeFunctionsInspector,
-  FindExceptionsInspector,
-  LinkPolicyInspector,
-} from './process/Process06To08Inspectors'
-
-import {
-  ChecklistTransformInspector,
-  DraftInspector,
-  TableTransformInspector,
-} from './process/Process09To11Inspectors'
-
-import {
-  CallSkillInspector,
-  PromptComposeInspector,
-  QuestionListInspector,
-} from './process/Process12To14Inspectors'
-
-import {
-  PromptFillBlanksInspector,
-  SummaryPromptLayoutInspector,
-} from './process/Process15To16Inspectors'
-
 
 export interface StudioInspectorConfigUpdateOptions {
   summaryValue?: string
   state?: StudioSlotState
 }
 
+/**
+ * 현재 선택된 Stage Node와 연결된 다른 Stage Node의 요약 정보입니다.
+ *
+ * Stdio_create1.tsx의 selectedConnectionInfo가 만드는 데이터 구조와
+ * 동일하게 유지합니다.
+ */
 export interface StudioInspectorConnectedNode {
   id: string
   title: string
@@ -113,6 +97,13 @@ export interface StudioInspectorConnectedNode {
   slots: StudioNodeSlot[]
 }
 
+/**
+ * Inspector에서 이전/다음 연결 노드가 필요한 블록을 위해
+ * 전달하는 연결 정보입니다.
+ *
+ * 연결 정보가 필요하지 않은 Inspector도 같은 공통 Props 타입을
+ * 사용하므로 optional로 둡니다.
+ */
 export interface StudioInspectorConnectionInfo {
   incomingNodes: StudioInspectorConnectedNode[]
   outgoingNodes: StudioInspectorConnectedNode[]
@@ -182,182 +173,140 @@ const studioBlockInspectorRegistry:
       StudioBlockInspectorComponent
     >
   > = {
-    /*
-     * INPUT
-     */
+  /*
+   * INPUT
+   */
 
-    'input-text':
-      UserRequestInspector,
+  'input-text':
+    UserRequestInspector,
 
-    'input-goal':
-      GoalSettingInspector,
+  'input-goal':
+    GoalSettingInspector,
 
-    'input-topic':
-      TopicInputInspector,
+  'input-topic':
+    TopicInputInspector,
 
-    'input-file-upload':
-      FileUploadInspector,
+  'input-file-upload':
+    FileUploadInspector,
 
-    'input-required-document':
-      RequiredDocumentInspector,
+  'input-required-document':
+    RequiredDocumentInspector,
 
-    'input-required-skill':
-      RequiredSkillInspector,
+  'input-required-skill':
+    RequiredSkillInspector,
 
-    'input-target-audience':
-      TargetAudienceInspector,
+  'input-target-audience':
+    TargetAudienceInspector,
 
-    'input-result-usage':
-      ResultUsageInspector,
+  'input-result-usage':
+    ResultUsageInspector,
 
-    'input-constraints':
-      ConstraintInputInspector,
+  'input-constraints':
+    ConstraintInputInspector,
 
-    /*
-     * CONTEXT
-     */
+  /*
+   * CONTEXT
+   */
 
-    'context-project-document':
-      ProjectDocumentInspector,
+  'context-project-document':
+    ProjectDocumentInspector,
 
-    'context-uploaded-document':
-      UploadedDocumentInspector,
+  'context-uploaded-document':
+    UploadedDocumentInspector,
 
-    'context-direct-input':
-      DirectContextInputInspector,
+  'context-direct-input':
+    DirectContextInputInspector,
 
-    'context-reference-scope':
-      ReferenceScopeInspector,
+  'context-reference-scope':
+    ReferenceScopeInspector,
 
-    'context-role':
-      RoleAssignmentInspector,
+  'context-role':
+    RoleAssignmentInspector,
 
-    'context-background':
-      BackgroundContextInspector,
+  'context-background':
+    BackgroundContextInspector,
 
-    'context-exclusion':
-      ExclusionContextInspector,
+  'context-exclusion':
+    ExclusionContextInspector,
 
-          /*
-     * PROCESS
-     */
+  /*
+* PROCESS
+*/
 
-    'process-extract-core':
-      ExtractCoreInspector,
+  'process-extract-core':
+    ExtractCoreInspector,
 
-    'process-summary':
-      SummaryInspector,
-    
-    'process-classify-items':
-      ClassifyItemsInspector,
+  'process-summary':
+    SummaryInspector,
 
-    'process-compare':
-      CompareInspector,
+  /*
+ * REVIEW
+ */
 
-    'process-order':
-      OrderInspector,
+  'review-missing':
+    MissingCheckInspector,
 
-    'process-decompose-functions':
-      DecomposeFunctionsInspector,
+  'review-quality':
+    FormatCheckInspector,
 
-    'process-link-policy':
-      LinkPolicyInspector,
+  'review-condition':
+    ConditionCheckInspector,
 
-    'process-find-exceptions':
-      FindExceptionsInspector,
+  'review-policy-conflict':
+    PolicyConflictInspector,
 
-    'process-draft':
-      DraftInspector,
+  'review-evidence':
+    EvidenceCheckInspector,
 
-    'process-table':
-      TableTransformInspector,
+  'review-deduplicate':
+    DuplicateRemovalInspector,
 
-    'process-checklist':
-      ChecklistTransformInspector,
+  'review-tone':
+    ToneAdjustmentInspector,
 
-    'process-question-list':
-      QuestionListInspector,
+  'review-error-location':
+    ErrorLocationInspector,
 
-    'process-call-skill':
-      CallSkillInspector,
+  'review-fix-guide':
+    FixGuideInspector,
 
-    'process-prompt-compose':
-      PromptComposeInspector,
+  /*
+* OUTPUT
+*/
 
-    'process-prompt-fill-blanks':
-      PromptFillBlanksInspector,
+  'output-text':
+    TextOutputInspector,
 
-    'process-summary-prompt-layout':
-      SummaryPromptLayoutInspector,
+  'output-table':
+    TableOutputInspector,
 
-      /*
-     * REVIEW
-     */
+  'output-checklist':
+    ChecklistOutputInspector,
 
-    'review-missing':
-      MissingCheckInspector,
+  'output-document-draft':
+    DocumentDraftInspector,
 
-    'review-quality':
-      FormatCheckInspector,
+  'output-presentation-summary':
+    PresentationSummaryInspector,
 
-    'review-condition':
-      ConditionCheckInspector,
+  'output-developer-handoff':
+    DeveloperHandoffInspector,
 
-    'review-policy-conflict':
-      PolicyConflictInspector,
+  'output-prompt':
+    PromptOutputInspector,
 
-    'review-evidence':
-      EvidenceCheckInspector,
+  'output-step-guide':
+    StepGuideInspector,
 
-    'review-deduplicate':
-      DuplicateRemovalInspector,
+  'output-save-storage':
+    SaveStorageInspector,
 
-    'review-tone':
-      ToneAdjustmentInspector,
+  'output-public-description':
+    PublicDescriptionInspector,
 
-    'review-error-location':
-      ErrorLocationInspector,
-
-    'review-fix-guide':
-      FixGuideInspector,
-
-          /*
-     * OUTPUT
-     */
-
-    'output-text':
-      TextOutputInspector,
-
-    'output-table':
-      TableOutputInspector,
-
-    'output-checklist':
-      ChecklistOutputInspector,
-
-    'output-document-draft':
-      DocumentDraftInspector,
-
-    'output-presentation-summary':
-      PresentationSummaryInspector,
-
-    'output-developer-handoff':
-      DeveloperHandoffInspector,
-
-    'output-prompt':
-      PromptOutputInspector,
-
-    'output-step-guide':
-      StepGuideInspector,
-
-    'output-save-storage':
-      SaveStorageInspector,
-
-    'output-public-description':
-      PublicDescriptionInspector,
-
-    'output-copyable-flow':
-      CopyableFlowInspector,
-  }
+  'output-copyable-flow':
+    CopyableFlowInspector,
+}
 
 export function hasStudioBlockInspector(
   blockId: string,
@@ -373,7 +322,7 @@ export function hasStudioBlockInspector(
 
   return Boolean(
     studioBlockInspectorRegistry[
-      definition.id as StudioBlockId
+    definition.id as StudioBlockId
     ],
   )
 }
@@ -399,7 +348,7 @@ function GenericStudioBlockInspector({
     slot.required
       ? '필수'
       : definition?.requirement ===
-          'recommended'
+        'recommended'
         ? '권장'
         : '선택'
 
@@ -411,10 +360,10 @@ function GenericStudioBlockInspector({
   const hasConfig =
     Boolean(
       slot.config &&
-        Object.keys(
-          slot.config,
-        ).length >
-          0,
+      Object.keys(
+        slot.config,
+      ).length >
+      0,
     )
 
   return (
@@ -440,8 +389,8 @@ function GenericStudioBlockInspector({
 
             stage
               ? stageColorMap[
-                  stage
-                ]
+              stage
+              ]
               : 'bg-[#9A9AA3]',
           ].join(' ')}
         />
@@ -469,7 +418,7 @@ function GenericStudioBlockInspector({
             slot.required
               ? 'text-[#6366F1]'
               : definition?.requirement ===
-                  'recommended'
+                'recommended'
                 ? 'rounded-[6px] bg-[#EEF4EE] px-[7px] py-[3px] text-[#5FAA81]'
                 : 'rounded-[6px] bg-[#F0F0F3] px-[7px] py-[3px] text-[#9A9AA3]',
           ].join(' ')}
@@ -548,7 +497,7 @@ export function StudioBlockInspector({
 
   const InspectorComponent =
     studioBlockInspectorRegistry[
-      definition.id as StudioBlockId
+    definition.id as StudioBlockId
     ]
 
   if (!InspectorComponent) {
@@ -559,6 +508,9 @@ export function StudioBlockInspector({
         }
         slot={
           slot
+        }
+        connectionInfo={
+          connectionInfo
         }
         onConfigChange={
           onConfigChange
@@ -571,19 +523,26 @@ export function StudioBlockInspector({
   }
 
   return (
-    <InspectorComponent
-      nodeId={
-        nodeId
-      }
-      slot={
-        slot
-      }
-      onConfigChange={
-        onConfigChange
-      }
-      onValueChange={
-        onValueChange
-      }
-    />
+    <ExpandableSettingBlockEnvironmentProvider
+      embeddedInStudioInspector
+    >
+      <InspectorComponent
+        nodeId={
+          nodeId
+        }
+        slot={
+          slot
+        }
+        connectionInfo={
+          connectionInfo
+        }
+        onConfigChange={
+          onConfigChange
+        }
+        onValueChange={
+          onValueChange
+        }
+      />
+    </ExpandableSettingBlockEnvironmentProvider>
   )
 }

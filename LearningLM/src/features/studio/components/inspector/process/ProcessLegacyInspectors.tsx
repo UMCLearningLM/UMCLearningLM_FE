@@ -31,25 +31,25 @@ function LegacyProcessInspector({
 }: LegacyProcessInspectorProps) {
   const storedSummary =
     typeof slot.config?.sourceSummary ===
-    'string'
+      'string'
       ? slot.config.sourceSummary
       : ''
 
   return (
     <ExpandableSettingBlock
       title={definition.title}
-      code={definition.code}
-      stage="PROCESS"
-      description={definition.description}
-      icon={
-        <Wrench
-          size={18}
-        />
-      }
-      category="OPTIONAL"
-      tagCounts={{
-        optional: 1,
-      }}
+      // code={definition.code}
+      // stage="PROCESS"
+      // description={definition.description}
+      // icon={
+      //   <Wrench
+      //     size={18}
+      //   />
+      // }
+      // category="OPTIONAL"
+      // tagCounts={{
+      //   optional: 1,
+      // }}
       required={slot.required}
       className={
         studioInspectorClassName

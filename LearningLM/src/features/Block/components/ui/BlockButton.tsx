@@ -17,20 +17,20 @@ interface BlockButtonCommonProps {
 
 type BlockButtonProps = BlockButtonCommonProps & (
   | {
-      multiple?: false
-      value: string
-      onChange: (value: string) => void
-    }
+    multiple?: false
+    value: string
+    onChange: (value: string) => void
+  }
   | {
-      multiple: true
-      value: string[]
-      onChange: (value: string[]) => void
-    }
+    multiple: true
+    value: string[]
+    onChange: (value: string[]) => void
+  }
 )
 
 const sizeClassMap: Record<BlockButtonSize, string> = {
   sm: 'h-8 px-3 text-xs',
-  md: 'h-10 px-4 text-sm',
+  md: 'h-10 px-3 text-sm',
 }
 
 export function BlockButton(props: BlockButtonProps) {
@@ -45,7 +45,7 @@ export function BlockButton(props: BlockButtonProps) {
   return (
     <div
       className={[
-        'inline-flex',
+        'inline-flex text-[13px] font-bold',
         variant === 'track'
           ? 'rounded-xl border-2 border-slate-200 bg-slate-50 p-1'
           : 'gap-2 bg-transparent',

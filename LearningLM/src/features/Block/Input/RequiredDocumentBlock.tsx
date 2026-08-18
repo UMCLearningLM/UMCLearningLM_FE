@@ -32,11 +32,11 @@ export function RequiredDocumentBlock() {
   return (
     <ExpandableSettingBlock
       title="필요한 문서 확인하기"
-      code="IN-005"
-      stage="INPUT"
-      description="실행 전 필요한 자료 유형과 없을 때의 처리 방식을 정합니다."
-      icon={<BookOpen size={18} />}
-      tagCounts={{ required: 3, optional: 1, missing: missingCount }}
+      // code="IN-005"
+      // stage="INPUT"
+      // description="실행 전 필요한 자료 유형과 없을 때의 처리 방식을 정합니다."
+      // icon={<BookOpen size={18} />}
+      // tagCounts={{ required: 3, optional: 1, missing: missingCount }}
       required
       footer={<div className="flex items-center justify-between"><span className="text-xs text-slate-400">{missingCount > 0 ? `필수 옵션 ${missingCount}개 미입력` : '필수 옵션 입력 완료'}</span><Button size="sm" variant="secondary">검증</Button></div>}
     >

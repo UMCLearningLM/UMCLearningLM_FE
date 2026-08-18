@@ -7,11 +7,15 @@ import { PageContainer } from '../../components/layout/PageContainer'
 import {
   tutorialCategories,
   tutorialLevels,
-  tutorials,
   type TutorialCategory,
   type TutorialLevel,
 } from '../../features/tutorial/data/tutorials'
 import { TutorialCard } from '../../features/tutorial/components/TutorialCard'
+import {
+  getTutorials,
+  type TutorialListItem,
+} from '../../api/tutorial'
+
 
 const MAX_LEVEL_FILTER_COUNT = 2
 const MAX_CATEGORY_FILTER_COUNT = 3
@@ -118,6 +122,8 @@ function FilterButton({
 }
 
 export function OfficialTutorialPage() {
+  
+
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -126,13 +132,81 @@ export function OfficialTutorialPage() {
     TutorialCategory[]
   >([])
   const [currentPage, setCurrentPage] = useState(0)
+  // 서버에서 받은 튜토리얼 목록
+  const [tutorialItems, setTutorialItems] = useState<TutorialListItem[]>([])
+  // API 로딩 상태
+  const [isLoading, setIsLoading] = useState(true)
+  // API 오류 메시지
+  const [error, setError] = useState('')
+  // 화면이 처음 열릴 때 튜토리얼 목록 API 호출
+  useEffect(() => {
+    let isMounted = true
+
+    getTutorials()
+      .then((result) => {
+        // 화면을 이미 벗어났다면 상태를 변경하지 않음
+        if (!isMounted) return
+
+        // result.tutorials를 화면 상태에 저장
+        setTutorialItems(result.tutorials)
+      })
+      .catch((requestError: unknown) => {
+        if (!isMounted) return
+
+        // API 오류 메시지를 저장
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : '튜토리얼 목록을 불러오지 못했습니다.',
+        )
+      })
+      .finally(() => {
+        if (isMounted) {
+          // 요청 성공·실패와 관계없이 로딩 종료
+          setIsLoading(false)
+        }
+      })
+
+    // 다른 화면으로 이동할 때 실행
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // 백엔드 난이도를 화면의 한글 난이도로 변환
+  const levelMap: Record<string, TutorialLevel> = {
+    BEGINNER: '입문',
+    BASIC: '기초',
+    ADVANCED: '응용',
+  }
+
+  // 서버 데이터를 기존 튜토리얼 카드 형식으로 변환
+  const apiTutorials = useMemo(
+    () => tutorialItems.map((tutorial) => ({
+      id: tutorial.tutorialId,
+      title: tutorial.title,
+      description: tutorial.summary,
+      level:
+        levelMap[tutorial.difficulty] ??
+        '입문',
+      categories:
+        tutorial.categories.map(
+          (category) =>
+            category.name as TutorialCategory,
+        ),
+      blockCount: tutorial.blockCount,
+      estimatedMinutes:
+        tutorial.estimatedMinutes,
+    })),
+    [tutorialItems],
+  )
 
   const normalizedKeyword = keyword.trim()
 
   const filteredTutorials = useMemo(() => {
     const loweredKeyword = normalizedKeyword.toLowerCase()
 
-    return tutorials.filter((tutorial) => {
+    return apiTutorials.filter((tutorial) => {
       const matchesKeyword =
         loweredKeyword.length === 0 ||
         tutorial.title.toLowerCase().includes(loweredKeyword) ||
@@ -152,7 +226,12 @@ export function OfficialTutorialPage() {
 
       return matchesKeyword && matchesLevel && matchesCategory
     })
-  }, [normalizedKeyword, selectedCategories, selectedLevels])
+  }, [
+    apiTutorials,
+    normalizedKeyword,
+    selectedCategories,
+    selectedLevels,
+  ])
 
   const totalPages = Math.ceil(filteredTutorials.length / ITEMS_PER_PAGE)
   const canGoPrev = totalPages > 1 && currentPage > 0
@@ -317,7 +396,18 @@ export function OfficialTutorialPage() {
           )}
 
           <div className="relative">
-            {paginatedTutorials.length > 0 ? (
+            {isLoading ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-slate-500">
+                튜토리얼 목록을 불러오는 중입니다.
+              </div>
+            ) : error ? (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm font-semibold text-red-700"
+              >
+                {error}
+              </div>
+            ) : paginatedTutorials.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {paginatedTutorials.map((tutorial) => (
                   <TutorialCard

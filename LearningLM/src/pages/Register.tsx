@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from '../api/api'
 //.\gradlew bootRun 스프링부트 서버 키는 방법
 
 export function Register() {
@@ -29,7 +30,6 @@ export function Register() {
     // 이메일 인증 완료 후 받은 임시 토큰
     const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
 
-
     //인증번호 보낸 여부
     const [isSendCode, setIsSendCode] = useState(false);
     //인증 남은 시간
@@ -53,7 +53,7 @@ export function Register() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-
+    //인증번호
 
 
     //이메일 형식 유효한지
@@ -88,8 +88,8 @@ export function Register() {
         setEmailFormErr(false);
 
         try {
-            const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/email/request",
+            const res = await api.post(
+                "/auth/email/request",
                 {
                     verificationType: "NON_LOGIN",
                     purpose: "SIGNUP",
@@ -129,8 +129,8 @@ export function Register() {
     const verifyCode = async () => {
         //이메일&&인증번호 백엔드 전송
         try {
-            const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/email/verify",
+            const res = await api.post(
+                "/auth/email/verify",
                 {
                     verificationType: "NON_LOGIN",
                     purpose: "SIGNUP",
@@ -154,7 +154,7 @@ export function Register() {
             setIsSendCode(false);
             setVerifiedStatus("succ");
         } catch (error) {
-            console.log("이메일 인증 성공");
+            console.log("이메일 인증 실패");
             console.log(error);
 
             setVerifiedStatus("fail");
@@ -363,8 +363,8 @@ export function Register() {
         );
         try {
             const emailVerificationToken = temporaryAccessToken.trim();
-            const res = await axios.post(
-                "http://3.35.22.232:8080/api/auth/signup",
+            const res = await api.post(
+                "/auth/signup",
                 {
                     email,
                     password: pw,

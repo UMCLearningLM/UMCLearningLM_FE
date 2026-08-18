@@ -31,11 +31,11 @@ export function UserRequestBlock() {
   return (
     <ExpandableSettingBlock
       title="사용자 요청 받기"
-      code="IN-001"
-      stage="INPUT"
-      description="사용자의 요청 문장을 받아 흐름의 출발점으로 사용합니다."
-      icon={<MessageCircleMore size={18} />}
-      tagCounts={{ required: 2, optional: 2, missing: missingCount }}
+      // code="IN-001"
+      // stage="INPUT"
+      // description="사용자의 요청 문장을 받아 흐름의 출발점으로 사용합니다."
+      // icon={<MessageCircleMore size={18} />}
+      // tagCounts={{ required: 2, optional: 2, missing: missingCount }}
       required
       footer={
         <div className="flex items-center justify-between">

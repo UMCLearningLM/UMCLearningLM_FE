@@ -243,13 +243,13 @@ export function TextOutputInspector({
   ) => {
     const nextStructure =
       typeof patch.structure ===
-      'string'
+        'string'
         ? patch.structure
         : structure
 
     const nextLength =
       typeof patch.length ===
-      'string'
+        'string'
         ? patch.length
         : length
 
@@ -308,23 +308,23 @@ export function TextOutputInspector({
   return (
     <ExpandableSettingBlock
       title="텍스트로 출력하기"
-      code="OUT-001"
-      stage="OUTPUT"
-      description="결과를 일반 텍스트 형태로 출력합니다."
-      icon={
-        <AlignLeft
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          Number(
-            !length,
-          ),
-      }}
+      // code="OUT-001"
+      // stage="OUTPUT"
+      // description="결과를 일반 텍스트 형태로 출력합니다."
+      // icon={
+      //   <AlignLeft
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !length,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -585,29 +585,29 @@ export function TableOutputInspector({
         patch.columns,
       )
         ? patch.columns.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : columns
 
     const nextRowKey =
       typeof patch.rowKey ===
-      'string'
+        'string'
         ? patch.rowKey
         : rowKey
 
     const nextCellLength =
       typeof patch.cellLength ===
-      'string'
+        'string'
         ? patch.cellLength
         : cellLength
 
     const complete =
       nextColumns.length >
-        0 &&
+      0 &&
       Boolean(
         nextRowKey,
       )
@@ -661,9 +661,9 @@ export function TableOutputInspector({
 
     if (
       nextIndex <
-        0 ||
+      0 ||
       nextIndex >=
-        columns.length
+      columns.length
     ) {
       return
     }
@@ -715,25 +715,25 @@ export function TableOutputInspector({
   return (
     <ExpandableSettingBlock
       title="표로 출력하기"
-      code="OUT-002"
-      stage="OUTPUT"
-      description="출력할 표의 열 순서, 행 기준과 셀 분량을 지정합니다."
-      icon={
-        <Table2
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 3,
-        sortable: 1,
-        missing:
-          Number(
-            columns.length ===
-              0,
-          ),
-      }}
+      // code="OUT-002"
+      // stage="OUTPUT"
+      // description="출력할 표의 열 순서, 행 기준과 셀 분량을 지정합니다."
+      // icon={
+      //   <Table2
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 3,
+      //   sortable: 1,
+      //   missing:
+      //     Number(
+      //       columns.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -842,7 +842,7 @@ export function TableOutputInspector({
                     disabled={
                       index ===
                       columns.length -
-                        1
+                      1
                     }
                     onClick={() =>
                       moveColumn(
@@ -1097,13 +1097,13 @@ export function ChecklistOutputInspector({
   ) => {
     const nextGroup =
       typeof patch.groupBy ===
-      'string'
+        'string'
         ? patch.groupBy
         : groupBy
 
     const nextState =
       typeof patch.checkState ===
-      'string'
+        'string'
         ? patch.checkState
         : checkState
 
@@ -1160,20 +1160,20 @@ export function ChecklistOutputInspector({
   return (
     <ExpandableSettingBlock
       title="체크리스트로 출력하기"
-      code="OUT-003"
-      stage="OUTPUT"
-      description="결과를 점검용 체크리스트로 출력합니다."
-      icon={
-        <ListChecks
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        conditional: 1,
-        optional: 1,
-      }}
+      // code="OUT-003"
+      // stage="OUTPUT"
+      // description="결과를 점검용 체크리스트로 출력합니다."
+      // icon={
+      //   <ListChecks
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   conditional: 1,
+      //   optional: 1,
+      // }}
       required={
         slot.required
       }
@@ -1336,46 +1336,46 @@ export function ChecklistOutputInspector({
 
         {groupBy !==
           'none' && (
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold text-slate-700">
-                그룹 순서
-              </p>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-700">
+                  그룹 순서
+                </p>
 
-              <span className="text-[11px] font-bold text-amber-600">
-                조건부
-              </span>
-            </div>
+                <span className="text-[11px] font-bold text-amber-600">
+                  조건부
+                </span>
+              </div>
 
-            <div className="space-y-2">
-              {[
-                1,
-                2,
-              ].map(
-                (
-                  index,
-                ) => (
-                  <div
-                    key={
-                      index
-                    }
-                    className="flex h-[52px] items-center rounded-xl border-2 border-slate-200 px-4"
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-700 text-xs font-bold text-white">
-                      {
+              <div className="space-y-2">
+                {[
+                  1,
+                  2,
+                ].map(
+                  (
+                    index,
+                  ) => (
+                    <div
+                      key={
                         index
                       }
-                    </span>
+                      className="flex h-[52px] items-center rounded-xl border-2 border-slate-200 px-4"
+                    >
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-700 text-xs font-bold text-white">
+                        {
+                          index
+                        }
+                      </span>
 
-                    <span className="ml-3 text-sm font-bold text-slate-700">
-                      그룹 이름
-                    </span>
-                  </div>
-                ),
-              )}
+                      <span className="ml-3 text-sm font-bold text-slate-700">
+                        그룹 이름
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </ExpandableSettingBlock>
   )
@@ -1532,25 +1532,25 @@ export function DocumentDraftInspector({
   ) => {
     const nextType =
       typeof patch.documentType ===
-      'string'
+        'string'
         ? patch.documentType
         : documentType
 
     const nextTitle =
       typeof patch.title ===
-      'string'
+        'string'
         ? patch.title
         : title
 
     const nextSection =
       typeof patch.sectionMode ===
-      'string'
+        'string'
         ? patch.sectionMode
         : sectionMode
 
     const nextDepth =
       typeof patch.depth ===
-      'string'
+        'string'
         ? patch.depth
         : depth
 
@@ -1604,23 +1604,23 @@ export function DocumentDraftInspector({
   return (
     <ExpandableSettingBlock
       title="문서 초안으로 출력하기"
-      code="OUT-004"
-      stage="OUTPUT"
-      description="문서 종류와 제목, 목차 방식과 깊이를 지정합니다."
-      icon={
-        <FileText
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 4,
-        optional: 1,
-        missing:
-          Number(
-            !title.trim(),
-          ),
-      }}
+      // code="OUT-004"
+      // stage="OUTPUT"
+      // description="문서 종류와 제목, 목차 방식과 깊이를 지정합니다."
+      // icon={
+      //   <FileText
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 4,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !title.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1729,69 +1729,69 @@ export function DocumentDraftInspector({
 
         {sectionMode ===
           'manual' && (
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold text-slate-700">
-                목차 블록
-              </p>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-700">
+                  목차 블록
+                </p>
 
-              <span className="text-[11px] font-bold text-amber-600">
-                조건부
-              </span>
-            </div>
+                <span className="text-[11px] font-bold text-amber-600">
+                  조건부
+                </span>
+              </div>
 
-            <div className="space-y-2">
-              {[
-                [
-                  '배경 및 목표',
-                  '문제 정의 · 기대 효과',
-                ],
-                [
-                  '주요 기능',
-                  '기능 목록 · 우선순위',
-                ],
-                [
-                  '일정 및 리스크',
-                  '마일스톤 · 위험 요소',
-                ],
-              ].map(
-                (
+              <div className="space-y-2">
+                {[
                   [
-                    heading,
-                    description,
+                    '배경 및 목표',
+                    '문제 정의 · 기대 효과',
                   ],
-                  index,
-                ) => (
-                  <div
-                    key={
-                      heading
-                    }
-                    className="rounded-xl border-2 border-slate-200 px-4 py-3"
-                  >
-                    <div className="flex items-center">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-700 text-xs font-bold text-white">
-                        {index +
-                          1}
-                      </span>
-
-                      <span className="ml-3 text-sm font-bold text-slate-700">
-                        {
-                          heading
-                        }
-                      </span>
-                    </div>
-
-                    <p className="ml-9 mt-1 text-xs text-slate-400">
-                      {
-                        description
+                  [
+                    '주요 기능',
+                    '기능 목록 · 우선순위',
+                  ],
+                  [
+                    '일정 및 리스크',
+                    '마일스톤 · 위험 요소',
+                  ],
+                ].map(
+                  (
+                    [
+                      heading,
+                      description,
+                    ],
+                    index,
+                  ) => (
+                    <div
+                      key={
+                        heading
                       }
-                    </p>
-                  </div>
-                ),
-              )}
+                      className="rounded-xl border-2 border-slate-200 px-4 py-3"
+                    >
+                      <div className="flex items-center">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-700 text-xs font-bold text-white">
+                          {index +
+                            1}
+                        </span>
+
+                        <span className="ml-3 text-sm font-bold text-slate-700">
+                          {
+                            heading
+                          }
+                        </span>
+                      </div>
+
+                      <p className="ml-9 mt-1 text-xs text-slate-400">
+                        {
+                          description
+                        }
+                      </p>
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <div>
           <p className="mb-2 text-xs font-bold text-slate-700">
@@ -1982,25 +1982,25 @@ export function PresentationSummaryInspector({
   ) => {
     const nextType =
       typeof patch.presentationType ===
-      'string'
+        'string'
         ? patch.presentationType
         : presentationType
 
     const nextDuration =
       typeof patch.duration ===
-      'string'
+        'string'
         ? patch.duration
         : duration
 
     const nextAudience =
       typeof patch.audience ===
-      'string'
+        'string'
         ? patch.audience
         : audience
 
     const nextSlideCount =
       typeof patch.slideCount ===
-      'number'
+        'number'
         ? patch.slideCount
         : slideCount
 
@@ -2021,7 +2021,7 @@ export function PresentationSummaryInspector({
       (
         !slideCountRequired ||
         nextSlideCount >
-          0
+        0
       )
 
     const typeLabel =
@@ -2068,24 +2068,24 @@ export function PresentationSummaryInspector({
   return (
     <ExpandableSettingBlock
       title="발표용 요약으로 출력하기"
-      code="OUT-005"
-      stage="OUTPUT"
-      description="발표 시간에 맞는 요약을 출력합니다."
-      icon={
-        <Presentation
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        conditional:
-          Number(
-            presentationType ===
-              'slide-outline',
-          ),
-        optional: 2,
-      }}
+      // code="OUT-005"
+      // stage="OUTPUT"
+      // description="발표 시간에 맞는 요약을 출력합니다."
+      // icon={
+      //   <Presentation
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   conditional:
+      //     Number(
+      //       presentationType ===
+      //       'slide-outline',
+      //     ),
+      //   optional: 2,
+      // }}
       required={
         slot.required
       }
@@ -2098,7 +2098,7 @@ export function PresentationSummaryInspector({
           <span className="text-xs text-slate-400">
             {duration} ·{' '}
             {presentationType ===
-            'slide-outline'
+              'slide-outline'
               ? `슬라이드 ${slideCount}장`
               : '발표 요약'}
           </span>
@@ -2201,93 +2201,93 @@ export function PresentationSummaryInspector({
 
         {presentationType ===
           'slide-outline' && (
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold text-slate-700">
-                슬라이드 수
-              </p>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-700">
+                  슬라이드 수
+                </p>
 
-              <span className="text-[11px] font-bold text-amber-600">
-                조건부
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  save({
-                    slideCount:
-                      Math.max(
-                        0,
-                        slideCount -
-                          1,
-                      ),
-                  })
-                }
-                className="h-[42px] w-[42px] rounded-xl border-2 border-slate-200 font-bold"
-              >
-                −
-              </button>
-
-              <div className="flex h-[42px] min-w-[64px] items-center justify-center rounded-xl border-2 border-slate-200 text-sm font-bold">
-                {
-                  slideCount
-                }
+                <span className="text-[11px] font-bold text-amber-600">
+                  조건부
+                </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  save({
-                    slideCount:
-                      slideCount +
-                      1,
-                  })
-                }
-                className="h-[42px] w-[42px] rounded-xl border-2 border-slate-200 font-bold"
-              >
-                +
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    save({
+                      slideCount:
+                        Math.max(
+                          0,
+                          slideCount -
+                          1,
+                        ),
+                    })
+                  }
+                  className="h-[42px] w-[42px] rounded-xl border-2 border-slate-200 font-bold"
+                >
+                  −
+                </button>
 
-              {[
-                3,
-                5,
-                7,
-              ].map(
-                (
-                  count,
-                ) => (
-                  <button
-                    key={
-                      count
-                    }
-                    type="button"
-                    onClick={() =>
-                      save({
-                        slideCount:
-                          count,
-                      })
-                    }
-                    className={[
-                      'h-[42px] w-[42px] rounded-xl border-2 text-sm font-bold',
-                      slideCount ===
-                      count
-                        ? 'border-indigo-500 bg-indigo-500 text-white'
-                        : 'border-slate-200 text-slate-500',
-                    ].join(
-                      ' ',
-                    )}
-                  >
-                    {
-                      count
-                    }
-                  </button>
-                ),
-              )}
+                <div className="flex h-[42px] min-w-[64px] items-center justify-center rounded-xl border-2 border-slate-200 text-sm font-bold">
+                  {
+                    slideCount
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    save({
+                      slideCount:
+                        slideCount +
+                        1,
+                    })
+                  }
+                  className="h-[42px] w-[42px] rounded-xl border-2 border-slate-200 font-bold"
+                >
+                  +
+                </button>
+
+                {[
+                  3,
+                  5,
+                  7,
+                ].map(
+                  (
+                    count,
+                  ) => (
+                    <button
+                      key={
+                        count
+                      }
+                      type="button"
+                      onClick={() =>
+                        save({
+                          slideCount:
+                            count,
+                        })
+                      }
+                      className={[
+                        'h-[42px] w-[42px] rounded-xl border-2 text-sm font-bold',
+                        slideCount ===
+                          count
+                          ? 'border-indigo-500 bg-indigo-500 text-white'
+                          : 'border-slate-200 text-slate-500',
+                      ].join(
+                        ' ',
+                      )}
+                    >
+                      {
+                        count
+                      }
+                    </button>
+                  ),
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <ToggleSwitch
           checked={
@@ -2432,7 +2432,7 @@ export function DeveloperHandoffInspector({
   ) => {
     const nextTarget =
       typeof patch.target ===
-      'string'
+        'string'
         ? patch.target
         : target
 
@@ -2441,17 +2441,17 @@ export function DeveloperHandoffInspector({
         patch.includedItems,
       )
         ? patch.includedItems.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : includedItems
 
     const nextDetail =
       typeof patch.detailLevel ===
-      'string'
+        'string'
         ? patch.detailLevel
         : detailLevel
 
@@ -2460,7 +2460,7 @@ export function DeveloperHandoffInspector({
         nextTarget,
       ) &&
       nextItems.length >
-        0 &&
+      0 &&
       Boolean(
         nextDetail,
       )
@@ -2492,24 +2492,24 @@ export function DeveloperHandoffInspector({
   return (
     <ExpandableSettingBlock
       title="개발자 전달용으로 출력하기"
-      code="OUT-006"
-      stage="OUTPUT"
-      description="개발 역할에 맞는 전달 문서를 출력합니다."
-      icon={
-        <Code2
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 4,
-        optional: 3,
-        missing:
-          Number(
-            includedItems.length ===
-              0,
-          ),
-      }}
+      // code="OUT-006"
+      // stage="OUTPUT"
+      // description="개발 역할에 맞는 전달 문서를 출력합니다."
+      // icon={
+      //   <Code2
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 4,
+      //   optional: 3,
+      //   missing:
+      //     Number(
+      //       includedItems.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2521,7 +2521,7 @@ export function DeveloperHandoffInspector({
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-400">
             {includedItems.length >
-            0
+              0
               ? `${includedItems.length}개 항목 선택`
               : '포함 항목 미선택'}
           </span>
@@ -2808,7 +2808,7 @@ export function PromptOutputInspector({
   ) => {
     const nextFormat =
       typeof patch.format ===
-      'string'
+        'string'
         ? patch.format
         : format
 
@@ -2848,19 +2848,19 @@ export function PromptOutputInspector({
   return (
     <ExpandableSettingBlock
       title="프롬프트로 출력하기"
-      code="OUT-007"
-      stage="OUTPUT"
-      description="결과를 재사용 가능한 프롬프트로 출력합니다."
-      icon={
-        <Braces
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 1,
-        optional: 4,
-      }}
+      // code="OUT-007"
+      // stage="OUTPUT"
+      // description="결과를 재사용 가능한 프롬프트로 출력합니다."
+      // icon={
+      //   <Braces
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 4,
+      // }}
       required={
         slot.required
       }
@@ -3192,13 +3192,13 @@ export function StepGuideInspector({
   ) => {
     const nextTarget =
       typeof patch.target ===
-      'string'
+        'string'
         ? patch.target
         : target
 
     const nextStepCount =
       typeof patch.stepCount ===
-      'string'
+        'string'
         ? patch.stepCount
         : stepCount
 
@@ -3207,12 +3207,12 @@ export function StepGuideInspector({
         patch.composition,
       )
         ? patch.composition.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : composition
 
     const complete =
@@ -3223,7 +3223,7 @@ export function StepGuideInspector({
         nextStepCount,
       ) &&
       nextComposition.length >
-        0
+      0
 
     onConfigChange(
       {
@@ -3252,31 +3252,31 @@ export function StepGuideInspector({
   return (
     <ExpandableSettingBlock
       title="단계별 가이드로 출력하기"
-      code="OUT-008"
-      stage="OUTPUT"
-      description="따라 할 수 있는 단계별 가이드로 출력합니다."
-      icon={
-        <ListOrdered
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        recommended: 1,
-        missing:
-          Number(
-            !target,
-          ) +
-          Number(
-            !stepCount,
-          ) +
-          Number(
-            composition.length ===
-              0,
-          ),
-      }}
+      // code="OUT-008"
+      // stage="OUTPUT"
+      // description="따라 할 수 있는 단계별 가이드로 출력합니다."
+      // icon={
+      //   <ListOrdered
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   recommended: 1,
+      //   missing:
+      //     Number(
+      //       !target,
+      //     ) +
+      //     Number(
+      //       !stepCount,
+      //     ) +
+      //     Number(
+      //       composition.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -3288,8 +3288,8 @@ export function StepGuideInspector({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
             {target &&
-            stepCount &&
-            composition.length >
+              stepCount &&
+              composition.length >
               0
               ? '가이드 설정 완료'
               : '필수 설정 미완료'}
@@ -3580,25 +3580,25 @@ export function SaveStorageInspector({
   ) => {
     const nextTarget =
       typeof patch.saveTarget ===
-      'string'
+        'string'
         ? patch.saveTarget
         : saveTarget
 
     const nextTitle =
       typeof patch.title ===
-      'string'
+        'string'
         ? patch.title
         : title
 
     const nextLocation =
       typeof patch.location ===
-      'string'
+        'string'
         ? patch.location
         : location
 
     const nextTiming =
       typeof patch.saveTiming ===
-      'string'
+        'string'
         ? patch.saveTiming
         : saveTiming
 
@@ -3649,26 +3649,26 @@ export function SaveStorageInspector({
   return (
     <ExpandableSettingBlock
       title="내 저장소에 저장하기"
-      code="OUT-009"
-      stage="OUTPUT"
-      description="저장할 대상과 위치, 저장 시점을 지정합니다."
-      icon={
-        <Save
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 4,
-        optional: 1,
-        missing:
-          Number(
-            !title.trim(),
-          ) +
-          Number(
-            !saveTiming,
-          ),
-      }}
+      // code="OUT-009"
+      // stage="OUTPUT"
+      // description="저장할 대상과 위치, 저장 시점을 지정합니다."
+      // icon={
+      //   <Save
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 4,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !title.trim(),
+      //     ) +
+      //     Number(
+      //       !saveTiming,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -3680,7 +3680,7 @@ export function SaveStorageInspector({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
             {title.trim() &&
-            saveTiming
+              saveTiming
               ? '내 흐름에 비공개 저장'
               : '저장 설정 미완료'}
           </span>
@@ -3982,31 +3982,31 @@ export function PublicDescriptionInspector({
   ) => {
     const nextTitle =
       typeof patch.publicTitle ===
-      'string'
+        'string'
         ? patch.publicTitle
         : publicTitle
 
     const nextDescription =
       typeof patch.shortDescription ===
-      'string'
+        'string'
         ? patch.shortDescription
         : shortDescription
 
     const nextPurpose =
       typeof patch.purpose ===
-      'string'
+        'string'
         ? patch.purpose
         : purpose
 
     const nextDifficulty =
       typeof patch.difficulty ===
-      'string'
+        'string'
         ? patch.difficulty
         : difficulty
 
     const nextTags =
       typeof patch.tags ===
-      'string'
+        'string'
         ? patch.tags
         : tags
 
@@ -4052,35 +4052,35 @@ export function PublicDescriptionInspector({
   return (
     <ExpandableSettingBlock
       title="공개용 설명 만들기"
-      code="OUT-010"
-      stage="OUTPUT"
-      description="흐름을 공개할 때 보일 소개 정보를 작성합니다."
-      icon={
-        <Globe2
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 5,
-        optional: 1,
-        missing:
-          Number(
-            !publicTitle.trim(),
-          ) +
-          Number(
-            !shortDescription.trim(),
-          ) +
-          Number(
-            !purpose,
-          ) +
-          Number(
-            !difficulty,
-          ) +
-          Number(
-            !tags.trim(),
-          ),
-      }}
+      // code="OUT-010"
+      // stage="OUTPUT"
+      // description="흐름을 공개할 때 보일 소개 정보를 작성합니다."
+      // icon={
+      //   <Globe2
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 5,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !publicTitle.trim(),
+      //     ) +
+      //     Number(
+      //       !shortDescription.trim(),
+      //     ) +
+      //     Number(
+      //       !purpose,
+      //     ) +
+      //     Number(
+      //       !difficulty,
+      //     ) +
+      //     Number(
+      //       !tags.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -4395,25 +4395,25 @@ export function CopyableFlowInspector({
   ) => {
     const nextCopyAllowed =
       typeof patch.copyAllowed ===
-      'boolean'
+        'boolean'
         ? patch.copyAllowed
         : copyAllowed
 
     const nextTarget =
       typeof patch.copyTarget ===
-      'string'
+        'string'
         ? patch.copyTarget
         : copyTarget
 
     const nextDocumentHandling =
       typeof patch.documentLinkHandling ===
-      'string'
+        'string'
         ? patch.documentLinkHandling
         : documentLinkHandling
 
     const nextReset =
       typeof patch.inputReset ===
-      'string'
+        'string'
         ? patch.inputReset
         : inputReset
 
@@ -4463,29 +4463,29 @@ export function CopyableFlowInspector({
   return (
     <ExpandableSettingBlock
       title="복사 가능한 흐름으로 만들기"
-      code="OUT-011"
-      stage="OUTPUT"
-      description="다른 사용자가 복사해 쓸 수 있게 흐름을 정리합니다."
-      icon={
-        <Copy
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 5,
-        optional: 1,
-        missing:
-          Number(
-            !copyAllowed,
-          ) +
-          Number(
-            !documentLinkHandling,
-          ) +
-          Number(
-            !inputReset,
-          ),
-      }}
+      // code="OUT-011"
+      // stage="OUTPUT"
+      // description="다른 사용자가 복사해 쓸 수 있게 흐름을 정리합니다."
+      // icon={
+      //   <Copy
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 5,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !copyAllowed,
+      //     ) +
+      //     Number(
+      //       !documentLinkHandling,
+      //     ) +
+      //     Number(
+      //       !inputReset,
+      //     ),
+      // }}
       required={
         slot.required
       }

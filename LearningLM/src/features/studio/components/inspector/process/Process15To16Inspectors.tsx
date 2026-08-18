@@ -140,31 +140,31 @@ export function PromptFillBlanksInspector({
   ) => {
     const nextTemplate =
       typeof patch.template ===
-      'string'
+        'string'
         ? patch.template
         : template
 
     const nextRole =
       typeof patch.roleValue ===
-      'string'
+        'string'
         ? patch.roleValue
         : roleValue
 
     const nextTask =
       typeof patch.taskValue ===
-      'string'
+        'string'
         ? patch.taskValue
         : taskValue
 
     const nextTarget =
       typeof patch.targetValue ===
-      'string'
+        'string'
         ? patch.targetValue
         : targetValue
 
     const nextOutput =
       typeof patch.outputValue ===
-      'string'
+        'string'
         ? patch.outputValue
         : outputValue
 
@@ -187,7 +187,7 @@ export function PromptFillBlanksInspector({
         nextTemplate,
       ) &&
       filledCount ===
-        4
+      4
 
     onConfigChange(
       {
@@ -270,7 +270,7 @@ export function PromptFillBlanksInspector({
     if (
       !draggedWord ||
       draggedWord.type !==
-        targetType
+      targetType
     ) {
       return
     }
@@ -345,7 +345,7 @@ export function PromptFillBlanksInspector({
         }
         title={
           promptSlotLabelMap[
-            type
+          type
           ]
         }
         className={[
@@ -355,10 +355,10 @@ export function PromptFillBlanksInspector({
               'role'
               ? 'border-[#4A5E8A] bg-[#EDF1F8] text-[#4A5E8A]'
               : type ===
-                  'target'
+                'target'
                 ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
                 : type ===
-                    'task'
+                  'task'
                   ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
                   : 'border-violet-500 bg-violet-50 text-violet-600'
             : canDrop
@@ -377,22 +377,22 @@ export function PromptFillBlanksInspector({
   return (
     <ExpandableSettingBlock
       title="빈칸 프롬프트 채우기"
-      code="PR-015"
-      stage="PROCESS"
-      description="단어 카드를 문장의 빈칸으로 끌어다 놓습니다."
-      icon={
-        <Puzzle
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        conditional: 4,
-        missing:
-          4 -
-          filledCount,
-      }}
+      // code="PR-015"
+      // stage="PROCESS"
+      // description="단어 카드를 문장의 빈칸으로 끌어다 놓습니다."
+      // icon={
+      //   <Puzzle
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   conditional: 4,
+      //   missing:
+      //     4 -
+      //     filledCount,
+      // }}
       required={
         slot.required
       }
@@ -408,24 +408,23 @@ export function PromptFillBlanksInspector({
             {' '}채움
             {filledCount <
               4
-              ? ` · ${
-                  [
-                    !taskValue &&
-                      '작업',
-                    !outputValue &&
-                      '출력',
-                    !roleValue &&
-                      '역할',
-                    !targetValue &&
-                      '대상',
-                  ]
-                    .filter(
-                      Boolean,
-                    )
-                    .join(
-                      '·',
-                    )
-                } 남음`
+              ? ` · ${[
+                !taskValue &&
+                '작업',
+                !outputValue &&
+                '출력',
+                !roleValue &&
+                '역할',
+                !targetValue &&
+                '대상',
+              ]
+                .filter(
+                  Boolean,
+                )
+                .join(
+                  '·',
+                )
+              } 남음`
               : ' · 완료'}
           </span>
 
@@ -545,7 +544,7 @@ export function PromptFillBlanksInspector({
                       'task'
                       ? 'border-indigo-500 bg-indigo-500 text-white'
                       : card.type ===
-                          'output'
+                        'output'
                         ? 'border-violet-500 bg-violet-500 text-white'
                         : 'border-dashed border-indigo-400 text-indigo-500',
                   ].join(
@@ -717,11 +716,11 @@ export function SummaryPromptLayoutInspector({
   ) => {
     const nextOrder =
       'cardOrder' in
-      patch
+        patch
         ? readStringArray(
-            patch.cardOrder,
-            cardOrder,
-          )
+          patch.cardOrder,
+          cardOrder,
+        )
         : cardOrder
 
     const complete =
@@ -806,24 +805,24 @@ export function SummaryPromptLayoutInspector({
   return (
     <ExpandableSettingBlock
       title="요약 프롬프트 배치하기"
-      code="PR-016"
-      stage="PROCESS"
-      description="역할·작업·참고·출력 카드를 색과 아이콘으로 구분해 배치합니다."
-      icon={
-        <Layers3
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        optional: 1,
-        missing:
-          Number(
-            cardOrder.length ===
-              0,
-          ),
-      }}
+      // code="PR-016"
+      // stage="PROCESS"
+      // description="역할·작업·참고·출력 카드를 색과 아이콘으로 구분해 배치합니다."
+      // icon={
+      //   <Layers3
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       cardOrder.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -874,7 +873,7 @@ export function SummaryPromptLayoutInspector({
               ) => {
                 const card =
                   summaryPromptCardMeta[
-                    cardId
+                  cardId
                   ]
 
                 if (
@@ -924,10 +923,10 @@ export function SummaryPromptLayoutInspector({
                             'role'
                             ? 'bg-[#4A5E8A]'
                             : cardId ===
-                                'task'
+                              'task'
                               ? 'bg-indigo-500'
                               : cardId ===
-                                  'reference'
+                                'reference'
                                 ? 'bg-amber-700'
                                 : 'bg-emerald-700',
                         ].join(
@@ -944,7 +943,7 @@ export function SummaryPromptLayoutInspector({
 
                     <p className="text-xs leading-5 text-slate-500">
                       {cardId ===
-                      'reference'
+                        'reference'
                         ? referenceNode
                           ? `← ${referenceNode.title} 노드`
                           : '연결된 참조 노드 없음'

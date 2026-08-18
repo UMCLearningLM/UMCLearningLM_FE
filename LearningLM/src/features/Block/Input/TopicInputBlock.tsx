@@ -1,6 +1,6 @@
 import { Hash } from 'lucide-react'
 import { useState } from 'react'
-import { Button, Textarea} from '../../../components/ui'
+import { Button, Textarea } from '../../../components/ui'
 import { ConnectedSegmentedControl } from '../components/ui/ConnectedSegmentedControl'
 import { ExpandableSettingBlock } from '../components/layouts/ExpandableSettingBlock'
 
@@ -29,11 +29,11 @@ export function TopicInputBlock() {
   return (
     <ExpandableSettingBlock
       title="주제 입력하기"
-      code="IN-003"
-      stage="INPUT"
-      description="대표 주제와 키워드를 입력해 작업 범위를 정합니다."
-      icon={<Hash size={19} />}
-      tagCounts={{ required: 1, optional: 3, sortable: 1, missing: missingCount }}
+      // code="IN-003"
+      // stage="INPUT"
+      // description="대표 주제와 키워드를 입력해 작업 범위를 정합니다."
+      // icon={<Hash size={19} />}
+      // tagCounts={{ required: 1, optional: 3, sortable: 1, missing: missingCount }}
       required
       footer={
         <div className="flex items-center justify-between gap-4">

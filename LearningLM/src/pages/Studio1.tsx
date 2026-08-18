@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 
 import {
+  useLocation,
   useNavigate,
 } from 'react-router-dom'
 
@@ -24,121 +25,271 @@ import {
   StudioSimulation,
 } from '../features/studio/simulation/components/StudioSimulation'
 
-import { createFlow } from "../pages/api/StudioApi";
+import {
+  createFlow,
+  getFlow,
+} from '../pages/api/StudioApi'
 
-
+type StudioEntryState = {
+  flowId?: number
+  tutorialId?: number
+  originFlowId?: number
+}
 
 export function Studio1() {
   const navigate =
     useNavigate()
+
+  const location =
+    useLocation()
+
+  const locationState =
+    (
+      location.state as
+        | StudioEntryState
+        | null
+    ) ?? null
 
   const [
     isSimulationOpen,
     setIsSimulationOpen,
   ] = useState(false)
 
+  /**
+   * 공식 튜토리얼을 선택하는 화면으로 이동합니다.
+   */
   const handleGuidedMode = () => {
-    /*
-     * 현재 가이드 모드는
-     * 공식 튜토리얼을 선택한 뒤
-     * tutorialId를 가지고 Studio로
-     * 진입하는 구조입니다.
-     */
     navigate(
       '/official-tutorials',
     )
   }
 
-  // 1. 자유 제작 모드 (빈 캔버스 생성)
-const handleCreateMode = async () => {
-  try {
-    const accessToken = localStorage.getItem('accessToken') || '';
-    
-    // Swagger Body에 맞춰 mode: "CREATE" 전달
-    const data = await createFlow({
-      mode: "CREATE",
-      tutorialId: null,
-      originFlowId: null,
-    }, accessToken);
+  /**
+   * 자유 제작 모드
+   *
+   * 1. POST /flows
+   * 2. 백엔드에서 flowId 발급
+   * 3. Studio URL + state에 flowId 저장
+   */
+  const handleCreateMode =
+    async () => {
+      const accessToken =
+        localStorage.getItem(
+          'accessToken',
+        ) ?? undefined
 
-    console.log("생성된 Flow:", data);
+      try {
+        const response =
+          await createFlow(
+            {
+              mode:
+                'CREATE',
+            },
+            accessToken,
+          )
 
-    navigate(
-      `/studio/create?mode=create&flowId=${data.result.flowId}`,
-      {
-        state: {
-          mode: "create",
-          flowId: data.result.flowId,
-        },
-      },
-    );
-  } catch (error) {
-    console.error("Flow 생성 실패:", error);
-  }
-};
+        const flowId =
+          response.result.flowId
 
+        console.log(
+          'POST /flows 전체 응답:',
+          response,
+        )
 
-// 2. 복사한 워크플로우 이어 편집 (복사본 기반 생성)
-const handleContinueCopiedWorkflow = async () => {
-  try {
-    // TODO: 실제 원본 Flow ID를 UI선택값이나 Props에서 받아오도록 수정
-    const originFlowId = 7; 
-    const accessToken = "여기에_나중에_실제_accessToken";
+        console.log(
+          '생성된 flowId:',
+          flowId,
+        )
 
-    // 단순 조회(GET)가 아니라 복사본 생성(POST) API를 호출해야 함
-    const data = await createFlow({
-      mode: "COPY",
-      tutorialId: null,
-      originFlowId: originFlowId,
-    }, accessToken);
+        navigate(
+          `/studio/create?mode=create&flowId=${flowId}`,
+          {
+            state: {
+              mode:
+                'create',
 
-    console.log("생성된 복사본 Flow:", data);
+              flowId,
+            },
+          },
+        )
+      } catch (error) {
+        console.error(
+          'Flow 생성 실패:',
+          error,
+        )
+      }
+    }
 
-    // 복사 결과로 새로 발급된 data.result.flowId 로 이동
-    navigate(
-      `/studio/create?mode=copied&flowId=${data.result.flowId}`,
-      {
-        state: {
-          mode: "copied",
-          flowId: data.result.flowId,
-        },
-      },
-    );
-  } catch (error) {
-    console.error("복사본 Flow 생성 실패:", error);
-  }
-};
+  /**
+   * 복사된 Flow 이어 편집
+   *
+   * 다른 화면에서 이미 새 복사본 Flow를 만든 뒤
+   * flowId를 전달했다고 가정합니다.
+   */
+  const handleContinueCopiedWorkflow =
+    async () => {
+      const accessToken =
+        localStorage.getItem(
+          'accessToken',
+        ) ?? undefined
 
+      const flowId =
+        locationState?.flowId
 
-// 3. 시뮬레이션 진입 후 시작 (또는 가이드/튜토리얼 모드)
-const handleStartStudioFromSimulation = async () => {
-  try {
-    const accessToken = 'temporary-token';
+      console.log(
+        'Studio1이 받은 flowId:',
+        flowId,
+      )
 
-    // 튜토리얼/가이드 모드로 생성할 경우 mode: "TUTORIAL" 및 tutorialId 전달
-    const data = await createFlow({
-      mode: "TUTORIAL",
-      tutorialId: 5, // 필요에 따라 지정한 튜토리얼 ID
-      originFlowId: null,
-    }, accessToken);
+      if (!flowId) {
+        console.error(
+          '편집할 flowId를 전달받지 못했습니다.',
+        )
+        return
+      }
 
-    console.log("생성된 Flow:", data);
+      try {
+        const response =
+          await getFlow(
+            flowId,
+            accessToken,
+          )
 
-    setIsSimulationOpen(false);
+        console.log(
+          '가져온 Flow:',
+          response,
+        )
 
-    navigate(
-      `/studio/create?mode=tutorial&flowId=${data.result.flowId}`,
-      {
-        state: {
-          mode: "tutorial",
-          flowId: data.result.flowId,
-        },
-      },
-    );
-  } catch (error) {
-    console.error("Flow 생성 실패:", error);
-  }
-};
+        console.log(
+          'flowId:',
+          response.result.flowId,
+        )
+
+        console.log(
+          'status:',
+          response.result.status,
+        )
+
+        console.log(
+          'blockFlow:',
+          response.result.blockFlow,
+        )
+
+        navigate(
+          `/studio/create?mode=edit&flowId=${response.result.flowId}`,
+          {
+            state: {
+              mode:
+                'edit',
+
+              flowId:
+                response.result.flowId,
+
+              flowData:
+                response.result,
+            },
+          },
+        )
+      } catch (error) {
+        console.error(
+          'Flow 가져오기 실패:',
+          error,
+        )
+      }
+    }
+
+  /**
+   * 시뮬레이션 완료 후 Studio 시작
+   *
+   * tutorialId가 있으면 GUIDED Flow,
+   * originFlowId가 있으면 원본 Flow 기반,
+   * 둘 다 없으면 자유 제작 Flow를 생성합니다.
+   */
+  const handleStartStudioFromSimulation =
+    async () => {
+      const accessToken =
+        localStorage.getItem(
+          'accessToken',
+        ) ?? undefined
+
+      const tutorialId =
+        locationState?.tutorialId
+
+      const originFlowId =
+        locationState?.originFlowId
+
+      try {
+        const response =
+          await createFlow(
+            {
+              mode:
+                tutorialId
+                  ? 'GUIDED'
+                  : 'CREATE',
+
+              tutorialId:
+                tutorialId ??
+                null,
+
+              originFlowId:
+                originFlowId ??
+                null,
+            },
+            accessToken,
+          )
+
+        const flowId =
+          response.result.flowId
+
+        const mode =
+          tutorialId
+            ? 'guided'
+            : originFlowId
+              ? 'copied'
+              : 'create'
+
+        console.log(
+          'Flow 생성 응답:',
+          response,
+        )
+
+        console.log(
+          '생성된 flowId:',
+          flowId,
+        )
+
+        console.log(
+          'tutorialId:',
+          tutorialId,
+        )
+
+        console.log(
+          'originFlowId:',
+          originFlowId,
+        )
+
+        navigate(
+          `/studio/create?mode=${mode}&flowId=${flowId}`,
+          {
+            state: {
+              mode,
+
+              flowId,
+
+              tutorialId,
+
+              originFlowId,
+            },
+          },
+        )
+      } catch (error) {
+        console.error(
+          'Flow 생성 실패:',
+          error,
+        )
+      }
+    }
+
   return (
     <>
       <div className="flex min-h-screen flex-col bg-[#F6F6F8] text-[#27272A]">
@@ -203,7 +354,7 @@ const handleStartStudioFromSimulation = async () => {
                 <button
                   type="button"
                   onClick={
-                    handleStartStudioFromSimulation
+                    handleGuidedMode
                   }
                   className="cursor-pointer mt-[20px] flex h-[40px] w-full items-center justify-center rounded-[6px] bg-[#6366F1] text-[14px] font-bold text-white transition hover:bg-[#5558E8]"
                 >
@@ -311,9 +462,9 @@ const handleStartStudioFromSimulation = async () => {
 
                 <button
                   type="button"
-                  onClick={
-                    handleContinueCopiedWorkflow
-                  }
+                  onClick={() => {
+                    void handleContinueCopiedWorkflow()
+                  }}
                   className="cursor-pointer ml-[24px] inline-flex h-[42px] shrink-0 items-center justify-center rounded-[7px] border border-[#D4D4D8] bg-white px-[18px] text-[13px] font-bold text-[#27272A] transition hover:border-[#6366F1] hover:text-[#6366F1]"
                 >
                   편집 계속하기

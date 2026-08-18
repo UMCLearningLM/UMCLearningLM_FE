@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import { BottomBar } from "./component/BottomBar";
 import text from "../assets/text.svg";
 import flag from "../assets/flag-checkered.svg"
@@ -40,22 +39,6 @@ export function RV_001() {
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[550px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-6 pt-[26px] pb-6">
-                    <PageHeader
-                        title="누락 확인하기"
-                        subTitle="RV-001 · REVIEW"
-                        content="빠진 항목이 없는지 기준에 따라 점검합니다."
-                        text1="필수2"
-                        text2="조건부1"
-                        text3="선택1"
-                        bor1="6366F1"
-                        bor2="9CA3AF"
-                        bor3="5FAA81"
-                        bg1="DFE0FF"
-                        bg2="F1F1F2"
-                        bg3="DFF2DF"
-                        pageState="RECOMMENDED"
-                        imgState={flag}
-                    />
                     <div className="w-[548px] h-[1.5px] mt-[8px] ml-[-24px] bg-[#E4E4E7]" />
                     <div className="px-[50px] mt-[-3px] "></div>
                     {/* Checkbox row */}

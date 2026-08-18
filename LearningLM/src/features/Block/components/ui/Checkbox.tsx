@@ -79,7 +79,7 @@ export function Checkbox({
             <label
               key={option.value}
               className={[
-                'flex min-h-[76px] items-center gap-3 rounded-2xl border-2 bg-white px-4 py-3 text-sm outline-none transition focus-within:ring-4 focus-within:ring-indigo-100',
+                'flex min-h-[76px] items-center gap-3 rounded-[10px] border-2 bg-white px-4 py-3 text-sm outline-none transition focus-within:ring-4 focus-within:ring-indigo-100',
                 orientation === 'horizontal' ? 'min-w-36 flex-1' : 'w-full',
                 isSelected
                   ? 'border-indigo-500'

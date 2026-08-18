@@ -79,18 +79,18 @@ export function FileUploadBlock() {
   return (
     <ExpandableSettingBlock
       title="파일 업로드 받기"
-      code="IN-004"
-      stage="INPUT"
-      description="문서·이미지를 드래그해 업로드합니다. 카드별 역할과 우선순위를 정할 수 있습니다."
-      icon={<Paperclip size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 1,
-        sortable: 1,
-        missing: missingCount,
-        error: errorCount,
-      }}
+      // code="IN-004"
+      // stage="INPUT"
+      // description="문서·이미지를 드래그해 업로드합니다. 카드별 역할과 우선순위를 정할 수 있습니다."
+      // icon={<Paperclip size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      //   sortable: 1,
+      //   missing: missingCount,
+      //   error: errorCount,
+      // }}
       required
       footer={
         <div className="flex items-center justify-between gap-4">
@@ -101,7 +101,8 @@ export function FileUploadBlock() {
                 ? `필수 옵션 ${missingCount}개 미입력`
                 : '파일 설정 완료'}
           </span>
-          <Button size="sm">저장</Button>
+          <Button
+            type='button' size="sm">저장</Button>
         </div>
       }
     >

@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type DragEvent,
 } from 'react'
@@ -15,22 +16,21 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom'
 
 import { Header } from '../components/layout/Header'
 import searchRound from '../assets/searchRound.svg'
 import searchStick from '../assets/searchStick.svg'
 import dashed from '../assets/dashed.png'
-
-import {
-  StudioBlockInspector,
-  type StudioInspectorConnectionInfo,
-} from '../features/studio/components/inspector/StudioBlockInspector'
-
 import {
   studioNodeTypes,
   type StudioFlowNodeInstance,
 } from '../features/studio/components/node/StudioFlowNode'
+
+import {
+  StudioBlockInspector,
+} from '../features/studio/components/inspector/StudioBlockInspector'
 
 import {
   STUDIO_STAGE_ORDER,
@@ -56,13 +56,20 @@ import type {
   StudioWorkflowValidationResult,
 } from '../features/studio/types/studioValidation'
 
-import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
-import { useRef } from 'react'
+import type {
+  StudioSaveDraft,
+  StudioSaveMode,
+  StudioSaveNavigationState,
+} from '../features/studio/types/studioSave'
 
 import {
-  FlowPreviewResponse,
-  saveFlow,
-  type FlowSavePayload,
+  hydrateStudioFlowFromApi,
+} from '../features/studio/utils/hydrateStudioFlow'
+
+import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
+
+import {
+  getFlow,
 } from './api/StudioApi'
 
 type ValidationCheckStatus =
@@ -79,18 +86,51 @@ type ValidationCheck = {
   result: string
 }
 
-type StudioNavigationState = {
-  mode?: 'guided' | 'create' | 'copied' | 'edit'
-  tutorialId?: number
-  copiedLibraryItemId?: number
-  workflowId?: number
-  nodes?: StudioFlowNodeInstance[]
-  edges?: Edge[]
-  validationResult?: StudioWorkflowValidationResult | null
+function parseFlowId(
+  value: string | number | null | undefined,
+): number | undefined {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return undefined
+  }
+
+  const parsed = Number(value)
+
+  return Number.isInteger(parsed) && parsed > 0
+    ? parsed
+    : undefined
 }
 
+function parseStudioMode(
+  value: string | null,
+): StudioSaveMode | undefined {
+  if (
+    value === 'guided' ||
+    value === 'create' ||
+    value === 'copied' ||
+    value === 'edit' ||
+    value === 'preview'
+  ) {
+    return value
+  }
 
+  return undefined
+}
 
+function getAccessToken() {
+  return (
+    localStorage.getItem(
+      'accessToken',
+    ) ??
+    sessionStorage.getItem(
+      'accessToken',
+    ) ??
+    undefined
+  )
+}
 
 const stageStyleMap: Record<
   StudioStage,
@@ -344,12 +384,44 @@ function ValidationRow({
 export function Stdio_create1() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { workflowId } = useParams()
+  const { flowId: routeFlowId } =
+    useParams<{ flowId?: string }>()
+  const [searchParams] = useSearchParams()
 
   const locationState =
-    (location.state as StudioNavigationState | null) ?? null
+    (
+      location.state as
+      | StudioSaveNavigationState
+      | null
+    ) ?? null
+
+  const flowId =
+    parseFlowId(
+      searchParams.get('flowId'),
+    ) ??
+    parseFlowId(routeFlowId) ??
+    parseFlowId(
+      locationState?.flowId,
+    )
+
+  const mode =
+    locationState?.mode ??
+    parseStudioMode(
+      searchParams.get('mode'),
+    ) ??
+    (
+      flowId
+        ? 'edit'
+        : 'create'
+    )
 
   const [searchText, setSearchText] = useState('')
+
+  const inspectorScrollRef =
+    useRef<HTMLDivElement | null>(null)
+
+  const [openInspectorSlotId, setOpenInspectorSlotId] =
+    useState<string | null>(null)
   const [openValidationId, setOpenValidationId] =
     useState<number | null>(null)
   const [validationResult, setValidationResult] =
@@ -357,10 +429,35 @@ export function Stdio_create1() {
       locationState?.validationResult ?? null,
     )
 
+  const [
+    loadedSaveDraft,
+    setLoadedSaveDraft,
+  ] =
+    useState<StudioSaveDraft | undefined>(
+      locationState?.saveDraft,
+    )
+
+  const [
+    isHydratingFlow,
+    setIsHydratingFlow,
+  ] =
+    useState(false)
+
+  const [
+    hydrationError,
+    setHydrationError,
+  ] =
+    useState<string | null>(
+      null,
+    )
+
   /*
-   * API 연동 전 라우트 연결 단계에서는 location.state로 넘겨진
-   * 노드와 연결선을 초기값으로 재사용합니다.
-   * 전달된 값이 없으면 기존 요구사항대로 노드 0개로 시작합니다.
+   * 같은 페이지에서 저장 검토/미리보기에서 돌아온 경우에는
+   * location.state의 React Flow 상태를 즉시 재사용합니다.
+   *
+   * 브라우저 새로고침 또는 내 저장소에서 편집으로 진입해
+   * state가 없는 경우에는 아래 hydration effect가
+   * GET /flows/{flowId} 응답으로 캔버스를 복원합니다.
    */
   const studio = useStudioEditor({
     initialNodes: locationState?.nodes ?? [],
@@ -370,90 +467,190 @@ export function Stdio_create1() {
   const selectedNode =
     studio.nodes.find((node) => node.selected) ?? null
 
-    const selectedNodeConnectionInfo =
-  useMemo<StudioInspectorConnectionInfo>(
+  /*
+   * Studio는 자체적으로 좌측 Palette / 중앙 Canvas / 우측 Inspector를
+   * 각각 스크롤하는 데스크톱 편집 화면입니다.
+   *
+   * 긴 Inspector가 열릴 때 body/document까지 높이가 늘어나면
+   * 브라우저 scroll anchoring 때문에 화면 전체가 위아래로 튈 수 있으므로
+   * Studio가 마운트된 동안 바깥 문서 스크롤을 잠급니다.
+   */
+  useEffect(() => {
+    const html =
+      document.documentElement
+    const body =
+      document.body
+    const previousHtmlOverflow =
+      html.style.overflow
+    const previousHtmlOverscrollBehavior =
+      html.style.overscrollBehavior
+    const previousBodyOverflow =
+      body.style.overflow
+    const previousBodyOverscrollBehavior =
+      body.style.overscrollBehavior
+
+    html.style.overflow =
+      'hidden'
+    html.style.overscrollBehavior =
+      'none'
+    body.style.overflow =
+      'hidden'
+    body.style.overscrollBehavior =
+      'none'
+
+    return () => {
+      html.style.overflow =
+        previousHtmlOverflow
+
+      html.style.overscrollBehavior =
+        previousHtmlOverscrollBehavior
+
+      body.style.overflow =
+        previousBodyOverflow
+
+      body.style.overscrollBehavior =
+        previousBodyOverscrollBehavior
+    }
+  }, [])
+
+  useEffect(
     () => {
-      if (!selectedNode) {
-        return {
-          incomingNodes: [],
-          outgoingNodes: [],
-        }
+      /*
+       * 자유 제작 CREATE는 서버에 빈 DRAFT Flow를 먼저 만들기 때문에
+       * blockFlow가 없는 것이 정상입니다.
+       *
+       * 반대로 edit/copied/guided 또는 /studio/:flowId/edit 직접 진입은
+       * 서버에 저장된 Flow를 복원해야 합니다.
+       */
+      const hasNavigationNodes =
+        (
+          locationState?.nodes
+            ?.length ??
+          0
+        ) > 0
+
+      const shouldHydrate =
+        Boolean(
+          flowId,
+        ) &&
+        !hasNavigationNodes &&
+        (
+          Boolean(
+            routeFlowId,
+          ) ||
+          mode !==
+          'create'
+        )
+
+      if (
+        !shouldHydrate ||
+        !flowId
+      ) {
+        return
       }
 
-      const incomingNodeIds =
-        new Set(
-          studio.edges
-            .filter(
-              (edge) =>
-                edge.target ===
-                selectedNode.id,
+      let cancelled =
+        false
+
+      const hydrate =
+        async () => {
+          setIsHydratingFlow(
+            true,
+          )
+
+          setHydrationError(
+            null,
+          )
+
+          try {
+            const response =
+              await getFlow(
+                flowId,
+                getAccessToken(),
+              )
+
+            if (
+              !response.success ||
+              !response.result
+            ) {
+              throw new Error(
+                response.message ||
+                '저장된 흐름을 불러오지 못했습니다.',
+              )
+            }
+
+            const hydrated =
+              hydrateStudioFlowFromApi(
+                response.result,
+              )
+
+            if (
+              cancelled
+            ) {
+              return
+            }
+
+            studio.setNodes(
+              hydrated.nodes,
             )
-            .map(
-              (edge) =>
-                edge.source,
-            ),
-        )
 
-      const outgoingNodeIds =
-        new Set(
-          studio.edges
-            .filter(
-              (edge) =>
-                edge.source ===
-                selectedNode.id,
+            studio.setEdges(
+              hydrated.edges,
             )
-            .map(
-              (edge) =>
-                edge.target,
-            ),
-        )
 
-      const toConnectedNode = (
-        node: StudioFlowNodeInstance,
-      ) => ({
-        id:
-          node.id,
-
-        title:
-          node.data.node.title,
-
-        stage:
-          node.data.node.stage,
-
-        slots:
-          node.data.node.slots,
-      })
-
-      return {
-        incomingNodes:
-          studio.nodes
-            .filter(
-              (node) =>
-                incomingNodeIds.has(
-                  node.id,
-                ),
+            setLoadedSaveDraft(
+              hydrated.saveDraft,
             )
-            .map(
-              toConnectedNode,
-            ),
 
-        outgoingNodes:
-          studio.nodes
-            .filter(
-              (node) =>
-                outgoingNodeIds.has(
-                  node.id,
-                ),
+            setValidationResult(
+              null,
             )
-            .map(
-              toConnectedNode,
-            ),
+
+            window.requestAnimationFrame(
+              () => {
+                studio.fitView()
+              },
+            )
+          } catch (error) {
+            if (
+              cancelled
+            ) {
+              return
+            }
+
+            console.error(
+              'Studio Flow 복원 실패:',
+              error,
+            )
+
+            setHydrationError(
+              error instanceof Error
+                ? error.message
+                : '저장된 흐름을 Studio로 복원하지 못했습니다.',
+            )
+          } finally {
+            if (
+              !cancelled
+            ) {
+              setIsHydratingFlow(
+                false,
+              )
+            }
+          }
+        }
+
+      void hydrate()
+
+      return () => {
+        cancelled =
+          true
       }
     },
     [
-      selectedNode,
-      studio.edges,
-      studio.nodes,
+      flowId,
+      locationState?.nodes,
+      mode,
+      routeFlowId,
     ],
   )
 
@@ -471,69 +668,44 @@ export function Stdio_create1() {
     )
   }, [searchText])
 
-    const workflowStructureSignature =
-  useMemo(() => {
-    const nodeSignature =
-      studio.nodes
-        .map((node) => {
-          const slots =
-            node.data.node.slots
-              .map((slot) =>
-                [
-                  slot.id,
-                  slot.value ??
-                    '',
-                  slot.state ??
-                    '',
-                  slot.required
-                    ? '1'
-                    : '0',
-                  JSON.stringify(
-                    slot.config ??
-                      {},
-                  ),
-                ].join(':'),
-              )
-              .sort()
-              .join(',')
-
-          return [
-            node.id,
-            node.data.node.stage,
-            slots,
-          ].join('|')
-        })
-        .sort()
-        .join('||')
-
-    const edgeSignature =
-      studio.edges
-        .map(
-          (edge) =>
+  const workflowStructureSignature = useMemo(() => {
+    return studio.nodes
+      .map((node) => {
+        const slots = node.data.node.slots
+          .map((slot) =>
             [
-              edge.source,
-              edge.target,
-              edge.sourceHandle ??
-                '',
-              edge.targetHandle ??
-                '',
-            ].join('>'),
-        )
-        .sort()
-        .join('||')
+              slot.id,
+              slot.value ?? '',
+              slot.state ?? '',
+              slot.required ? '1' : '0',
+              JSON.stringify(slot.config ?? {}),
+            ].join(':'),
+          )
+          .sort()
+          .join(',')
 
-    return [
-      nodeSignature,
-      edgeSignature,
-    ].join('###')
-  }, [
-    studio.nodes,
-    studio.edges,
-  ])
+        return [
+          node.id,
+          node.data.node.stage,
+          slots,
+        ].join('|')
+      })
+      .sort()
+      .join('||')
+  }, [studio.nodes])
 
   useEffect(() => {
     setValidationResult(null)
   }, [workflowStructureSignature])
+
+  useEffect(() => {
+    setOpenInspectorSlotId(null)
+
+    inspectorScrollRef.current?.scrollTo({
+      top: 0,
+      behavior: 'auto',
+    })
+  }, [selectedNode?.id])
 
   const validationChecks = useMemo<ValidationCheck[]>(() => {
     if (!validationResult) {
@@ -697,6 +869,92 @@ export function Stdio_create1() {
   const selectedCompletedRequiredSlots =
     selectedRequiredSlots.filter(hasSlotValue).length
 
+  const selectedConnectionInfo =
+    useMemo(() => {
+      if (!selectedNode) {
+        return undefined
+      }
+
+      const toConnectedNode = (
+        nodeId: string,
+      ) => {
+        const node =
+          studio.nodes.find(
+            (item) =>
+              item.id === nodeId,
+          )
+
+        if (!node) {
+          return null
+        }
+
+        return {
+          id: node.id,
+          title:
+            node.data.node.title,
+          stage:
+            node.data.node.stage,
+          slots:
+            node.data.node.slots,
+        }
+      }
+
+      const incomingNodes =
+        studio.edges
+          .filter(
+            (edge) =>
+              edge.target ===
+              selectedNode.id,
+          )
+          .map(
+            (edge) =>
+              toConnectedNode(
+                edge.source,
+              ),
+          )
+          .filter(
+            (
+              node,
+            ): node is NonNullable<
+              ReturnType<
+                typeof toConnectedNode
+              >
+            > => node !== null,
+          )
+
+      const outgoingNodes =
+        studio.edges
+          .filter(
+            (edge) =>
+              edge.source ===
+              selectedNode.id,
+          )
+          .map(
+            (edge) =>
+              toConnectedNode(
+                edge.target,
+              ),
+          )
+          .filter(
+            (
+              node,
+            ): node is NonNullable<
+              ReturnType<
+                typeof toConnectedNode
+              >
+            > => node !== null,
+          )
+
+      return {
+        incomingNodes,
+        outgoingNodes,
+      }
+    }, [
+      selectedNode,
+      studio.edges,
+      studio.nodes,
+    ])
+
   const handleValidate = () => {
     const result = validateStudioWorkflow({
       nodes: studio.nodes,
@@ -707,94 +965,78 @@ export function Stdio_create1() {
     setValidationResult(result)
   }
 
-  const buildNavigationState = (): StudioNavigationState => ({
-    mode:
-      locationState?.mode ??
-      (workflowId ? 'edit' : 'create'),
-    tutorialId: locationState?.tutorialId,
-    copiedLibraryItemId: locationState?.copiedLibraryItemId,
-    workflowId:
-      locationState?.workflowId ??
-      (workflowId ? Number(workflowId) : undefined),
-    nodes: studio.nodes,
-    edges: studio.edges,
-    validationResult,
-  })
+  const buildNavigationState =
+    (): StudioSaveNavigationState => ({
+      mode,
+
+      flowId,
+
+      tutorialId:
+        locationState?.tutorialId,
+
+      originFlowId:
+        locationState?.originFlowId,
+
+      copiedLibraryItemId:
+        locationState?.copiedLibraryItemId,
+
+      nodes:
+        studio.nodes,
+
+      edges:
+        studio.edges,
+
+      validationResult,
+
+      saveDraft:
+        loadedSaveDraft ??
+        locationState?.saveDraft,
+    })
 
   const handleOpenExample = () => {
-    navigate('/workflows/draft/preview?view=example', {
+    if (!flowId) {
+      window.alert(
+        '예시 결과를 생성할 flowId가 없습니다.',
+      )
+      return
+    }
+
+    navigate(
+      `/workflows/${flowId}/preview?view=example`,
+      {
+        state: buildNavigationState(),
+      },
+    )
+  }
+
+  const handleOpenPreview = () => {
+    if (!flowId) {
+      window.alert(
+        '미리보기에 사용할 flowId가 없습니다.',
+      )
+      return
+    }
+
+    navigate(
+      `/workflows/${flowId}/preview`,
+      {
+        state: buildNavigationState(),
+      },
+    )
+  }
+
+  const handleStartSave = () => {
+    if (!validationResult?.valid) {
+      return
+    }
+
+    navigate('/studio/save/review', {
       state: buildNavigationState(),
     })
   }
 
-  const handleOpenPreview = async () => {
-    try{
-      const flowId=8;
-      // TODO: 로그인 API 머지 후 실제 accessToken으로 교체
-      const accessToken = "여기에_나중에_실제_accessToken";
-      const data=await FlowPreviewResponse(
-        flowId,
-        accessToken,
-      );
-      console.log("불러온 Flow:", data);
-      navigate(
-        `/studio/create?mode=copied&flowId=${flowId}`,
-      {
-        state: {
-          mode: "preview",
-          flowId: flowId,
-          flowData: data,
-        },
-      },
-    );
-    } catch (error) {
-    console.error("Flow 불러오기 실패:", error);
-  }
-  }
-const buildFlowSavePayload = (): FlowSavePayload => ({
-  title: '새 흐름',
-  summary: '자동 생성된 요약',
-  purpose: '사용자 정의 흐름',
-  difficulty: 'BEGINNER',
-  categoryIds: [],
-  visibility: 'PRIVATE',
-  status: 'COMPLETED',
-  authorNote: '',
-  exampleInput: '',
-  exampleResult: '',
-  blocks: studio.nodes.map((node, index) => ({
-    blockId: index + 1,
-    blockOrder: index,
-    options: {
-      title: node.data.node.title,
-      stage: node.data.node.stage,
-      id: node.data.node.id,
-    },
-    promptTemplateId: 0,
-  })),
-})
-
-const handleStartSave = async () => {
-  if (!validationResult?.valid) {
-    return
-  }
-
-  try {
-    const flowIdNum = workflowId ? Number(workflowId) : undefined
-    if (!flowIdNum) return
-
-    const { result } = await saveFlow(flowIdNum, buildFlowSavePayload())
-
-    navigate('/studio/save/review', {
-      state: { ...buildNavigationState(), saveResult: result },
-    })
-  } catch (error) {
-    // 에러 코드별 분기 (FLOW400xx, AUTH401xx, FLOW403xx, FLOW404xx)
-  }
-}
-
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
+    <div className="fixed inset-0 flex h-[100dvh] w-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
       <div className="shrink-0">
         <Header />
       </div>
@@ -848,7 +1090,7 @@ const handleStartSave = async () => {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[32px]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[32px] [overflow-anchor:none] [scrollbar-gutter:stable]">
             {STUDIO_STAGE_ORDER.map((stage) => {
               const blocks = filteredBlocks.filter(
                 (block) => block.stage === stage,
@@ -949,15 +1191,42 @@ const handleStartSave = async () => {
             }}
             className="h-full w-full"
           />
+
+          {isHydratingFlow && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
+              <div className="rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[22px] text-center shadow-sm">
+                <div className="mx-auto h-[38px] w-[38px] animate-spin rounded-full border-[4px] border-[#E4E4E7] border-t-[#6366F1]" />
+
+                <p className="mt-[14px] text-[15px] font-bold text-[#52525B]">
+                  저장된 흐름을 불러오는 중입니다.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {hydrationError && !isHydratingFlow && (
+            <div className="absolute left-1/2 top-[22px] z-20 w-[min(620px,calc(100%-40px))] -translate-x-1/2 rounded-[12px] border-[1.5px] border-[#E9C9C9] bg-[#FBF1F0] px-[18px] py-[14px] text-center shadow-sm">
+              <p className="text-[14px] font-bold text-[#B4453A]">
+                저장된 흐름을 불러오지 못했습니다.
+              </p>
+
+              <p className="mt-[4px] text-[13px] leading-[20px] text-[#8C5A55]">
+                {hydrationError}
+              </p>
+            </div>
+          )}
         </main>
 
         {/* 인스펙터와 검증 결과 */}
-        <aside className="relative z-30 flex min-h-0 w-[406px] shrink-0 flex-col border-l-[1.5px] border-[#E4E4E7] bg-white">
+        <aside className="relative z-30 flex min-h-0 w-[406px] shrink-0 flex-col overflow-hidden border-l-[1.5px] border-[#E4E4E7] bg-white">
           <div className="flex h-[78px] shrink-0 items-center border-b-[1.5px] border-[#E4E4E7] pl-[20px] text-[22px] font-bold">
             인스펙터
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div
+            ref={inspectorScrollRef}
+            className="min-h-0 flex-1 overflow-y-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
+          >
             {!selectedNode && (
               <div className="flex min-h-[510px] flex-col border-b-[1.5px] border-[#E4E4E7]">
                 <div className="flex h-[180px] items-center justify-center border-b-[1.5px] border-[#E4E4E7] px-[30px] text-center">
@@ -1043,43 +1312,97 @@ const handleStartSave = async () => {
                     </p>
                   </div>
 
-                                    <div className="mt-[14px] flex flex-col gap-[8px]">
-                    {selectedNode.data.node.slots.map((slot) => (
-                          <StudioBlockInspector
-                            key={slot.id}
-                            nodeId={selectedNode.id}
-                            slot={slot}
-                            connectionInfo={
-                              selectedNodeConnectionInfo
-                            }
-                            onConfigChange={(patch, options) => {
-                              studio.updateBlockConfig({
-                                nodeId: selectedNode.id,
-                                slotId: slot.id,
-                                patch,
-                                summaryValue:
-                                  options?.summaryValue,
-                                state:
-                                  options?.state,
-                              })
-                            }}
-                            onValueChange={(value) => {
-                              studio.updateSlotValue({
-                                nodeId: selectedNode.id,
-                                slotId: slot.id,
-                                value,
-                              })
-                            }}
-                          />
-                        ))}
+                  <div className="mt-[14px] flex flex-col gap-[8px]">
+                    {selectedNode.data.node.slots.map((slot) => {
+                      const isOpen = openInspectorSlotId === slot.id
+
+                      return (
+                        <div
+                          key={slot.id}
+                          className="rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white px-[14px] py-[13px]"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className={[
+                                'h-[21px] w-[21px] shrink-0 rounded-[8px]',
+                                stageStyleMap[selectedNode.data.node.stage].dot,
+                              ].join(' ')}
+                            />
+
+                            <p className="ml-[12px] min-w-0 flex-1 truncate text-[16.5px] font-bold">
+                              {slot.label}
+                            </p>
+
+                            <span
+                              className={[
+                                'text-[11.5px] font-bold',
+                                slot.required
+                                  ? 'text-[#6366F1]'
+                                  : 'rounded-[6px] bg-[#F0F0F3] px-[7px] py-[3px] text-[#9A9AA3]',
+                              ].join(' ')}
+                            >
+                              {slot.required ? '필수' : '선택'}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenInspectorSlotId(
+                                  isOpen ? null : slot.id,
+                                )
+                              }
+                              className="ml-[22px] mt-[-6px] text-[18px] text-[#9A9AA3]"
+                            >
+                              {isOpen ? '⌃' : '⌄'}
+                            </button>
+                          </div>
+
+                          {isOpen && (
+                            <div className="mt-[12px] border-t border-[#EEEEF1] pt-[12px]">
+                              <StudioBlockInspector
+                                nodeId={selectedNode.id}
+                                slot={slot}
+                                connectionInfo={selectedConnectionInfo}
+                                onConfigChange={(
+                                  patch,
+                                  options,
+                                ) => {
+                                  studio.updateBlockConfig({
+                                    nodeId:
+                                      selectedNode.id,
+                                    slotId:
+                                      slot.id,
+                                    patch,
+                                    summaryValue:
+                                      options?.summaryValue,
+                                    state:
+                                      options?.state,
+                                  })
+                                }}
+                                onValueChange={(value) => {
+                                  studio.updateSlotValue({
+                                    nodeId:
+                                      selectedNode.id,
+                                    slotId:
+                                      slot.id,
+                                    value,
+                                  })
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
-                                  </div>
+                </div>
 
                 <div className="my-[14px] border-t-[1.5px] border-[#EEEEF1]" />
 
                 <div className="flex items-center justify-center pb-[14px]">
                   <button
                     type="button"
+                    onClick={() => setOpenInspectorSlotId(null)}
                     className="flex h-[53px] w-[374px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
                   >
                     설정 저장
@@ -1164,7 +1487,7 @@ const handleStartSave = async () => {
           <button
             type="button"
             onClick={handleValidate}
-            className="cursor-pointer flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             검증
           </button>
@@ -1172,7 +1495,7 @@ const handleStartSave = async () => {
           <button
             type="button"
             onClick={handleOpenExample}
-            className="cursor-pointer flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             예시 결과
           </button>
@@ -1180,7 +1503,7 @@ const handleStartSave = async () => {
           <button
             type="button"
             onClick={handleOpenPreview}
-            className="cursor-pointer flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            className="flex h-[50px] w-[110px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
           >
             미리보기
           </button>
@@ -1192,7 +1515,7 @@ const handleStartSave = async () => {
             className={[
               'flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] text-[17px] font-bold',
               validationResult?.valid
-                ? 'cursor-pointer border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
+                ? 'border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
                 : 'cursor-not-allowed border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
             ].join(' ')}
           >

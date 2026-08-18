@@ -109,22 +109,22 @@ export function DecomposeFunctionsInspector({
   ) => {
     const nextTarget =
       typeof patch.decompositionTarget ===
-      'string'
+        'string'
         ? patch.decompositionTarget
         : decompositionTarget
 
     const nextLevel =
       typeof patch.decompositionLevel ===
-      'string'
+        'string'
         ? patch.decompositionLevel
         : decompositionLevel
 
     const nextIncludedInfo =
       'includedInfo' in patch
         ? readStringArray(
-            patch.includedInfo,
-            includedInfo,
-          )
+          patch.includedInfo,
+          includedInfo,
+        )
         : includedInfo
 
     const complete =
@@ -135,7 +135,7 @@ export function DecomposeFunctionsInspector({
         nextLevel,
       ) &&
       nextIncludedInfo.length >
-        0
+      0
 
     onConfigChange(
       {
@@ -169,14 +169,14 @@ export function DecomposeFunctionsInspector({
         item,
       )
         ? includedInfo.filter(
-            (value) =>
-              value !==
-              item,
-          )
-        : [
-            ...includedInfo,
+          (value) =>
+            value !==
             item,
-          ]
+        )
+        : [
+          ...includedInfo,
+          item,
+        ]
 
     save({
       includedInfo:
@@ -187,30 +187,30 @@ export function DecomposeFunctionsInspector({
   return (
     <ExpandableSettingBlock
       title="기능으로 분해하기"
-      code="PR-006"
-      stage="PROCESS"
-      description="대상을 기능 단위로 분해합니다."
-      icon={
-        <Layers3
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        missing:
-          Number(
-            !decompositionTarget,
-          ) +
-          Number(
-            !decompositionLevel,
-          ) +
-          Number(
-            includedInfo.length ===
-              0,
-          ),
-      }}
+      // code="PR-006"
+      // stage="PROCESS"
+      // description="대상을 기능 단위로 분해합니다."
+      // icon={
+      //   <Layers3
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !decompositionTarget,
+      //     ) +
+      //     Number(
+      //       !decompositionLevel,
+      //     ) +
+      //     Number(
+      //       includedInfo.length ===
+      //         0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -530,33 +530,33 @@ export function LinkPolicyInspector({
   ) => {
     const nextTarget =
       typeof patch.connectionTarget ===
-      'string'
+        'string'
         ? patch.connectionTarget
         : connectionTarget
 
     const nextDocument =
       typeof patch.policyDocument ===
-      'string'
+        'string'
         ? patch.policyDocument
         : policyDocument
 
     const nextTypes =
       'policyTypes' in patch
         ? readStringArray(
-            patch.policyTypes,
-            policyTypes,
-          )
+          patch.policyTypes,
+          policyTypes,
+        )
         : policyTypes
 
     const nextMatchingMode =
       typeof patch.matchingMode ===
-      'string'
+        'string'
         ? patch.matchingMode
         : matchingMode
 
     const nextNoPolicyHandling =
       typeof patch.noPolicyHandling ===
-      'string'
+        'string'
         ? patch.noPolicyHandling
         : noPolicyHandling
 
@@ -568,7 +568,7 @@ export function LinkPolicyInspector({
         nextDocument,
       ) &&
       nextTypes.length >
-        0 &&
+      0 &&
       Boolean(
         nextMatchingMode,
       ) &&
@@ -607,14 +607,14 @@ export function LinkPolicyInspector({
         type,
       )
         ? policyTypes.filter(
-            (item) =>
-              item !==
-              type,
-          )
-        : [
-            ...policyTypes,
+          (item) =>
+            item !==
             type,
-          ]
+        )
+        : [
+          ...policyTypes,
+          type,
+        ]
 
     save({
       policyTypes:
@@ -625,26 +625,26 @@ export function LinkPolicyInspector({
   return (
     <ExpandableSettingBlock
       title="정책과 연결하기"
-      code="PR-007"
-      stage="PROCESS"
-      description="기능·화면을 정책 문서와 연결합니다."
-      icon={
-        <Link2
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 5,
-        missing:
-          Number(
-            !policyDocument,
-          ) +
-          Number(
-            policyTypes.length ===
-              0,
-          ),
-      }}
+      // code="PR-007"
+      // stage="PROCESS"
+      // description="기능·화면을 정책 문서와 연결합니다."
+      // icon={
+      //   <Link2
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 5,
+      //   missing:
+      //     Number(
+      //       !policyDocument,
+      //     ) +
+      //     Number(
+      //       policyTypes.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -700,7 +700,7 @@ export function LinkPolicyInspector({
                   className={[
                     'h-[44px] rounded-xl border-2 text-xs font-bold',
                     connectionTarget ===
-                    option
+                      option
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-600',
                   ].join(
@@ -831,7 +831,7 @@ export function LinkPolicyInspector({
                   className={[
                     'h-[44px] flex-1 text-xs font-bold',
                     matchingMode ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -974,22 +974,22 @@ export function FindExceptionsInspector({
   ) => {
     const nextTypes =
       'exceptionTypes' in
-      patch
+        patch
         ? readStringArray(
-            patch.exceptionTypes,
-            exceptionTypes,
-          )
+          patch.exceptionTypes,
+          exceptionTypes,
+        )
         : exceptionTypes
 
     const nextScope =
       typeof patch.analysisScope ===
-      'string'
+        'string'
         ? patch.analysisScope
         : analysisScope
 
     const complete =
       nextTypes.length >
-        0 &&
+      0 &&
       Boolean(
         nextScope,
       )
@@ -1024,14 +1024,14 @@ export function FindExceptionsInspector({
         item,
       )
         ? exceptionTypes.filter(
-            (value) =>
-              value !==
-              item,
-          )
-        : [
-            ...exceptionTypes,
+          (value) =>
+            value !==
             item,
-          ]
+        )
+        : [
+          ...exceptionTypes,
+          item,
+        ]
 
     save({
       exceptionTypes:
@@ -1047,14 +1047,14 @@ export function FindExceptionsInspector({
         item,
       )
         ? responseScopes.filter(
-            (value) =>
-              value !==
-              item,
-          )
-        : [
-            ...responseScopes,
+          (value) =>
+            value !==
             item,
-          ]
+        )
+        : [
+          ...responseScopes,
+          item,
+        ]
 
     save({
       responseScopes:
@@ -1065,27 +1065,27 @@ export function FindExceptionsInspector({
   return (
     <ExpandableSettingBlock
       title="예외 케이스 찾기"
-      code="PR-008"
-      stage="PROCESS"
-      description="점검할 예외 유형과 범위를 정합니다."
-      icon={
-        <TriangleAlert
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          Number(
-            exceptionTypes.length ===
-              0,
-          ) +
-          Number(
-            !analysisScope,
-          ),
-      }}
+      // code="PR-008"
+      // stage="PROCESS"
+      // description="점검할 예외 유형과 범위를 정합니다."
+      // icon={
+      //   <TriangleAlert
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       exceptionTypes.length ===
+      //       0,
+      //     ) +
+      //     Number(
+      //       !analysisScope,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1196,7 +1196,7 @@ export function FindExceptionsInspector({
                   className={[
                     'h-[38px] rounded-lg px-4 text-xs font-bold',
                     analysisScope ===
-                    option
+                      option
                       ? 'text-indigo-500'
                       : 'border border-slate-200 text-slate-600',
                   ].join(

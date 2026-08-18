@@ -5,6 +5,7 @@ import {
 import {
   useEffect,
   useState,
+  useRef,
   type FormEvent,
 } from 'react'
 
@@ -76,7 +77,39 @@ export function Header() {
   ] = useState<CurrentUser | null>(
     null,
   )
+  const [
+    isProfileMenuOpen,
+    setIsProfileMenuOpen,
+  ] = useState(false)
 
+  const profileMenuRef =
+    useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleClickOutside = (
+      event: MouseEvent,
+    ) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener(
+      'mousedown',
+      handleClickOutside,
+    )
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleClickOutside,
+      )
+    }
+  }, [])
   /**
    * 현재 사용자 확인
    *
@@ -236,6 +269,89 @@ export function Header() {
     handleSearch()
   }
 
+  const handleLogout = async () => {
+    // localStorage 또는 sessionStorage에서 토큰 가져오기
+    const accessToken =
+      localStorage.getItem('accessToken') ??
+      sessionStorage.getItem('accessToken')
+
+    const refreshToken =
+      localStorage.getItem('refreshToken') ??
+      sessionStorage.getItem('refreshToken')
+
+    try {
+      // refreshToken이 있는 경우에만
+      // 백엔드 로그아웃 API 호출
+      if (refreshToken) {
+        await api.post(
+          '/auth/logout',
+          {
+            refreshToken,
+          },
+        )
+
+        console.log('로그아웃 API 성공')
+      }
+    } catch (error) {
+      console.error(
+        '로그아웃 API 실패:',
+        error,
+      )
+    } finally {
+      /**
+       * 백엔드 요청 성공/실패와 관계없이
+       * 프론트의 로그인 정보는 모두 제거
+       */
+
+      // localStorage 삭제
+      localStorage.removeItem(
+        'accessToken',
+      )
+
+      localStorage.removeItem(
+        'refreshToken',
+      )
+
+      localStorage.removeItem(
+        'user',
+      )
+
+      // sessionStorage 삭제
+      sessionStorage.removeItem(
+        'accessToken',
+      )
+
+      sessionStorage.removeItem(
+        'refreshToken',
+      )
+
+      sessionStorage.removeItem(
+        'user',
+      )
+
+      // Google 로그인 관련 저장값도 정리
+      sessionStorage.removeItem(
+        'googleLoginRememberMe',
+      )
+
+      sessionStorage.removeItem(
+        'googleLoginRedirect',
+      )
+
+      // Header 상태 변경
+      setCurrentUser(null)
+      setAuthStatus('guest')
+      setIsProfileMenuOpen(false)
+
+      // 로그인 페이지로 이동
+      navigate(
+        '/login',
+        {
+          replace: true,
+        },
+      )
+    }
+  }
   /**
    * 사용자 프로필 버튼에
    * 표시할 한 글자
@@ -380,23 +496,52 @@ export function Header() {
           {authStatus ===
             'authenticated' &&
             currentUser && (
-              <button
-                type="button"
-                aria-label={`${currentUser.nickname}님의 내 저장소로 이동`}
-                title={
-                  currentUser.nickname
-                }
-                onClick={() => {
-                  navigate(
-                    '/my-storage',
-                  )
-                }}
-                className="flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-full border border-[#E4E4E7] bg-[#F5F5F7] text-[12px] font-bold text-[#52525B] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
+              <div
+                ref={profileMenuRef}
+                className="relative"
               >
-                {
-                  profileLabel
-                }
-              </button>
+                {/* 프로필 버튼 */}
+                <button
+                  type="button"
+                  aria-label={`${currentUser.nickname}님의 프로필 메뉴`}
+                  title={currentUser.nickname}
+                  onClick={() => {
+                    setIsProfileMenuOpen(
+                      (prev) => !prev,
+                    )
+                  }}
+                  className="flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-full border border-[#E4E4E7] bg-[#F5F5F7] text-[12px] font-bold text-[#52525B] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
+                >
+                  {profileLabel}
+                </button>
+
+                {/* 드롭다운 메뉴 */}
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 top-[39px] z-[1000] w-[145px] overflow-hidden rounded-[2px] border border-[#E4E4E7] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
+
+                    {/* 프로필 설정 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false)
+                        navigate('/myProfile')
+                      }}
+                      className="flex h-[55px] w-full cursor-pointer items-center justify-center border-b border-[#E4E4E7] bg-white text-[18px] font-semibold text-[#52525B] transition-colors hover:bg-[#F8F8FA]"
+                    >
+                      프로필 설정
+                    </button>
+
+                    {/* 로그아웃 */}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex h-[55px] w-full cursor-pointer items-center justify-center bg-white text-[18px] font-semibold text-[#E58A8A] transition-colors hover:bg-[#F8F8FA]"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
         </div>
       </div>

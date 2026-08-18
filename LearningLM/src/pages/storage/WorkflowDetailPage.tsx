@@ -1,44 +1,402 @@
-import { useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+
 import {
   ArrowLeft,
   Globe2,
   Info,
   Lock,
 } from 'lucide-react'
+
 import {
   Link,
   useNavigate,
   useParams,
 } from 'react-router-dom'
 
-import { Header } from '../../components/layout/Header'
-import { Footer } from '../../components/layout/Footer'
-import { PageContainer } from '../../components/layout/PageContainer'
+import {
+  deleteStoredFlow,
+  getFlowDetail,
+  updateFlowVisibility,
+  type FlowDetail,
+} from '../../api/storage'
 
+import { Footer } from '../../components/layout/Footer'
+import { Header } from '../../components/layout/Header'
+import { PageContainer } from '../../components/layout/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 
-import {
-  mockCreatedWorkflows,
-} from '../../features/storage/data/storage'
 import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
 
-function WorkflowDetailPage() {
-  const { workflowId } = useParams()
-  const navigate = useNavigate()
+import type {
+  StudioStage,
+} from '../../features/studio/types/studioNode'
 
-  const workflow = mockCreatedWorkflows.find(
-    (item) => item.id === Number(workflowId),
+function WorkflowDetailPage() {
+  /*
+   * router.tsx:
+   * /my-storage/workflows/:flowId
+   *
+   * URL 파라미터 이름과 실제 코드에서 읽는 이름을
+   * flowId로 완전히 통일합니다.
+   */
+  const {
+    flowId,
+  } =
+    useParams<{
+      flowId: string
+    }>()
+
+  const navigate =
+    useNavigate()
+
+  const [
+    flow,
+    setFlow,
+  ] =
+    useState<FlowDetail | null>(
+      null,
+    )
+
+  const [
+    isLoading,
+    setIsLoading,
+  ] =
+    useState(true)
+
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] =
+    useState('')
+
+  /*
+   * 내가 만든 흐름과 복사한 흐름 모두
+   * URL의 flowId를 이용해 같은 상세 API를 호출합니다.
+   */
+  useEffect(
+    () => {
+      const parsedFlowId =
+        Number(flowId)
+
+      if (
+        !Number.isInteger(
+          parsedFlowId,
+        ) ||
+        parsedFlowId <= 0
+      ) {
+        setFlow(
+          null,
+        )
+
+        setErrorMessage(
+          '올바르지 않은 흐름 번호입니다.',
+        )
+
+        setIsLoading(
+          false,
+        )
+
+        return
+      }
+
+      let isMounted =
+        true
+
+      setIsLoading(
+        true,
+      )
+
+      setErrorMessage(
+        '',
+      )
+
+      getFlowDetail(
+        parsedFlowId,
+      )
+        .then(
+          (
+            result,
+          ) => {
+            if (
+              !isMounted
+            ) {
+              return
+            }
+
+            setFlow(
+              result,
+            )
+          },
+        )
+        .catch(
+          (
+            error:
+              unknown,
+          ) => {
+            if (
+              !isMounted
+            ) {
+              return
+            }
+
+            setFlow(
+              null,
+            )
+
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : '흐름 상세 정보를 불러오지 못했습니다.',
+            )
+          },
+        )
+        .finally(
+          () => {
+            if (
+              isMounted
+            ) {
+              setIsLoading(
+                false,
+              )
+            }
+          },
+        )
+
+      return () => {
+        isMounted =
+          false
+      }
+    },
+    [
+      flowId,
+    ],
   )
 
-  const [visibility, setVisibility] = useState<
-    'public' | 'private'
-  >(workflow?.visibility ?? 'private')
+  const workflow =
+    useMemo(
+      () => {
+        if (!flow) {
+          return null
+        }
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] =
+        const stages:
+          StudioStage[] = [
+            'INPUT',
+            'CONTEXT',
+            'PROCESS',
+            'REVIEW',
+            'OUTPUT',
+          ]
+
+        return {
+          id:
+            flow.flowId,
+
+          title:
+            flow.title,
+
+          description:
+            flow.summary ??
+            flow.purpose ??
+            '',
+
+          level:
+            flow.difficulty,
+
+          categories:
+            flow.categories.map(
+              (
+                category,
+              ) =>
+                category.name,
+            ),
+
+          visibility:
+            flow.visibility ===
+            'PUBLIC'
+              ? 'public' as const
+              : 'private' as const,
+
+          updatedAt:
+            new Date(
+              flow.updatedAt,
+            ).toLocaleDateString(
+              'ko-KR',
+            ),
+
+          flowSteps:
+            [
+              ...flow.blockFlow,
+            ]
+              .sort(
+                (
+                  first,
+                  second,
+                ) =>
+                  first.blockOrder -
+                  second.blockOrder,
+              )
+              .filter(
+                (
+                  block,
+                ) =>
+                  stages.includes(
+                    block.stage as
+                      StudioStage,
+                  ),
+              )
+              .map(
+                (
+                  block,
+                ) => ({
+                  id:
+                    String(
+                      block.flowBlockId,
+                    ),
+
+                  label:
+                    block.name,
+
+                  stage:
+                    block.stage as
+                      StudioStage,
+                }),
+              ),
+
+          exampleInput:
+            flow.exampleInput ??
+            '등록된 예시 입력이 없습니다.',
+
+          exampleResult:
+            flow.exampleResult
+              ? [
+                  flow.exampleResult,
+                ]
+              : [],
+
+          creatorNote:
+            flow.authorNote ??
+            '등록된 작성자 노트가 없습니다.',
+        }
+      },
+      [
+        flow,
+      ],
+    )
+
+  const [
+    visibility,
+    setVisibility,
+  ] =
+    useState<
+      'public' |
+      'private'
+    >(
+      'private',
+    )
+
+  useEffect(
+    () => {
+      if (
+        workflow
+      ) {
+        setVisibility(
+          workflow.visibility,
+        )
+      }
+    },
+    [
+      workflow,
+    ],
+  )
+
+  const [
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+  ] =
     useState(false)
 
-  if (!workflow) {
+  const [
+    isUpdatingVisibility,
+    setIsUpdatingVisibility,
+  ] =
+    useState(false)
+
+  const [
+    isDeleting,
+    setIsDeleting,
+  ] =
+    useState(false)
+
+  const [
+    actionError,
+    setActionError,
+  ] =
+    useState('')
+
+  if (
+    isLoading
+  ) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <PageContainer className="py-20">
+          <Card className="px-6 py-16 text-center font-bold text-slate-600">
+            흐름 상세 정보를 불러오는 중입니다.
+          </Card>
+        </PageContainer>
+
+        <Footer />
+      </div>
+    )
+  }
+
+  if (
+    errorMessage
+  ) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+
+        <PageContainer className="py-20">
+          <Card className="px-6 py-16 text-center">
+            <h1 className="text-2xl font-black text-slate-900">
+              흐름 상세 정보를 불러오지 못했습니다.
+            </h1>
+
+            <p className="mt-3 text-sm font-semibold text-rose-500">
+              {
+                errorMessage
+              }
+            </p>
+
+            <Button
+              className="mt-8"
+              onClick={() =>
+                navigate(
+                  '/my-storage',
+                )
+              }
+            >
+              내 저장소로
+            </Button>
+          </Card>
+        </PageContainer>
+
+        <Footer />
+      </div>
+    )
+  }
+
+  if (
+    !workflow
+  ) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
@@ -55,7 +413,11 @@ function WorkflowDetailPage() {
 
             <Button
               className="mt-8"
-              onClick={() => navigate('/my-storage')}
+              onClick={() =>
+                navigate(
+                  '/my-storage',
+                )
+              }
             >
               내 저장소로
             </Button>
@@ -67,27 +429,102 @@ function WorkflowDetailPage() {
     )
   }
 
-  const handleEdit = () => {
-    navigate(`/studio/${workflow.id}/edit`)
-  }
+  const handleEdit =
+    () => {
+      /*
+       * 기존 Flow 편집은 정식 edit route로 보냅니다.
+       *
+       * Stdio_create1의 hydration 로직이
+       * :flowId를 읽어 GET /flows/{flowId} 후
+       * 기존 캔버스를 복원합니다.
+       */
+      navigate(
+        `/studio/${workflow.id}/edit`,
+      )
+    }
 
-  const handleToggleVisibility = () => {
-    setVisibility((previousVisibility) =>
-      previousVisibility === 'public'
-        ? 'private'
-        : 'public',
-    )
-  }
+  const handleToggleVisibility =
+    async () => {
+      const nextVisibility =
+        visibility ===
+        'public'
+          ? 'private'
+          : 'public'
 
-  const handleDelete = () => {
-    setIsDeleteModalOpen(true)
-  }
+      setIsUpdatingVisibility(
+        true,
+      )
 
-  const handleConfirmDelete = () => {
-    console.log('삭제할 워크플로우:', workflow.id)
+      setActionError(
+        '',
+      )
 
-    navigate('/my-storage')
-  }
+      try {
+        await updateFlowVisibility(
+          workflow.id,
+          nextVisibility ===
+            'public'
+            ? 'PUBLIC'
+            : 'PRIVATE',
+        )
+
+        setVisibility(
+          nextVisibility,
+        )
+      } catch (error) {
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : '공개 상태를 변경하지 못했습니다.',
+        )
+      } finally {
+        setIsUpdatingVisibility(
+          false,
+        )
+      }
+    }
+
+  const handleDelete =
+    () => {
+      setIsDeleteModalOpen(
+        true,
+      )
+    }
+
+  const handleConfirmDelete =
+    async () => {
+      setIsDeleting(
+        true,
+      )
+
+      setActionError(
+        '',
+      )
+
+      try {
+        await deleteStoredFlow(
+          workflow.id,
+        )
+
+        navigate(
+          '/my-storage',
+        )
+      } catch (error) {
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : '흐름을 삭제하지 못했습니다.',
+        )
+
+        setIsDeleteModalOpen(
+          false,
+        )
+      } finally {
+        setIsDeleting(
+          false,
+        )
+      }
+    }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -100,7 +537,12 @@ function WorkflowDetailPage() {
             to="/my-storage"
             className="inline-flex items-center gap-2 text-sm font-black text-indigo-500 transition hover:text-indigo-600"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft
+              size={
+                16
+              }
+            />
+
             내 저장소
           </Link>
 
@@ -109,61 +551,111 @@ function WorkflowDetailPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-500">
-                  {visibility === 'public' ? (
-                    <Globe2 size={14} />
+                  {visibility ===
+                  'public' ? (
+                    <Globe2
+                      size={
+                        14
+                      }
+                    />
                   ) : (
-                    <Lock size={14} />
+                    <Lock
+                      size={
+                        14
+                      }
+                    />
                   )}
 
-                  {visibility === 'public'
+                  {visibility ===
+                  'public'
                     ? '공개'
                     : '비공개'}
                 </span>
 
                 <span className="text-xs font-semibold text-slate-400">
-                  마지막 편집 {workflow.updatedAt}
+                  마지막 편집{' '}
+                  {
+                    workflow.updatedAt
+                  }
                 </span>
               </div>
 
               <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-                {workflow.title}
+                {
+                  workflow.title
+                }
               </h1>
 
               <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
-                {workflow.description}
+                {
+                  workflow.description
+                }
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <span className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-600">
-                  {workflow.level}
+                  {
+                    workflow.level
+                  }
                 </span>
 
-                {workflow.categories.map((category) => (
-                  <span
-                    key={category}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-black text-slate-600"
-                  >
-                    {category}
-                  </span>
-                ))}
+                {workflow.categories.map(
+                  (
+                    category,
+                  ) => (
+                    <span
+                      key={
+                        category
+                      }
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-black text-slate-600"
+                    >
+                      {
+                        category
+                      }
+                    </span>
+                  ),
+                )}
               </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button onClick={handleEdit}>
+              <Button
+                onClick={
+                  handleEdit
+                }
+              >
                 편집
               </Button>
 
               <Button
                 variant="secondary"
-                onClick={handleToggleVisibility}
+                onClick={
+                  handleToggleVisibility
+                }
+                disabled={
+                  isUpdatingVisibility
+                }
               >
-                {visibility === 'public'
-                  ? '비공개로 설정'
-                  : '공개로 설정'}
+                {isUpdatingVisibility
+                  ? '변경 중...'
+                  : visibility ===
+                      'public'
+                    ? '비공개로 설정'
+                    : '공개로 설정'}
               </Button>
             </div>
           </section>
+
+          {actionError && (
+            <p
+              role="alert"
+              className="text-sm font-bold text-rose-500"
+            >
+              {
+                actionError
+              }
+            </p>
+          )}
 
           {/* 블록 흐름 */}
           <Card className="px-6 py-5">
@@ -173,36 +665,52 @@ function WorkflowDetailPage() {
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               {workflow.flowSteps.map(
-                (step, index) => {
-                  const stageMeta = studioStageMeta[step.stage]
+                (
+                  step,
+                  index,
+                ) => {
+                  const stageMeta =
+                    studioStageMeta[
+                      step.stage
+                    ]
 
                   return (
                     <div
-                      key={step.id}
+                      key={
+                        step.id
+                      }
                       className="flex items-center gap-3"
-                    >
-                    <span
-                      className={[
-                        'inline-flex items-center gap-2 rounded-lg border-2 bg-white px-3 py-2 text-sm font-bold text-slate-600',
-                        stageMeta.handleClassName,
-                      ].join(' ')}
                     >
                       <span
                         className={[
-                          'h-2.5 w-2.5 rounded-sm',
-                          stageMeta.slotMarkClassName,
-                        ].join(' ')}
-                      />
-                      {step.label}
-                    </span>
+                          'inline-flex items-center gap-2 rounded-lg border-2 bg-white px-3 py-2 text-sm font-bold text-slate-600',
+                          stageMeta.handleClassName,
+                        ].join(
+                          ' ',
+                        )}
+                      >
+                        <span
+                          className={[
+                            'h-2.5 w-2.5 rounded-sm',
+                            stageMeta.slotMarkClassName,
+                          ].join(
+                            ' ',
+                          )}
+                        />
 
-                    {index <
-                      workflow.flowSteps.length - 1 && (
-                      <span className="text-lg font-bold text-slate-500">
-                        →
+                        {
+                          step.label
+                        }
                       </span>
-                    )}
-                  </div>
+
+                      {index <
+                        workflow.flowSteps.length -
+                          1 && (
+                        <span className="text-lg font-bold text-slate-500">
+                          →
+                        </span>
+                      )}
+                    </div>
                   )
                 },
               )}
@@ -217,7 +725,11 @@ function WorkflowDetailPage() {
               </p>
 
               <div className="mt-5 rounded-xl bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-500">
-                “{workflow.exampleInput}”
+                “
+                {
+                  workflow.exampleInput
+                }
+                ”
               </div>
             </Card>
 
@@ -228,7 +740,10 @@ function WorkflowDetailPage() {
 
               <div className="mt-5 space-y-3">
                 {workflow.exampleResult.map(
-                  (result, index) => (
+                  (
+                    result,
+                    index,
+                  ) => (
                     <div
                       key={`${result}-${index}`}
                       className="h-3 rounded-full bg-slate-100"
@@ -248,7 +763,9 @@ function WorkflowDetailPage() {
             </p>
 
             <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
-              {workflow.creatorNote}
+              {
+                workflow.creatorNote
+              }
             </p>
           </Card>
 
@@ -260,12 +777,23 @@ function WorkflowDetailPage() {
               </p>
 
               <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-500 bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">
-                {visibility === 'public' ? (
-                  <Globe2 size={14} />
+                {visibility ===
+                'public' ? (
+                  <Globe2
+                    size={
+                      14
+                    }
+                  />
                 ) : (
-                  <Lock size={14} />
+                  <Lock
+                    size={
+                      14
+                    }
+                  />
                 )}
-                {visibility === 'public'
+
+                {visibility ===
+                'public'
                   ? '공개'
                   : '비공개'}
               </span>
@@ -276,17 +804,36 @@ function WorkflowDetailPage() {
                 '제목 · 한 줄 요약 작성됨',
                 '블록 흐름 1개 이상',
                 '예시 입력·결과 작성 권장',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3">
-                  <span className="h-3.5 w-3.5 rounded-sm border-2 border-indigo-500" />
-                  {item}
-                </li>
-              ))}
+              ].map(
+                (
+                  item,
+                ) => (
+                  <li
+                    key={
+                      item
+                    }
+                    className="flex items-center gap-3"
+                  >
+                    <span className="h-3.5 w-3.5 rounded-sm border-2 border-indigo-500" />
+
+                    {
+                      item
+                    }
+                  </li>
+                ),
+              )}
             </ul>
 
             <div className="mt-5 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm font-semibold text-slate-600">
-              <Info size={17} className="shrink-0 text-amber-600" />
-              {visibility === 'public'
+              <Info
+                size={
+                  17
+                }
+                className="shrink-0 text-amber-600"
+              />
+
+              {visibility ===
+              'public'
                 ? '현재 다른 사용자가 이 흐름을 보고 복사할 수 있습니다.'
                 : '공개하면 다른 사용자가 흐름을 보고 복사할 수 있습니다.'}
             </div>
@@ -294,9 +841,17 @@ function WorkflowDetailPage() {
             <div className="mt-5 flex flex-wrap gap-4">
               <Button
                 size="lg"
-                onClick={() => setVisibility('public')}
+                disabled={
+                  isUpdatingVisibility ||
+                  visibility ===
+                    'public'
+                }
+                onClick={
+                  handleToggleVisibility
+                }
               >
-                {visibility === 'public'
+                {visibility ===
+                'public'
                   ? '공개 상태 유지'
                   : '공개로 게시'}
               </Button>
@@ -304,16 +859,26 @@ function WorkflowDetailPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                onClick={() => setVisibility('private')}
+                disabled={
+                  isUpdatingVisibility ||
+                  visibility ===
+                    'private'
+                }
+                onClick={
+                  handleToggleVisibility
+                }
               >
-                {visibility === 'public'
+                {visibility ===
+                'public'
                   ? '비공개로 전환'
                   : '비공개로 유지'}
               </Button>
 
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={
+                  handleDelete
+                }
                 className="inline-flex h-12 items-center justify-center rounded-xl border border-rose-300 bg-white px-5 text-base font-semibold text-rose-500 transition hover:bg-rose-50"
               >
                 삭제
@@ -328,14 +893,22 @@ function WorkflowDetailPage() {
       {isDeleteModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#181818]/[0.42] px-6"
-          onClick={() => setIsDeleteModalOpen(false)}
+          onClick={() =>
+            setIsDeleteModalOpen(
+              false,
+            )
+          }
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-workflow-title"
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(
+              event,
+            ) =>
+              event.stopPropagation()
+            }
           >
             <h2
               id="delete-workflow-title"
@@ -345,23 +918,38 @@ function WorkflowDetailPage() {
             </h2>
 
             <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">
-              “{workflow.title}” 워크플로우가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+              “
+              {
+                workflow.title
+              }
+              ” 워크플로우가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
             </p>
 
             <div className="mt-6 flex items-center justify-end gap-3">
               <Button
                 variant="ghost"
-                onClick={() => setIsDeleteModalOpen(false)}
+                onClick={() =>
+                  setIsDeleteModalOpen(
+                    false,
+                  )
+                }
               >
                 취소
               </Button>
 
               <button
                 type="button"
-                onClick={handleConfirmDelete}
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#C0473C] px-4 text-sm font-semibold text-white transition hover:bg-[#A93D34]"
+                onClick={() => {
+                  void handleConfirmDelete()
+                }}
+                disabled={
+                  isDeleting
+                }
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#C0473C] px-4 text-sm font-semibold text-white transition hover:bg-[#A93D34] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                삭제
+                {isDeleting
+                  ? '삭제 중...'
+                  : '삭제'}
               </button>
             </div>
           </div>

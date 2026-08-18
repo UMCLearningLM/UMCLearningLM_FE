@@ -227,7 +227,7 @@ export function ExtractCoreInspector({
 
   const complete =
     extractionTargets.length >
-      0 &&
+    0 &&
     Boolean(
       extractionUnit,
     )
@@ -240,35 +240,35 @@ export function ExtractCoreInspector({
         patch.extractionTargets,
       )
         ? patch.extractionTargets.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : extractionTargets
 
     const nextUnit =
       typeof patch.extractionUnit ===
-      'string'
+        'string'
         ? patch.extractionUnit
         : extractionUnit
 
     const nextIntensity =
       typeof patch.intensity ===
-      'number'
+        'number'
         ? patch.intensity
         : intensity
 
     const nextMaxItems =
       typeof patch.maxItems ===
-      'number'
+        'number'
         ? patch.maxItems
         : maxItems
 
     const nextComplete =
       nextTargets.length >
-        0 &&
+      0 &&
       Boolean(
         nextUnit,
       )
@@ -301,8 +301,8 @@ export function ExtractCoreInspector({
         summaryValue:
           nextComplete
             ? `${unitLabel} · ${getExtractionIntensityLabel(
-                nextIntensity,
-              )}`
+              nextIntensity,
+            )}`
             : '',
 
         state:
@@ -327,25 +327,25 @@ export function ExtractCoreInspector({
 
   return (
     <ExpandableSettingBlock
-        title="핵심 내용 추출하기"
-        code="PROCESS-001"
-        stage="PROCESS"
-        description="입력에서 필요한 핵심 내용을 지정한 단위와 강도로 추출합니다."
-        icon={
-            <Search
-            size={18}
-            />
-        }
-        category="CORE"
-      tagCounts={{
-        required: 3,
-        optional: 1,
-        missing:
-          Number(
-            extractionTargets.length ===
-              0,
-          ),
-      }}
+      title="핵심 내용 추출하기"
+      //   code="PROCESS-001"
+      //   stage="PROCESS"
+      //   description="입력에서 필요한 핵심 내용을 지정한 단위와 강도로 추출합니다."
+      //   icon={
+      //       <Search
+      //       size={18}
+      //       />
+      //   }
+      //   category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       extractionTargets.length ===
+      //         0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -358,8 +358,8 @@ export function ExtractCoreInspector({
           <span className="text-xs text-slate-400">
             {complete
               ? `${extractionTargets.length}개 대상 · ${getExtractionIntensityLabel(
-                  intensity,
-                )}`
+                intensity,
+              )}`
               : '추출 대상을 선택하세요'}
           </span>
 
@@ -516,7 +516,7 @@ export function ExtractCoreInspector({
                     maxItems >
                       0
                       ? maxItems -
-                          1
+                      1
                       : 0,
                   )
                 }
@@ -527,7 +527,7 @@ export function ExtractCoreInspector({
 
               <div className="flex min-w-[54px] items-center justify-center text-sm font-bold text-slate-700">
                 {maxItems ===
-                0
+                  0
                   ? '∞'
                   : maxItems}
               </div>
@@ -537,10 +537,10 @@ export function ExtractCoreInspector({
                 onClick={() =>
                   handleMaxItemsChange(
                     maxItems ===
-                    0
+                      0
                       ? 1
                       : maxItems +
-                          1,
+                      1,
                   )
                 }
                 className="flex w-[44px] items-center justify-center border-l-2 border-slate-200 text-lg text-slate-600"
@@ -567,7 +567,7 @@ export function ExtractCoreInspector({
                   className={[
                     'h-[44px] rounded-xl border-2 px-3 text-sm font-bold',
                     maxItems ===
-                    option.value
+                      option.value
                       ? 'border-indigo-500 bg-indigo-500 text-white'
                       : 'border-slate-200 bg-white text-slate-500',
                   ].join(
@@ -705,19 +705,19 @@ export function SummaryInspector({
   ) => {
     const nextLength =
       typeof patch.length ===
-      'string'
+        'string'
         ? patch.length
         : length
 
     const nextFormat =
       typeof patch.format ===
-      'string'
+        'string'
         ? patch.format
         : format
 
     const nextPerspective =
       typeof patch.perspective ===
-      'string'
+        'string'
         ? patch.perspective
         : perspective
 
@@ -776,24 +776,24 @@ export function SummaryInspector({
 
   return (
     <ExpandableSettingBlock
-        title="요약하기"
-        code="PROCESS-002"
-        stage="PROCESS"
-        description="내용을 지정한 길이와 형식으로 요약합니다."
-        icon={
-            <AlignLeft
-            size={18}
-            />
-        }
-        category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 1,
-        missing:
-          Number(
-            !format,
-          ),
-      }}
+      title="요약하기"
+      // code="PROCESS-002"
+      // stage="PROCESS"
+      // description="내용을 지정한 길이와 형식으로 요약합니다."
+      // icon={
+      //   <AlignLeft
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !format,
+      //     ),
+      // }}
       required={
         slot.required
       }

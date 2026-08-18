@@ -156,7 +156,7 @@ function getObjectArray(
       StudioBlockConfigValue
     > =>
       typeof item ===
-        'object' &&
+      'object' &&
       item !== null &&
       !Array.isArray(item),
   )
@@ -254,10 +254,10 @@ export function GoalSettingInspector({
   const complete =
     Boolean(
       goalType &&
-        (
-          !isCustomGoal ||
-          description.trim()
-        ),
+      (
+        !isCustomGoal ||
+        description.trim()
+      ),
     )
 
   const save = (
@@ -266,13 +266,13 @@ export function GoalSettingInspector({
   ) => {
     const nextGoalType =
       typeof patch.goalType ===
-      'string'
+        'string'
         ? patch.goalType
         : goalType
 
     const nextDescription =
       typeof patch.description ===
-      'string'
+        'string'
         ? patch.description
         : description
 
@@ -283,17 +283,17 @@ export function GoalSettingInspector({
     const nextComplete =
       Boolean(
         nextGoalType &&
-          (
-            !nextIsCustomGoal ||
-            nextDescription.trim()
-          ),
+        (
+          !nextIsCustomGoal ||
+          nextDescription.trim()
+        ),
       )
 
     const nextSummary =
       summary ??
       (
         nextIsCustomGoal &&
-        nextDescription.trim()
+          nextDescription.trim()
           ? nextDescription.trim()
           : nextGoalType
       )
@@ -323,27 +323,27 @@ export function GoalSettingInspector({
   return (
     <ExpandableSettingBlock
       title="목표 정하기"
-      code="IN-002"
-      stage="INPUT"
-      description="이번 작업의 목표 유형을 정하고 완료 기준을 지정합니다."
-      icon={
-        <Target
-          size={18}
-        />
-      }
-      tagCounts={{
-        required: 1,
-        optional: 2,
-        conditional:
-          Number(
-            isCustomGoal,
-          ),
-        missing:
-          Number(
-            isCustomGoal &&
-              !description.trim(),
-          ),
-      }}
+      // code="IN-002"
+      // stage="INPUT"
+      // description="이번 작업의 목표 유형을 정하고 완료 기준을 지정합니다."
+      // icon={
+      //   <Target
+      //     size={18}
+      //   />
+      // }
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 2,
+      //   conditional:
+      //     Number(
+      //       isCustomGoal,
+      //     ),
+      //   missing:
+      //     Number(
+      //       isCustomGoal &&
+      //         !description.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -644,23 +644,23 @@ export function TopicInputInspector({
   return (
     <ExpandableSettingBlock
       title="주제 입력하기"
-      code="IN-003"
-      stage="INPUT"
-      description="대표 주제와 키워드를 입력해 작업 범위를 정합니다."
-      icon={
-        <Hash
-          size={19}
-        />
-      }
-      tagCounts={{
-        required: 1,
-        optional: 3,
-        sortable: 1,
-        missing:
-          Number(
-            !topic.trim(),
-          ),
-      }}
+      // code="IN-003"
+      // stage="INPUT"
+      // description="대표 주제와 키워드를 입력해 작업 범위를 정합니다."
+      // icon={
+      //   <Hash
+      //     size={19}
+      //   />
+      // }
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 3,
+      //   sortable: 1,
+      //   missing:
+      //     Number(
+      //       !topic.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -769,39 +769,39 @@ export function TopicInputInspector({
 
           {keywords.length >
             0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {keywords.map(
-                (
-                  keyword,
-                ) => (
-                  <button
-                    key={
-                      keyword
-                    }
-                    type="button"
-                    onClick={() =>
-                      save({
-                        keywords:
-                          keywords.filter(
-                            (
-                              item,
-                            ) =>
-                              item !==
-                              keyword,
-                          ),
-                      })
-                    }
-                    className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600"
-                  >
-                    {
-                      keyword
-                    }{' '}
-                    ×
-                  </button>
-                ),
-              )}
-            </div>
-          )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {keywords.map(
+                  (
+                    keyword,
+                  ) => (
+                    <button
+                      key={
+                        keyword
+                      }
+                      type="button"
+                      onClick={() =>
+                        save({
+                          keywords:
+                            keywords.filter(
+                              (
+                                item,
+                              ) =>
+                                item !==
+                                keyword,
+                            ),
+                        })
+                      }
+                      className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600"
+                    >
+                      {
+                        keyword
+                      }{' '}
+                      ×
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
         </div>
 
         <div>
@@ -876,8 +876,8 @@ type StudioUploadedFile = {
   size: number
   role: string
   validationError:
-    | string
-    | null
+  | string
+  | null
 }
 
 const fileRoleOptions = [
@@ -967,7 +967,7 @@ function formatFileSize(
       1,
       Math.round(
         bytes /
-          1024,
+        1024,
       ),
     )}KB`
   }
@@ -1002,18 +1002,18 @@ function getFileTypeStyle(
 
   if (
     extension ===
-      'xls' ||
+    'xls' ||
     extension ===
-      'xlsx'
+    'xlsx'
   ) {
     return 'border-emerald-500 bg-emerald-50 text-emerald-600'
   }
 
   if (
     extension ===
-      'doc' ||
+    'doc' ||
     extension ===
-      'docx'
+    'docx'
   ) {
     return 'border-blue-500 bg-blue-50 text-blue-600'
   }
@@ -1034,31 +1034,31 @@ function readFiles(
       ) => ({
         id:
           typeof value.id ===
-          'string'
+            'string'
             ? value.id
             : '',
 
         name:
           typeof value.name ===
-          'string'
+            'string'
             ? value.name
             : '',
 
         size:
           typeof value.size ===
-          'number'
+            'number'
             ? value.size
             : 0,
 
         role:
           typeof value.role ===
-          'string'
+            'string'
             ? value.role
             : 'analysis',
 
         validationError:
           typeof value.validationError ===
-          'string'
+            'string'
             ? value.validationError
             : null,
       }),
@@ -1102,7 +1102,7 @@ export function FileUploadInspector({
 
   const complete =
     validFileCount >
-      0 &&
+    0 &&
     Boolean(
       missingAction,
     ) &&
@@ -1137,21 +1137,21 @@ export function FileUploadInspector({
       {
         summaryValue:
           nextValidCount >
-          0
+            0
             ? `${nextValidCount}개 파일`
             : '',
 
         state:
           nextErrorCount >
-          0
+            0
             ? 'error'
             : resolveState(
-                nextValidCount >
-                  0 &&
-                  Boolean(
-                    nextMissingAction,
-                  ),
+              nextValidCount >
+              0 &&
+              Boolean(
+                nextMissingAction,
               ),
+            ),
       },
     )
   }
@@ -1198,30 +1198,30 @@ export function FileUploadInspector({
   return (
     <ExpandableSettingBlock
       title="파일 업로드 받기"
-      code="IN-004"
-      stage="INPUT"
-      description="문서·이미지를 드래그해 업로드합니다. 카드별 역할과 우선순위를 정할 수 있습니다."
-      icon={
-        <Paperclip
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 1,
-        sortable: 1,
-        missing:
-          Number(
-            validFileCount ===
-              0,
-          ) +
-          Number(
-            !missingAction,
-          ),
-        error:
-          errorCount,
-      }}
+      // code="IN-004"
+      // stage="INPUT"
+      // description="문서·이미지를 드래그해 업로드합니다. 카드별 역할과 우선순위를 정할 수 있습니다."
+      // icon={
+      //   <Paperclip
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      //   sortable: 1,
+      //   missing:
+      //     Number(
+      //       validFileCount ===
+      //       0,
+      //     ) +
+      //     Number(
+      //       !missingAction,
+      //     ),
+      //   error:
+      //     errorCount,
+      // }}
       required={
         slot.required
       }
@@ -1233,7 +1233,7 @@ export function FileUploadInspector({
         <div className="flex items-center justify-between gap-4">
           <span className="text-xs text-slate-400">
             {errorCount >
-            0
+              0
               ? `오류 파일 ${errorCount}개`
               : complete
                 ? '파일 설정 완료'
@@ -1273,134 +1273,134 @@ export function FileUploadInspector({
 
         {files.length >
           0 && (
-          <div>
-            <p className="mb-2 text-xs font-bold text-slate-700">
-              업로드 된 파일
-              <span className="font-medium text-slate-300">
-                {' '}
-                · 드래그로 우선순위 변경
-              </span>
-            </p>
+            <div>
+              <p className="mb-2 text-xs font-bold text-slate-700">
+                업로드 된 파일
+                <span className="font-medium text-slate-300">
+                  {' '}
+                  · 드래그로 우선순위 변경
+                </span>
+              </p>
 
-            <DraggableBlock
-              items={files.map(
-                (
-                  file,
-                ) => ({
-                  id:
-                    file.id,
+              <DraggableBlock
+                items={files.map(
+                  (
+                    file,
+                  ) => ({
+                    id:
+                      file.id,
 
-                  error:
-                    Boolean(
-                      file.validationError,
-                    ),
+                    error:
+                      Boolean(
+                        file.validationError,
+                      ),
 
-                  content: (
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span
-                        className={[
-                          'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 text-base font-black',
-                          getFileTypeStyle(
-                            file.name,
-                            Boolean(
-                              file.validationError,
+                    content: (
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span
+                          className={[
+                            'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 text-base font-black',
+                            getFileTypeStyle(
+                              file.name,
+                              Boolean(
+                                file.validationError,
+                              ),
                             ),
-                          ),
-                        ].join(
-                          ' ',
-                        )}
-                      >
-                        {file.name
-                          .split(
-                            '.',
-                          )
-                          .pop()
-                          ?.toUpperCase()
-                          .slice(
-                            0,
-                            4,
+                          ].join(
+                            ' ',
                           )}
-                      </span>
-
-                      <span className="min-w-[80px] basis-0 flex-1">
-                        <span className="block truncate text-[15px] font-bold text-slate-700">
-                          {
-                            file.name
-                          }
-                        </span>
-
-                        <span className="mt-0.5 block text-xs text-slate-400">
-                          {file.validationError ??
-                            formatFileSize(
-                              file.size,
+                        >
+                          {file.name
+                            .split(
+                              '.',
+                            )
+                            .pop()
+                            ?.toUpperCase()
+                            .slice(
+                              0,
+                              4,
                             )}
                         </span>
-                      </span>
 
-                      {!file.validationError && (
-                        <Select
-                          size="sm"
-                          value={
-                            file.role
-                          }
-                          options={
-                            fileRoleOptions
-                          }
-                          onChange={(
-                            role,
-                          ) =>
-                            save(
-                              files.map(
-                                (
-                                  item,
-                                ) =>
-                                  item.id ===
-                                  file.id
-                                    ? {
+                        <span className="min-w-[80px] basis-0 flex-1">
+                          <span className="block truncate text-[15px] font-bold text-slate-700">
+                            {
+                              file.name
+                            }
+                          </span>
+
+                          <span className="mt-0.5 block text-xs text-slate-400">
+                            {file.validationError ??
+                              formatFileSize(
+                                file.size,
+                              )}
+                          </span>
+                        </span>
+
+                        {!file.validationError && (
+                          <Select
+                            size="sm"
+                            value={
+                              file.role
+                            }
+                            options={
+                              fileRoleOptions
+                            }
+                            onChange={(
+                              role,
+                            ) =>
+                              save(
+                                files.map(
+                                  (
+                                    item,
+                                  ) =>
+                                    item.id ===
+                                      file.id
+                                      ? {
                                         ...item,
                                         role,
                                       }
-                                    : item,
-                              ),
-                            )
-                          }
-                          className="!w-[105px] shrink-0"
-                        />
-                      )}
-                    </div>
-                  ),
-                }),
-              )}
-              onChange={(
-                orderedItems,
-              ) =>
-                save(
-                  orderedItems
-                    .map(
-                      (
-                        item,
-                      ) =>
-                        files.find(
-                          (
-                            file,
-                          ) =>
-                            file.id ===
-                            item.id,
-                        ),
-                    )
-                    .filter(
-                      (
-                        file,
-                      ): file is StudioUploadedFile =>
-                        Boolean(
-                          file,
-                        ),
+                                      : item,
+                                ),
+                              )
+                            }
+                            className="!w-[105px] shrink-0"
+                          />
+                        )}
+                      </div>
                     ),
-                )
-              }
-            />
-          </div>
-        )}
+                  }),
+                )}
+                onChange={(
+                  orderedItems,
+                ) =>
+                  save(
+                    orderedItems
+                      .map(
+                        (
+                          item,
+                        ) =>
+                          files.find(
+                            (
+                              file,
+                            ) =>
+                              file.id ===
+                              item.id,
+                          ),
+                      )
+                      .filter(
+                        (
+                          file,
+                        ): file is StudioUploadedFile =>
+                          Boolean(
+                            file,
+                          ),
+                      ),
+                  )
+                }
+              />
+            </div>
+          )}
 
         <div>
           <p className="mb-2 text-xs font-bold text-slate-700">
@@ -1522,7 +1522,7 @@ export function RequiredDocumentInspector({
 
   const complete =
     sources.length >
-      0 &&
+    0 &&
     Boolean(
       checkTiming,
     ) &&
@@ -1535,21 +1535,21 @@ export function RequiredDocumentInspector({
   ) => {
     const nextSources =
       'sources' in
-      patch
+        patch
         ? (
-            patch.sources as string[]
-          )
+          patch.sources as string[]
+        )
         : sources
 
     const nextTiming =
       typeof patch.checkTiming ===
-      'string'
+        'string'
         ? patch.checkTiming
         : checkTiming
 
     const nextMissing =
       typeof patch.missingAction ===
-      'string'
+        'string'
         ? patch.missingAction
         : missingAction
 
@@ -1564,20 +1564,20 @@ export function RequiredDocumentInspector({
       {
         summaryValue:
           nextSources.length >
-          0
+            0
             ? `${nextSources.length}개 자료 유형`
             : '',
 
         state:
           resolveState(
             nextSources.length >
-              0 &&
-              Boolean(
-                nextTiming,
-              ) &&
-              Boolean(
-                nextMissing,
-              ),
+            0 &&
+            Boolean(
+              nextTiming,
+            ) &&
+            Boolean(
+              nextMissing,
+            ),
           ),
       },
     )
@@ -1586,29 +1586,29 @@ export function RequiredDocumentInspector({
   return (
     <ExpandableSettingBlock
       title="필요한 문서 확인하기"
-      code="IN-005"
-      stage="INPUT"
-      description="실행 전 필요한 자료 유형과 없을 때의 처리 방식을 정합니다."
-      icon={
-        <BookOpen
-          size={18}
-        />
-      }
-      tagCounts={{
-        required: 3,
-        optional: 1,
-        missing:
-          Number(
-            sources.length ===
-              0,
-          ) +
-          Number(
-            !checkTiming,
-          ) +
-          Number(
-            !missingAction,
-          ),
-      }}
+      // code="IN-005"
+      // stage="INPUT"
+      // description="실행 전 필요한 자료 유형과 없을 때의 처리 방식을 정합니다."
+      // icon={
+      //   <BookOpen
+      //     size={18}
+      //   />
+      // }
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       sources.length ===
+      //       0,
+      //     ) +
+      //     Number(
+      //       !checkTiming,
+      //     ) +
+      //     Number(
+      //       !missingAction,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1780,23 +1780,23 @@ const skillDescriptions:
     string,
     string
   > = {
-    추출:
-      '필요한 정보만 골라내기',
-    요약:
-      '핵심을 짧게 정리',
-    분류:
-      '기준에 따라 항목 나누기',
-    비교:
-      '항목 간 차이 분석',
-    작성:
-      '목적에 맞는 결과 작성',
-    표:
-      '내용을 표 형태로 구성',
-    질문:
-      '확인할 질문 만들기',
-    검토:
-      '내용의 오류와 품질 확인',
-  }
+  추출:
+    '필요한 정보만 골라내기',
+  요약:
+    '핵심을 짧게 정리',
+  분류:
+    '기준에 따라 항목 나누기',
+  비교:
+    '항목 간 차이 분석',
+  작성:
+    '목적에 맞는 결과 작성',
+  표:
+    '내용을 표 형태로 구성',
+  질문:
+    '확인할 질문 만들기',
+  검토:
+    '내용의 오류와 품질 확인',
+}
 
 export function RequiredSkillInspector({
   slot,
@@ -1828,15 +1828,15 @@ export function RequiredSkillInspector({
   const orderedSkills =
     mainSkill
       ? [
-          mainSkill,
-          ...selectedSkills.filter(
-            (
-              skill,
-            ) =>
-              skill !==
-              mainSkill,
-          ),
-        ]
+        mainSkill,
+        ...selectedSkills.filter(
+          (
+            skill,
+          ) =>
+            skill !==
+            mainSkill,
+        ),
+      ]
       : selectedSkills
 
   const save = (
@@ -1862,10 +1862,10 @@ export function RequiredSkillInspector({
         state:
           resolveState(
             nextSkills.length >
-              0 &&
-              Boolean(
-                nextMainSkill,
-              ),
+            0 &&
+            Boolean(
+              nextMainSkill,
+            ),
           ),
       },
     )
@@ -1880,7 +1880,7 @@ export function RequiredSkillInspector({
       )
         ? mainSkill
         : nextSkills[0] ??
-          ''
+        ''
 
     save(
       {
@@ -1897,31 +1897,31 @@ export function RequiredSkillInspector({
   return (
     <ExpandableSettingBlock
       title="필요한 스킬 확인하기"
-      code="IN-006"
-      stage="INPUT"
-      description="작업 유형을 복수로 고른 뒤 대표 스킬 1개를 지정합니다."
-      icon={
-        <BriefcaseBusiness
-          size={18}
-        />
-      }
-      tagCounts={{
-        required: 2,
-        optional: 1,
-        sortable: 1,
-        recommended:
-          Number(
-            showRecommendation,
-          ),
-        missing:
-          Number(
-            selectedSkills.length ===
-              0,
-          ) +
-          Number(
-            !mainSkill,
-          ),
-      }}
+      // code="IN-006"
+      // stage="INPUT"
+      // description="작업 유형을 복수로 고른 뒤 대표 스킬 1개를 지정합니다."
+      // icon={
+      //   <BriefcaseBusiness
+      //     size={18}
+      //   />
+      // }
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      //   sortable: 1,
+      //   recommended:
+      //     Number(
+      //       showRecommendation,
+      //     ),
+      //   missing:
+      //     Number(
+      //       selectedSkills.length ===
+      //       0,
+      //     ) +
+      //     Number(
+      //       !mainSkill,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1995,7 +1995,7 @@ export function RequiredSkillInspector({
           </p>
 
           {selectedSkills.length >
-          0 ? (
+            0 ? (
             <Radio
               name={`main-skill-${slot.id}`}
               options={selectedSkills.map(
@@ -2008,7 +2008,7 @@ export function RequiredSkillInspector({
                     skill,
                   description:
                     skillDescriptions[
-                      skill
+                    skill
                     ],
                 }),
               )}
@@ -2056,7 +2056,7 @@ export function RequiredSkillInspector({
                     className={[
                       'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white',
                       index ===
-                      0
+                        0
                         ? 'bg-indigo-500'
                         : 'bg-cyan-600',
                     ].join(
@@ -2077,7 +2077,7 @@ export function RequiredSkillInspector({
                     <span className="mt-1 block text-xs text-slate-400">
                       {
                         skillDescriptions[
-                          skill
+                        skill
                         ]
                       }
                     </span>
@@ -2199,11 +2199,11 @@ export function TargetAudienceInspector({
   const complete =
     Boolean(
       audience &&
-        level &&
-        (
-          !isCustomAudience ||
-          customAudience.trim()
-        ),
+      level &&
+      (
+        !isCustomAudience ||
+        customAudience.trim()
+      ),
     )
 
   const save = (
@@ -2212,19 +2212,19 @@ export function TargetAudienceInspector({
   ) => {
     const nextAudience =
       typeof patch.audience ===
-      'string'
+        'string'
         ? patch.audience
         : audience
 
     const nextLevel =
       typeof patch.level ===
-      'string'
+        'string'
         ? patch.level
         : level
 
     const nextCustomAudience =
       typeof patch.customAudience ===
-      'string'
+        'string'
         ? patch.customAudience
         : customAudience
 
@@ -2235,18 +2235,18 @@ export function TargetAudienceInspector({
     const nextComplete =
       Boolean(
         nextAudience &&
-          nextLevel &&
-          (
-            !nextIsCustomAudience ||
-            nextCustomAudience.trim()
-          ),
+        nextLevel &&
+        (
+          !nextIsCustomAudience ||
+          nextCustomAudience.trim()
+        ),
       )
 
     const nextSummary =
       summary ??
       (
         nextIsCustomAudience &&
-        nextCustomAudience.trim()
+          nextCustomAudience.trim()
           ? nextCustomAudience.trim()
           : nextAudience
       )
@@ -2277,27 +2277,27 @@ export function TargetAudienceInspector({
   return (
     <ExpandableSettingBlock
       title="대상 독자 정하기"
-      code="IN-007"
-      stage="INPUT"
-      description="결과물을 읽을 대상과 이해 수준을 지정합니다."
-      icon={
-        <Users
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        recommended: 1,
-        missing:
-          Number(
-            !audience,
-          ) +
-          Number(
-            !level,
-          ),
-      }}
+      // code="IN-007"
+      // stage="INPUT"
+      // description="결과물을 읽을 대상과 이해 수준을 지정합니다."
+      // icon={
+      //   <Users
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   recommended: 1,
+      //   missing:
+      //     Number(
+      //       !audience,
+      //     ) +
+      //     Number(
+      //       !level,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2607,7 +2607,7 @@ export function ResultUsageInspector({
   ) => {
     const nextUsage =
       typeof patch.usage ===
-      'string'
+        'string'
         ? patch.usage
         : usage
 
@@ -2636,23 +2636,23 @@ export function ResultUsageInspector({
   return (
     <ExpandableSettingBlock
       title="결과 사용 상황 정하기"
-      code="IN-008"
-      stage="INPUT"
-      description="결과물이 쓰일 상황과 매체를 지정해 형식을 맞춥니다."
-      icon={
-        <Compass
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        optional: 3,
-        missing:
-          Number(
-            !usage,
-          ),
-      }}
+      // code="IN-008"
+      // stage="INPUT"
+      // description="결과물이 쓰일 상황과 매체를 지정해 형식을 맞춥니다."
+      // icon={
+      //   <Compass
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 3,
+      //   missing:
+      //     Number(
+      //       !usage,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2947,7 +2947,7 @@ export function ConstraintInputInspector({
 
   const complete =
     length !==
-      'custom' ||
+    'custom' ||
     Boolean(
       customLength.trim(),
     )
@@ -2957,19 +2957,19 @@ export function ConstraintInputInspector({
   ) => {
     const nextLength =
       typeof patch.length ===
-      'string'
+        'string'
         ? patch.length
         : length
 
     const nextCustom =
       typeof patch.customLength ===
-      'string'
+        'string'
         ? patch.customLength
         : customLength
 
     const nextComplete =
       nextLength !==
-        'custom' ||
+      'custom' ||
       Boolean(
         nextCustom.trim(),
       )
@@ -2986,7 +2986,7 @@ export function ConstraintInputInspector({
       {
         summaryValue:
           nextLength ===
-          'custom'
+            'custom'
             ? nextCustom
             : nextLength,
 
@@ -3001,30 +3001,30 @@ export function ConstraintInputInspector({
   return (
     <ExpandableSettingBlock
       title="제약조건 입력하기"
-      code="IN-009"
-      stage="INPUT"
-      description="분량·문체·포함·제외 규칙 등 결과물의 제약을 정합니다."
-      icon={
-        <Braces
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        optional: 4,
-        conditional:
-          Number(
-            length ===
-              'custom',
-          ),
-        sortable: 1,
-        missing:
-          Number(
-            length ===
-              'custom' &&
-              !customLength.trim(),
-          ),
-      }}
+      // code="IN-009"
+      // stage="INPUT"
+      // description="분량·문체·포함·제외 규칙 등 결과물의 제약을 정합니다."
+      // icon={
+      //   <Braces
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   optional: 4,
+      //   conditional:
+      //     Number(
+      //       length ===
+      //       'custom',
+      //     ),
+      //   sortable: 1,
+      //   missing:
+      //     Number(
+      //       length ===
+      //       'custom' &&
+      //       !customLength.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }

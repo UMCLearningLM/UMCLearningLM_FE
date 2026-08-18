@@ -174,7 +174,7 @@ export function ProjectDocumentInspector({
       projectId,
     ) &&
     selectedDocuments.length >
-      0 &&
+    0 &&
     Boolean(
       useRange,
     )
@@ -184,13 +184,13 @@ export function ProjectDocumentInspector({
   ) => {
     const nextProjectId =
       typeof patch.projectId ===
-      'string'
+        'string'
         ? patch.projectId
         : projectId
 
     const nextProjectLabel =
       typeof patch.projectLabel ===
-      'string'
+        'string'
         ? patch.projectLabel
         : projectLabel
 
@@ -199,17 +199,17 @@ export function ProjectDocumentInspector({
         patch.selectedDocuments,
       )
         ? patch.selectedDocuments.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : selectedDocuments
 
     const nextUseRange =
       typeof patch.useRange ===
-      'string'
+        'string'
         ? patch.useRange
         : useRange
 
@@ -218,7 +218,7 @@ export function ProjectDocumentInspector({
         nextProjectId,
       ) &&
       nextDocuments.length >
-        0 &&
+      0 &&
       Boolean(
         nextUseRange,
       )
@@ -243,7 +243,7 @@ export function ProjectDocumentInspector({
           nextProjectId ||
           (
             nextDocuments.length >
-            0
+              0
               ? `${nextDocuments.length}개 문서`
               : ''
           ),
@@ -266,9 +266,9 @@ export function ProjectDocumentInspector({
 
     if (
       nextIndex <
-        0 ||
+      0 ||
       nextIndex >=
-        selectedDocuments.length
+      selectedDocuments.length
     ) {
       return
     }
@@ -296,27 +296,27 @@ export function ProjectDocumentInspector({
   return (
     <ExpandableSettingBlock
       title="프로젝트 문서 불러오기"
-      code="CTX-001"
-      stage="CONTEXT"
-      description="프로젝트를 선택하고 참고할 문서를 지정합니다."
-      icon={
-        <FileText
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          Number(
-            !projectId,
-          ) +
-          Number(
-            selectedDocuments.length ===
-              0,
-          ),
-      }}
+      // code="CTX-001"
+      // stage="CONTEXT"
+      // description="프로젝트를 선택하고 참고할 문서를 지정합니다."
+      // icon={
+      //   <FileText
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !projectId,
+      //     ) +
+      //     Number(
+      //       selectedDocuments.length ===
+      //         0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -388,7 +388,7 @@ export function ProjectDocumentInspector({
           </p>
 
           {selectedDocuments.length >
-          0 ? (
+            0 ? (
             <div className="space-y-2">
               {selectedDocuments.map(
                 (
@@ -432,7 +432,7 @@ export function ProjectDocumentInspector({
                         disabled={
                           index ===
                           selectedDocuments.length -
-                            1
+                          1
                         }
                         onClick={() =>
                           moveDocument(
@@ -581,7 +581,7 @@ export function UploadedDocumentInspector({
     ) &&
     (
       readRange ===
-        'all' ||
+      'all' ||
       Boolean(
         locator.trim(),
       )
@@ -592,13 +592,13 @@ export function UploadedDocumentInspector({
   ) => {
     const nextReadRange =
       typeof patch.readRange ===
-      'string'
+        'string'
         ? patch.readRange
         : readRange
 
     const nextLocator =
       typeof patch.locator ===
-      'string'
+        'string'
         ? patch.locator
         : locator
 
@@ -608,7 +608,7 @@ export function UploadedDocumentInspector({
       ) &&
       (
         nextReadRange ===
-          'all' ||
+        'all' ||
         Boolean(
           nextLocator.trim(),
         )
@@ -630,7 +630,7 @@ export function UploadedDocumentInspector({
       {
         summaryValue:
           nextReadRange ===
-          'all'
+            'all'
             ? '전체 읽기'
             : nextLocator.trim()
               ? `${nextReadRange} · ${nextLocator.trim()}`
@@ -647,28 +647,28 @@ export function UploadedDocumentInspector({
   return (
     <ExpandableSettingBlock
       title="업로드 문서 읽기"
-      code="CTX-002"
-      stage="CONTEXT"
-      description="업로드한 파일의 읽기 범위를 지정합니다."
-      icon={
-        <FileText
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        conditional:
-          Number(
-            readRange !==
-              'all',
-          ),
-        optional: 1,
-        missing:
-          Number(
-            !complete,
-          ),
-      }}
+      // code="CTX-002"
+      // stage="CONTEXT"
+      // description="업로드한 파일의 읽기 범위를 지정합니다."
+      // icon={
+      //   <FileText
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   conditional:
+      //     Number(
+      //       readRange !==
+      //       'all',
+      //     ),
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !complete,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -758,39 +758,39 @@ export function UploadedDocumentInspector({
 
         {readRange !==
           'all' && (
-          <label className="block">
-            <span className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">
-                페이지·키워드
+            <label className="block">
+              <span className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700">
+                  페이지·키워드
+                </span>
+
+                <span className="text-[11px] font-bold text-amber-600">
+                  조건부
+                </span>
               </span>
 
-              <span className="text-[11px] font-bold text-amber-600">
-                조건부
-              </span>
-            </span>
-
-            <Textarea
-              value={
-                locator
-              }
-              onChange={(
-                value,
-              ) =>
-                save({
-                  locator:
-                    value,
-                })
-              }
-              placeholder={
-                readRange ===
-                'pages'
-                  ? '예: 3-12'
-                  : '키워드를 입력하세요'
-              }
-              rows={2}
-            />
-          </label>
-        )}
+              <Textarea
+                value={
+                  locator
+                }
+                onChange={(
+                  value,
+                ) =>
+                  save({
+                    locator:
+                      value,
+                  })
+                }
+                placeholder={
+                  readRange ===
+                    'pages'
+                    ? '예: 3-12'
+                    : '키워드를 입력하세요'
+                }
+                rows={2}
+              />
+            </label>
+          )}
 
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -925,13 +925,13 @@ export function DirectContextInputInspector({
   ) => {
     const nextEnabled =
       typeof patch.enabled ===
-      'boolean'
+        'boolean'
         ? patch.enabled
         : enabled
 
     const nextContent =
       typeof patch.content ===
-      'string'
+        'string'
         ? patch.content
         : content
 
@@ -970,24 +970,24 @@ export function DirectContextInputInspector({
   return (
     <ExpandableSettingBlock
       title="직접 입력 내용 사용하기"
-      code="CTX-003"
-      stage="CONTEXT"
-      description="사용자가 직접 입력한 참고 내용을 컨텍스트로 사용합니다."
-      icon={
-        <PenTool
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 1,
-        optional: 3,
-        missing:
-          Number(
-            enabled &&
-              !content.trim(),
-          ),
-      }}
+      // code="CTX-003"
+      // stage="CONTEXT"
+      // description="사용자가 직접 입력한 참고 내용을 컨텍스트로 사용합니다."
+      // icon={
+      //   <PenTool
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 3,
+      //   missing:
+      //     Number(
+      //       enabled &&
+      //       !content.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1246,9 +1246,9 @@ export function ReferenceScopeInspector({
     !enabled ||
     (
       rangeMode !==
-        'document' ||
+      'document' ||
       selectedDocuments.length >
-        0
+      0
     )
 
   const save = (
@@ -1256,13 +1256,13 @@ export function ReferenceScopeInspector({
   ) => {
     const nextEnabled =
       typeof patch.enabled ===
-      'boolean'
+        'boolean'
         ? patch.enabled
         : enabled
 
     const nextMode =
       typeof patch.rangeMode ===
-      'string'
+        'string'
         ? patch.rangeMode
         : rangeMode
 
@@ -1271,21 +1271,21 @@ export function ReferenceScopeInspector({
         patch.selectedDocuments,
       )
         ? patch.selectedDocuments.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : selectedDocuments
 
     const nextComplete =
       !nextEnabled ||
       (
         nextMode !==
-          'document' ||
+        'document' ||
         nextDocuments.length >
-          0
+        0
       )
 
     onConfigChange(
@@ -1337,32 +1337,32 @@ export function ReferenceScopeInspector({
   return (
     <ExpandableSettingBlock
       title="참고 범위 정하기"
-      code="CTX-004"
-      stage="CONTEXT"
-      description="참고할 자료의 범위 방식을 정합니다."
-      icon={
-        <Layers
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        conditional:
-          Number(
-            rangeMode ===
-              'document',
-          ),
-        optional: 2,
-        missing:
-          Number(
-            enabled &&
-              rangeMode ===
-                'document' &&
-              selectedDocuments.length ===
-                0,
-          ),
-      }}
+      // code="CTX-004"
+      // stage="CONTEXT"
+      // description="참고할 자료의 범위 방식을 정합니다."
+      // icon={
+      //   <Layers
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   conditional:
+      //     Number(
+      //       rangeMode ===
+      //       'document',
+      //     ),
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       enabled &&
+      //       rangeMode ===
+      //       'document' &&
+      //       selectedDocuments.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1438,45 +1438,45 @@ export function ReferenceScopeInspector({
 
             {rangeMode ===
               'document' && (
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-bold text-slate-700">
-                    대상 문서
-                  </p>
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-700">
+                      대상 문서
+                    </p>
 
-                  <span className="text-[11px] font-bold text-amber-600">
-                    조건부
-                  </span>
+                    <span className="text-[11px] font-bold text-amber-600">
+                      조건부
+                    </span>
+                  </div>
+
+                  {selectedDocuments.length >
+                    0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDocuments.map(
+                        (
+                          document,
+                        ) => (
+                          <span
+                            key={
+                              document
+                            }
+                            className="rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600"
+                          >
+                            {
+                              document
+                            }
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border-2 border-dashed border-slate-200 px-4 py-4 text-center text-xs leading-5 text-slate-400">
+                      프로젝트/문서 데이터 연결 후
+                      복수 선택할 수 있습니다.
+                    </div>
+                  )}
                 </div>
-
-                {selectedDocuments.length >
-                0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDocuments.map(
-                      (
-                        document,
-                      ) => (
-                        <span
-                          key={
-                            document
-                          }
-                          className="rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600"
-                        >
-                          {
-                            document
-                          }
-                        </span>
-                      ),
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border-2 border-dashed border-slate-200 px-4 py-4 text-center text-xs leading-5 text-slate-400">
-                    프로젝트/문서 데이터 연결 후
-                    복수 선택할 수 있습니다.
-                  </div>
-                )}
-              </div>
-            )}
+              )}
 
             <div>
               <div className="mb-2 flex items-center justify-between">
@@ -1517,39 +1517,39 @@ export function ReferenceScopeInspector({
 
               {keywords.length >
                 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {keywords.map(
-                    (
-                      keyword,
-                    ) => (
-                      <button
-                        key={
-                          keyword
-                        }
-                        type="button"
-                        onClick={() =>
-                          save({
-                            keywords:
-                              keywords.filter(
-                                (
-                                  item,
-                                ) =>
-                                  item !==
-                                  keyword,
-                              ),
-                          })
-                        }
-                        className="rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600"
-                      >
-                        {
-                          keyword
-                        }{' '}
-                        ×
-                      </button>
-                    ),
-                  )}
-                </div>
-              )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {keywords.map(
+                      (
+                        keyword,
+                      ) => (
+                        <button
+                          key={
+                            keyword
+                          }
+                          type="button"
+                          onClick={() =>
+                            save({
+                              keywords:
+                                keywords.filter(
+                                  (
+                                    item,
+                                  ) =>
+                                    item !==
+                                    keyword,
+                                ),
+                            })
+                          }
+                          className="rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600"
+                        >
+                          {
+                            keyword
+                          }{' '}
+                          ×
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
             </div>
 
             <div>
@@ -1700,13 +1700,13 @@ export function RoleAssignmentInspector({
   ) => {
     const nextEnabled =
       typeof patch.enabled ===
-      'boolean'
+        'boolean'
         ? patch.enabled
         : enabled
 
     const nextRole =
       typeof patch.role ===
-      'string'
+        'string'
         ? patch.role
         : role
 
@@ -1740,25 +1740,25 @@ export function RoleAssignmentInspector({
   return (
     <ExpandableSettingBlock
       title="역할 부여하기"
-      code="CTX-005"
-      stage="CONTEXT"
-      description="AI가 수행할 역할과 관점을 지정합니다."
-      icon={
-        <PenTool
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 1,
-        optional: 3,
-        recommended: 1,
-        missing:
-          Number(
-            enabled &&
-              !role,
-          ),
-      }}
+      // code="CTX-005"
+      // stage="CONTEXT"
+      // description="AI가 수행할 역할과 관점을 지정합니다."
+      // icon={
+      //   <PenTool
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 3,
+      //   recommended: 1,
+      //   missing:
+      //     Number(
+      //       enabled &&
+      //       !role,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2030,13 +2030,13 @@ export function BackgroundContextInspector({
   ) => {
     const nextEnabled =
       typeof patch.enabled ===
-      'boolean'
+        'boolean'
         ? patch.enabled
         : enabled
 
     const nextText =
       typeof patch.backgroundText ===
-      'string'
+        'string'
         ? patch.backgroundText
         : backgroundText
 
@@ -2076,24 +2076,24 @@ export function BackgroundContextInspector({
   return (
     <ExpandableSettingBlock
       title="배경 설명 추가하기"
-      code="CTX-006"
-      stage="CONTEXT"
-      description="작업의 배경 상황과 현재 단계를 알려줍니다."
-      icon={
-        <Lightbulb
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        optional: 3,
-        missing:
-          Number(
-            enabled &&
-              !backgroundText.trim(),
-          ),
-      }}
+      // code="CTX-006"
+      // stage="CONTEXT"
+      // description="작업의 배경 상황과 현재 단계를 알려줍니다."
+      // icon={
+      //   <Lightbulb
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 3,
+      //   missing:
+      //     Number(
+      //       enabled &&
+      //       !backgroundText.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2380,7 +2380,7 @@ export function ExclusionContextInspector({
     !enabled ||
     (
       exclusionTypes.length >
-        0 &&
+      0 &&
       Boolean(
         conflictHandling,
       ) &&
@@ -2397,7 +2397,7 @@ export function ExclusionContextInspector({
   ) => {
     const nextEnabled =
       typeof patch.enabled ===
-      'boolean'
+        'boolean'
         ? patch.enabled
         : enabled
 
@@ -2406,23 +2406,23 @@ export function ExclusionContextInspector({
         patch.exclusionTypes,
       )
         ? patch.exclusionTypes.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : exclusionTypes
 
     const nextTarget =
       typeof patch.exclusionTarget ===
-      'string'
+        'string'
         ? patch.exclusionTarget
         : exclusionTarget
 
     const nextConflict =
       typeof patch.conflictHandling ===
-      'string'
+        'string'
         ? patch.conflictHandling
         : conflictHandling
 
@@ -2435,7 +2435,7 @@ export function ExclusionContextInspector({
       !nextEnabled ||
       (
         nextTypes.length >
-          0 &&
+        0 &&
         Boolean(
           nextConflict,
         ) &&
@@ -2459,10 +2459,10 @@ export function ExclusionContextInspector({
       {
         summaryValue:
           nextTypes.length >
-          0
+            0
             ? nextTypes.join(
-                ', ',
-              )
+              ', ',
+            )
             : '',
 
         state:
@@ -2476,38 +2476,38 @@ export function ExclusionContextInspector({
   return (
     <ExpandableSettingBlock
       title="참고하지 말아야 할 내용 정하기"
-      code="CTX-009"
-      stage="CONTEXT"
-      description="참고에서 제외할 유형과 대상을 정합니다."
-      icon={
-        <RefreshCw
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        conditional:
-          Number(
-            keywordActive,
-          ),
-        optional: 1,
-        missing:
-          Number(
-            enabled &&
-              exclusionTypes.length ===
-                0,
-          ) +
-          Number(
-            enabled &&
-              !conflictHandling,
-          ) +
-          Number(
-            enabled &&
-              keywordActive &&
-              !exclusionTarget.trim(),
-          ),
-      }}
+      // code="CTX-009"
+      // stage="CONTEXT"
+      // description="참고에서 제외할 유형과 대상을 정합니다."
+      // icon={
+      //   <RefreshCw
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   conditional:
+      //     Number(
+      //       keywordActive,
+      //     ),
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       enabled &&
+      //       exclusionTypes.length ===
+      //       0,
+      //     ) +
+      //     Number(
+      //       enabled &&
+      //       !conflictHandling,
+      //     ) +
+      //     Number(
+      //       enabled &&
+      //       keywordActive &&
+      //       !exclusionTarget.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }

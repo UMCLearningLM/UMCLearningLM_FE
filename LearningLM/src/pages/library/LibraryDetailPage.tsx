@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   Bookmark,
@@ -19,14 +19,15 @@ import { PageContainer } from '../../components/layout/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 
-import {
-  getLibraryItemById,
-} from '../../features/library/data/libraryData'
-
 import type {
   LibraryFlowColor,
   LibraryLevel,
 } from '../../features/library/data/libraryData'
+import {
+  getLibraryFlowDetail,
+  createCopiedFlow,
+  type LibraryFlowDetail,
+} from '../../api/library'
 import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
 import type { StudioStage } from '../../features/studio/types/studioNode'
 
@@ -87,8 +88,9 @@ export function LibraryDetailPage() {
 
   const libraryId = Number(params.libraryId)
 
-  const libraryItem =
-    getLibraryItemById(libraryId)
+  const [detail, setDetail] = useState<LibraryFlowDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const [isBookmarked, setIsBookmarked] =
     useState(false)
@@ -98,39 +100,183 @@ export function LibraryDetailPage() {
 
   const [isCopyModalOpen, setIsCopyModalOpen] =
     useState(false)
+  const [isCopying, setIsCopying] = useState(false)
+  const [copyError, setCopyError] = useState('')
+  const [copiedFlowId, setCopiedFlowId] = useState<number | null>(null)
 
   const [comment, setComment] = useState('')
 
-  const handleCopyWorkflow = () => {
+  // URL의 libraryId는 백엔드에서 사용하는 flowId입니다.
+  useEffect(() => {
+    if (!Number.isInteger(libraryId) || libraryId <= 0) {
+      setErrorMessage('올바르지 않은 흐름 번호입니다.')
+      setIsLoading(false)
+      return
+    }
+
+    let isMounted = true
+    getLibraryFlowDetail(libraryId)
+      .then((result) => {
+        if (!isMounted) return
+        setDetail(result)
+        setIsLiked(result.isLiked)
+        setIsBookmarked(result.isBookmarked)
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : '공개 흐름을 불러오지 못했습니다.',
+        )
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [libraryId])
+
+  const libraryItem = useMemo(() => {
+    if (!detail) return null
+
+    const levelMap: Record<string, LibraryLevel> = {
+      BEGINNER: '입문',
+      BASIC: '기초',
+      ADVANCED: '응용',
+    }
+    const colorMap: Record<string, LibraryFlowColor> = {
+      INPUT: 'blue', CONTEXT: 'teal', PROCESS: 'indigo',
+      REVIEW: 'amber', OUTPUT: 'green',
+    }
+
+    return {
+      id: detail.flowId,
+      authorName: detail.author.nickname,
+      authorInitial: detail.author.nickname.slice(0, 1) || '?',
+      title: detail.title,
+      description: detail.summary,
+      level: levelMap[detail.difficulty] ?? '입문',
+      categories: detail.categories.map((category) => category.name),
+      tags: detail.tags.map((tag) => tag.name),
+      saves: detail.likeCount,
+      copies: detail.copyCount,
+      comments: detail.commentCount,
+      bookmarks: detail.bookmarkCount,
+      flowSteps: [...detail.blockFlow]
+        .sort((a, b) => a.blockOrder - b.blockOrder)
+        .map((block) => ({
+          id: String(block.flowBlockId),
+          label: block.name,
+          color: colorMap[block.stage] ?? 'indigo',
+        })),
+      exampleInput: detail.exampleInput,
+      exampleResult: detail.exampleResult ? [detail.exampleResult] : [],
+      creatorNote: detail.authorNote,
+      commentItems: detail.comments.map((item) => ({
+        id: item.commentId,
+        authorName: item.author.nickname,
+        authorInitial: item.author.nickname.slice(0, 1) || '?',
+        content: item.content,
+        createdAt: new Date(item.createdAt).toLocaleDateString('ko-KR'),
+      })),
+    }
+  }, [detail])
+
+  const handleCopyWorkflow = async () => {
     if (!libraryItem) {
       return
     }
 
-    setIsCopyModalOpen(true)
+    const accessToken =
+      localStorage.getItem('accessToken') ??
+      localStorage.getItem('token')
+
+    if (!accessToken) {
+      navigate('/login', {
+        state: { from: `/public-library/${libraryItem.id}` },
+      })
+      return
+    }
+
+    setIsCopying(true)
+    setCopyError('')
+
+    try {
+      // 버튼 클릭 시 공개 흐름을 즉시 복사하고 성공한 경우에만 완료 모달을 엽니다.
+      const copiedFlow = await createCopiedFlow(libraryItem.id)
+      setCopiedFlowId(copiedFlow.flowId)
+      setIsCopyModalOpen(true)
+    } catch (error) {
+      setCopyError(
+        error instanceof Error
+          ? error.message
+          : '흐름을 복사하지 못했습니다.',
+      )
+    } finally {
+      setIsCopying(false)
+    }
   }
 
   const handleContinueToStudio = () => {
-    if (!libraryItem) {
+    if (!libraryItem || !copiedFlowId) {
       return
     }
 
-    navigate('/studio', {
+    // 복사 API 응답으로 받은 새 flowId를 Studio에 전달합니다.
+    navigate(`/studio/create?flowId=${copiedFlowId}`, {
       state: {
-        copiedLibraryItemId: libraryItem.id,
+        flowId: copiedFlowId,
+        originFlowId: libraryItem.id,
       },
     })
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <PageContainer className="py-20">
+          <Card className="px-6 py-16 text-center text-sm font-bold text-slate-500">
+            공개 흐름 상세 정보를 불러오는 중입니다.
+          </Card>
+        </PageContainer>
+        <Footer />
+      </div>
+    )
+  }
+
+  // 등록 API가 생기기 전까지 입력 UI만 기존 방식으로 동작합니다.
   const handleSubmitComment = () => {
     const normalizedComment = comment.trim()
-
-    if (!normalizedComment) {
-      return
-    }
+    if (!normalizedComment) return
 
     console.log('등록할 댓글:', normalizedComment)
-
     setComment('')
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <PageContainer className="py-20">
+          <Card className="px-6 py-16 text-center">
+            <h1 className="text-2xl font-black text-slate-900">
+              공개 흐름을 불러오지 못했습니다.
+            </h1>
+            <p className="mt-3 text-sm font-semibold text-rose-500">
+              {errorMessage}
+            </p>
+            <Button className="mt-8" onClick={() => navigate('/public-library')}>
+              공개 라이브러리로
+            </Button>
+          </Card>
+        </PageContainer>
+        <Footer />
+      </div>
+    )
   }
 
   if (!libraryItem) {
@@ -224,6 +370,16 @@ export function LibraryDetailPage() {
                     </span>
                   ),
                 )}
+
+                {/* API의 tags도 카테고리와 구분해 상세 화면에 표시합니다. */}
+                {libraryItem.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-500"
+                  >
+                    #{tag}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -231,9 +387,7 @@ export function LibraryDetailPage() {
               <Button
                 variant="secondary"
                 onClick={() =>
-                  setIsBookmarked(
-                    (previous) => !previous,
-                  )
+                  setIsBookmarked((previous) => !previous)
                 }
                 className="cursor-pointer"
               >
@@ -253,13 +407,20 @@ export function LibraryDetailPage() {
 
               <Button
                 onClick={handleCopyWorkflow}
-                className="cursor-pointer "
+                disabled={isCopying}
+                className="cursor-pointer disabled:cursor-not-allowed" 
               >
                 <Copy size={16} />
                 복사해서 시작
               </Button>
             </div>
           </section>
+
+          {copyError && !isCopyModalOpen && (
+            <p role="alert" className="text-right text-sm font-bold text-rose-500">
+              {copyError}
+            </p>
+          )}
 
           {/* 블록 흐름 */}
           <Card className="px-6 py-5">
@@ -310,9 +471,10 @@ export function LibraryDetailPage() {
                 예시 결과
               </p>
 
-              <div className="relative mt-5 h-36 overflow-hidden rounded-xl border border-slate-300 bg-white">
-                <div className="absolute left-0 top-0 h-px w-[110%] origin-left rotate-[13deg] border-t border-dashed border-slate-300" />
-                <div className="absolute bottom-0 left-0 h-px w-[110%] origin-left -rotate-[13deg] border-t border-dashed border-slate-300" />
+              <div className="mt-5 min-h-36 whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold leading-6 text-slate-500">
+                {libraryItem.exampleResult.length > 0
+                  ? libraryItem.exampleResult.join('\n')
+                  : '등록된 예시 결과가 없습니다.'}
               </div>
             </Card>
           </section>
@@ -333,9 +495,7 @@ export function LibraryDetailPage() {
             <button
               type="button"
               onClick={() =>
-                setIsLiked(
-                  (previous) => !previous,
-                )
+                setIsLiked((previous) => !previous)
               }
               className={[
                 'cursor-pointer inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-black transition',
@@ -354,7 +514,8 @@ export function LibraryDetailPage() {
               />
 
               {libraryItem.saves +
-                (isLiked ? 1 : 0)}
+                (isLiked ? 1 : 0) -
+                (detail?.isLiked ? 1 : 0)}
             </button>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-400">
@@ -367,7 +528,8 @@ export function LibraryDetailPage() {
                 <Bookmark size={14} />
                 북마크{' '}
                 {libraryItem.bookmarks +
-                  (isBookmarked ? 1 : 0)}
+                  (isBookmarked ? 1 : 0) -
+                  (detail?.isBookmarked ? 1 : 0)}
               </span>
             </div>
           </div>
@@ -431,13 +593,9 @@ export function LibraryDetailPage() {
               <input
                 type="text"
                 value={comment}
-                onChange={(event) =>
-                  setComment(event.target.value)
-                }
+                onChange={(event) => setComment(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    handleSubmitComment()
-                  }
+                  if (event.key === 'Enter') handleSubmitComment()
                 }}
                 placeholder="댓글 남기기..."
                 className="h-11 flex-1 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-400"
@@ -485,6 +643,12 @@ export function LibraryDetailPage() {
               </p>
             </div>
 
+            {copyError && (
+              <p role="alert" className="mt-4 text-sm font-bold text-rose-500">
+                {copyError}
+              </p>
+            )}
+
             <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
               <Button
                 variant="ghost"
@@ -492,7 +656,7 @@ export function LibraryDetailPage() {
               >
                 내 저장소에서 보기
               </Button>
-              <Button onClick={handleContinueToStudio}>
+              <Button onClick={handleContinueToStudio} disabled={isCopying}>
                 스튜디오로 계속
               </Button>
             </div>

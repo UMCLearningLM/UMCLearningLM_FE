@@ -18,7 +18,10 @@ export function TargetAudienceBlock() {
   const isCustomAudience = audience === '직접 입력'
 
   return (
-    <ExpandableSettingBlock title="대상 독자 정하기" code="IN-007" stage="INPUT" description="결과물을 읽을 대상과 이해 수준을 지정합니다." icon={<Users size={18} />} category="RECOMMENDED" tagCounts={{ required: 2, optional: 2, recommended: 1, missing: Number(audience.length === 0) + Number(level.length === 0) }} required footer={<div className="flex items-center justify-between"><span className="text-xs text-slate-400">기본값으로 저장 가능</span><Button size="sm">적용</Button></div>}>
+    <ExpandableSettingBlock
+      title="대상 독자 정하기"
+      // code="IN-007" stage="INPUT" description="결과물을 읽을 대상과 이해 수준을 지정합니다." icon={<Users size={18} />} category="RECOMMENDED" tagCounts={{ required: 2, optional: 2, recommended: 1, missing: Number(audience.length === 0) + Number(level.length === 0) }} 
+      required footer={<div className="flex items-center justify-between"><span className="text-xs text-slate-400">기본값으로 저장 가능</span><Button size="sm">적용</Button></div>}>
       <div className="space-y-5">
         <div><p className="mb-2 text-xs font-bold text-slate-700">대상 독자 <span className="text-rose-500">*</span></p><BlockCard columns={4} options={audiences.map(([label, mark]) => ({ label, value: label, icon: <span className="font-black">{mark}</span> }))} value={audience} onChange={setAudience} /></div>
         <ConditionalSection

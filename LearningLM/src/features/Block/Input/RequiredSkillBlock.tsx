@@ -42,17 +42,17 @@ export function RequiredSkillBlock() {
   return (
     <ExpandableSettingBlock
       title="필요한 스킬 확인하기"
-      code="IN-006"
-      stage="INPUT"
-      description="작업 유형을 복수로 고른 뒤 대표 스킬 1개를 지정합니다. 수행 순서는 세로 목록처럼 정렬합니다."
-      icon={<BriefcaseBusiness size={18} />}
-      tagCounts={{
-        required: 2,
-        optional: 1,
-        sortable: 1,
-        recommended: Number(showRecommendation),
-        missing: Number(skillTypesSelected.length === 0) + Number(mainSkill.length === 0),
-      }}
+      // code="IN-006"
+      // stage="INPUT"
+      // description="작업 유형을 복수로 고른 뒤 대표 스킬 1개를 지정합니다. 수행 순서는 세로 목록처럼 정렬합니다."
+      // icon={<BriefcaseBusiness size={18} />}
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      //   sortable: 1,
+      //   recommended: Number(showRecommendation),
+      //   missing: Number(skillTypesSelected.length === 0) + Number(mainSkill.length === 0),
+      // }}
       required
       footer={
         <div className="flex items-center justify-between">

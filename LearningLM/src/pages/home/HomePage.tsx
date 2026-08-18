@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import {
   ArrowRight,
   Bookmark,
@@ -9,8 +8,18 @@ import {
 } from 'lucide-react'
 
 import {
+  useEffect,
+  useState,
+} from 'react'
+
+import {
   useNavigate,
 } from 'react-router-dom'
+
+import {
+  getHome,
+  type HomeResponse,
+} from '../../api/home'
 
 import {
   Header,
@@ -38,7 +47,6 @@ import {
 
 import {
   getTutorialLevelBadgeVariant,
-  isTutorialLevel,
 } from '../../features/tutorial/utils/tutorialLevelStyle'
 
 import {
@@ -51,7 +59,6 @@ import {
 import {
   ThumbnailBox,
 } from '../../components/ui/ThumbnailBox'
-
 
 const values = [
   {
@@ -76,165 +83,362 @@ const values = [
   },
 ]
 
-const categories = [
+const levelMap: Record<
+  string,
   {
-    icon: '자',
-    title: '자료조사',
-    description:
-      '튜토리얼 · 공개 흐름',
+    label: string
+    variant:
+      | 'green'
+      | 'blue'
+      | 'pink'
+  }
+> = {
+  BEGINNER: {
+    label: '입문',
+    variant: 'green',
   },
-  {
-    icon: '문',
-    title: '문서 요약',
-    description:
-      '튜토리얼 · 공개 흐름',
-  },
-  {
-    icon: '글',
-    title: '글쓰기',
-    description:
-      '튜토리얼 · 공개 흐름',
-  },
-  {
-    icon: '반',
-    title: '반복 작업 정리',
-    description:
-      '튜토리얼 · 공개 흐름',
-  },
-  {
-    icon: '검',
-    title: '결과물 검토',
-    description:
-      '튜토리얼 · 공개 흐름',
-  },
-  {
-    icon: 'A',
-    title: 'AI 툴 활용',
-    description:
-      '튜토리얼 · 공개 흐름',
-  },
-]
 
-const tutorials = [
-  {
-    id: 1,
-    title:
-      'AI로 자료조사 흐름 만들기',
-    description:
-      '검색, 요약, 정리 블록으로 리서치 흐름을 완성합니다.',
-    level: '입문',
-    tags: [
-      '자료조사',
-      '요약',
-    ],
-    bookmarks: 4,
-    minutes: 15,
+  BASIC: {
+    label: '기초',
+    variant: 'blue',
   },
-  {
-    id: 2,
-    title:
-      '회의록 자동 요약 워크플로우',
-    description:
-      '긴 회의록을 핵심 항목으로 정리하는 흐름.',
-    level: '기초',
-    tags: [
-      '문서 요약',
-    ],
-    bookmarks: 5,
-    minutes: 20,
-  },
-  {
-    id: 3,
-    title:
-      '블로그 초안 작성 흐름',
-    description:
-      '주제 입력부터 초안 생성까지.',
-    level: '기초',
-    tags: [
-      '글쓰기',
-    ],
-    bookmarks: 6,
-    minutes: 25,
-  },
-]
 
-const workflows = [
-  {
-    id: 1,
-    author: '김리서처',
-    title:
-      '경쟁사 리서치 정리표',
-    description:
-      '여러 출처를 표로 정리하는 공개 흐름.',
-    category: '자료조사',
-    level: '기초',
-    saves: 128,
-    copies: 64,
-    comments: 14,
+  INTERMEDIATE: {
+    label: '응용',
+    variant: 'pink',
   },
-  {
-    id: 2,
-    author: '이정리',
-    title:
-      '제품 리뷰 요약기',
-    description:
-      '리뷰 더미에서 장단점을 추출.',
-    category:
-      '결과물 검토',
-    level: '입문',
-    saves: 96,
-    copies: 41,
-    comments: 11,
-  },
-  {
-    id: 3,
-    author: '박워크',
-    title:
-      '주간 업무 정리 자동화',
-    description:
-      '반복 작업을 체크리스트로.',
-    category:
-      '반복 작업 정리',
-    level: '응용',
-    saves: 210,
-    copies: 132,
-    comments: 23,
-  },
-]
 
-const savedItems = [
-  {
-    id: 'tutorial-2',
-    title:
-      '회의록 자동 요약 워크플로우',
-    meta: '2일 전 저장',
-    badges: [
-      '튜토리얼',
-      '기초',
-    ],
-    action: '이어가기',
-    path:
-      '/official-tutorials/2',
+  입문: {
+    label: '입문',
+    variant: 'green',
   },
-  {
-    id: 'workflow-102',
-    title:
-      '제품 리뷰 요약기',
-    meta:
-      '이정리 님의 흐름 복사본 · 4일 전 저장',
-    badges: [
-      '공개 흐름',
-      '입문',
-    ],
-    action: '열기',
-    path:
-      '/my-storage/workflows/102',
+
+  기초: {
+    label: '기초',
+    variant: 'blue',
   },
-]
+
+  응용: {
+    label: '응용',
+    variant: 'pink',
+  },
+}
+
+function getLevel(
+  difficulty: string,
+) {
+  return (
+    levelMap[difficulty] ?? {
+      label: difficulty,
+      variant: 'gray' as const,
+    }
+  )
+}
+
+function formatSavedAt(
+  savedAt: string,
+) {
+  const date =
+    new Date(savedAt)
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return '저장됨'
+  }
+
+  return `${date.toLocaleDateString(
+    'ko-KR',
+  )} 저장`
+}
 
 export function HomePage() {
   const navigate =
     useNavigate()
+
+  // API에서 받은 홈 데이터
+  const [
+    home,
+    setHome,
+  ] = useState<HomeResponse | null>(
+    null,
+  )
+
+  // 홈 API 오류
+  const [
+    error,
+    setError,
+  ] = useState('')
+
+  // 화면이 처음 열릴 때 홈 API 호출
+  useEffect(() => {
+    let isMounted = true
+
+    getHome()
+      .then((result) => {
+        if (!isMounted) {
+          return
+        }
+
+        setHome(result)
+      })
+      .catch(
+        (
+          requestError:
+            unknown,
+        ) => {
+          if (!isMounted) {
+            return
+          }
+
+          setError(
+            requestError instanceof
+              Error
+              ? requestError.message
+              : '홈 화면을 불러오지 못했습니다.',
+          )
+        },
+      )
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // 이어서 학습하기 데이터
+  const continueLearning =
+    home?.continueLearning
+      ? {
+          tutorialId:
+            home.continueLearning
+              .tutorialId,
+
+          flowId:
+            home.continueLearning
+              .flowId,
+
+          title:
+            home.continueLearning
+              .title,
+
+          difficulty:
+            home.continueLearning
+              .difficulty,
+
+          level:
+            getLevel(
+              home
+                .continueLearning
+                .difficulty,
+            ).label,
+
+          currentStep:
+            home.continueLearning
+              .currentStepOrder,
+
+          totalSteps:
+            home.continueLearning
+              .totalSteps,
+
+          completedStepCount:
+            home.continueLearning
+              .completedStepCount,
+
+          progressRate:
+            home.continueLearning
+              .progressRate,
+
+          status:
+            home.continueLearning
+              .status,
+
+          thumbnailUrl:
+            home.continueLearning
+              .thumbnailUrl,
+
+          updatedAt:
+            home.continueLearning
+              .updatedAt,
+        }
+      : null
+
+  // 완료 단계 / 전체 단계 진행률
+  const progress =
+    continueLearning &&
+    continueLearning.totalSteps >
+      0
+      ? (
+          continueLearning
+            .completedStepCount /
+          continueLearning
+            .totalSteps
+        ) * 100
+      : 0
+
+  // 목적별 카테고리
+  const categories =
+    (
+      home?.categories ??
+      []
+    ).map(
+      (category) => ({
+        id:
+          category.categoryId,
+
+        code:
+          category.code,
+
+        icon:
+          category.name.slice(
+            0,
+            1,
+          ),
+
+        title:
+          category.name,
+
+        description:
+          '튜토리얼 · 공개 흐름',
+      }),
+    )
+
+  // 추천 공식 튜토리얼
+  const tutorials =
+    (
+      home?.recommendedTutorials ??
+      []
+    ).map(
+      (tutorial) => ({
+        id:
+          tutorial.tutorialId,
+
+        title:
+          tutorial.title,
+
+        description:
+          tutorial.summary,
+
+        level:
+          getLevel(
+            tutorial.difficulty,
+          ).label,
+
+        tags:
+          tutorial.categories.map(
+            (category) =>
+              category.name,
+          ),
+
+        bookmarks:
+          tutorial.blockCount,
+
+        minutes:
+          tutorial.estimatedMinutes,
+
+        thumbnailUrl:
+          tutorial.thumbnailUrl,
+      }),
+    )
+
+  // 인기 공개 워크플로우
+  const workflows =
+    (
+      home?.popularFlows ??
+      []
+    ).map(
+      (workflow) => ({
+        id:
+          workflow.flowId,
+
+        author:
+          workflow.author
+            .nickname,
+
+        title:
+          workflow.title,
+
+        description:
+          workflow.summary,
+
+        category:
+          workflow.categories[0]
+            ?.name ?? '기타',
+
+        level:
+          getLevel(
+            workflow.difficulty,
+          ).label,
+
+        saves:
+          workflow.likeCount,
+
+        copies:
+          workflow.copyCount,
+
+        comments:
+          workflow.commentCount,
+      }),
+    )
+
+  // 최근 저장한 항목
+  const savedItems =
+    (
+      home?.recentSavedItems ??
+      []
+    ).map((item) => {
+      const isTutorial =
+        item.tutorialId !==
+        undefined
+
+      const itemId =
+        isTutorial
+          ? item.tutorialId
+          : item.flowId
+
+      const level =
+        getLevel(
+          item.difficulty,
+        )
+
+      return {
+        id: `${item.itemType}-${itemId}`,
+
+        title:
+          item.title,
+
+        typeLabel:
+          isTutorial
+            ? '튜토리얼'
+            : '공개 흐름',
+
+        level:
+          level.label,
+
+        meta: `${
+          item.originalAuthor
+            ?.nickname
+            ? `${item.originalAuthor.nickname} 님의 흐름 · `
+            : ''
+        }${formatSavedAt(
+          item.savedAt,
+        )}`,
+
+        thumbnailUrl:
+          item.thumbnailUrl,
+
+        action:
+          isTutorial
+            ? '이어가기'
+            : '열기',
+
+        path:
+          isTutorial
+            ? `/official-tutorials/${itemId}`
+            : `/my-storage/workflows/${itemId}`,
+      }
+    })
 
   const goToTutorials =
     () => {
@@ -257,34 +461,27 @@ export function HomePage() {
       )
     }
 
-  useEffect(() => {
-    const googleLoginPending =
-      sessionStorage.getItem("googleLoginPending");
-
-    const accessToken =
-      localStorage.getItem("accessToken");
-
-    if (googleLoginPending === "true" && accessToken) {
-      sessionStorage.removeItem("googleLoginPending");
-
-      navigate("/auth/google/success", {
-        replace: true,
-      });
-    }
-  }, [navigate]);
-
   return (
-
-
     <div className="min-h-screen bg-slate-50">
       <Header />
 
       <PageContainer className="space-y-10">
+        {error && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Hero */}
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm lg:p-10">
           <div className="grid gap-10 lg:grid-cols-[1fr_520px] lg:items-center">
             <div>
               <p className="text-sm font-bold text-slate-400">
-                AI 활용 학습 플랫폼
+                AI 활용 학습
+                플랫폼
               </p>
 
               <h1 className="mt-8 text-4xl font-black leading-tight tracking-tight text-slate-950 md:text-5xl">
@@ -295,11 +492,12 @@ export function HomePage() {
               </h1>
 
               <p className="mt-8 max-w-xl text-base leading-7 text-slate-500">
-                공식 튜토리얼을 따라
-                하며 실제 업무에
-                사용하는 AI 활용
-                과정을 직접 구성하고
-                저장할 수 있습니다.
+                공식 튜토리얼을
+                따라 하며 실제
+                업무에 사용하는 AI
+                활용 과정을 직접
+                구성하고 저장할 수
+                있습니다.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
@@ -310,7 +508,8 @@ export function HomePage() {
                   }
                   className="cursor-pointer"
                 >
-                  튜토리얼 시작하기
+                  튜토리얼
+                  시작하기
                 </Button>
 
                 <Button
@@ -332,6 +531,7 @@ export function HomePage() {
                   event,
                 ) => {
                   event.preventDefault()
+
                   goToTutorials()
                 }}
               >
@@ -355,6 +555,7 @@ export function HomePage() {
           </div>
         </section>
 
+        {/* 서비스 특징 */}
         <Card className="overflow-hidden">
           <div className="grid divide-y divide-slate-200 md:grid-cols-4 md:divide-x md:divide-y-0">
             {values.map(
@@ -366,7 +567,9 @@ export function HomePage() {
                   className="p-6"
                 >
                   <h3 className="font-bold text-slate-950">
-                    {item.title}
+                    {
+                      item.title
+                    }
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -380,63 +583,108 @@ export function HomePage() {
           </div>
         </Card>
 
-        <Section title="이어서 학습하기">
-          <Card>
-            <CardBody className="flex flex-col gap-5 md:flex-row md:items-center">
-              <ThumbnailBox
-                variant="compact"
-                label="썸네일"
-                className="h-24 w-full md:w-32"
-              />
+        {/* 이어서 학습하기 */}
+        {home &&
+          !home.isGuest &&
+          continueLearning && (
+            <Section title="이어서 학습하기">
+              <Card>
+                <CardBody className="flex flex-col gap-5 md:flex-row md:items-center">
+                  {continueLearning
+                    .thumbnailUrl ? (
+                    <img
+                      src={
+                        continueLearning
+                          .thumbnailUrl
+                      }
+                      alt={`${continueLearning.title} 썸네일`}
+                      className="h-24 w-full rounded-xl object-cover md:w-32"
+                    />
+                  ) : (
+                    <ThumbnailBox
+                      variant="compact"
+                      label="썸네일"
+                      className="h-24 w-full md:w-32"
+                    />
+                  )}
 
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <Badge variant="levelBeginner">
-                    입문
-                  </Badge>
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge
+                        variant={getTutorialLevelBadgeVariant(
+                          continueLearning.level,
+                        )}
+                      >
+                        {
+                          continueLearning
+                            .level
+                        }
+                      </Badge>
 
-                  <span className="text-xs font-semibold text-slate-400">
-                    3 / 4 단계
-                  </span>
-                </div>
+                      <span className="text-xs font-semibold text-slate-400">
+                        {
+                          continueLearning
+                            .currentStep
+                        }
+                        {' / '}
+                        {
+                          continueLearning
+                            .totalSteps
+                        }
+                        {' 단계'}
+                      </span>
+                    </div>
 
-                <h3 className="font-bold text-slate-950">
-                  AI로 자료조사
-                  흐름 만들기
-                </h3>
+                    <h3 className="font-bold text-slate-950">
+                      {
+                        continueLearning
+                          .title
+                      }
+                    </h3>
 
-                <div className="mt-4 h-2 w-full max-w-sm overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-full w-3/4 rounded-full bg-indigo-500" />
-                </div>
-              </div>
+                    <div className="mt-4 h-2 w-full max-w-sm overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-indigo-500"
+                        style={{
+                          width: `${progress}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
 
-              <Button
-                onClick={() => {
-                  navigate(
-                    '/official-tutorials/1',
-                  )
-                }}
-                className="cursor-pointer"
-              >
-                이어가기
-              </Button>
-            </CardBody>
-          </Card>
-        </Section>
+                  <Button
+                    onClick={() => {
+                      navigate(
+                        `/official-tutorials/${continueLearning.tutorialId}`,
+                      )
+                    }}
+                    className="cursor-pointer"
+                  >
+                    이어가기
+                  </Button>
+                </CardBody>
+              </Card>
+            </Section>
+          )}
 
+        {/* 목적별 탐색 */}
         <Section title="목적별로 둘러보기">
           <div className="grid gap-4 md:grid-cols-3">
             {categories.map(
               (category) => (
                 <button
                   key={
-                    category.title
+                    category.id
                   }
                   type="button"
-                  className="text-left"
-                  onClick={
-                    goToTutorials
-                  }
+                  className="cursor-pointer text-left"
+                  onClick={() => {
+                    navigate(
+                      `/official-tutorials?category=${encodeURIComponent(
+                        category.code,
+                      )}`,
+                    )
+                  }}
                 >
                   <Card className="h-full transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md">
                     <CardBody className="flex items-center gap-4">
@@ -467,6 +715,7 @@ export function HomePage() {
           </div>
         </Section>
 
+        {/* 추천 공식 튜토리얼 */}
         <Section
           title="추천 공식 튜토리얼"
           actionLabel="전체 보기"
@@ -484,10 +733,20 @@ export function HomePage() {
                   className="transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <CardHeader>
-                    <ThumbnailBox
-                      variant="tutorial"
-                      label="튜토리얼 썸네일"
-                    />
+                    {tutorial.thumbnailUrl ? (
+                      <img
+                        src={
+                          tutorial.thumbnailUrl
+                        }
+                        alt={`${tutorial.title} 썸네일`}
+                        className="h-32 w-full rounded-xl object-cover"
+                      />
+                    ) : (
+                      <ThumbnailBox
+                        variant="tutorial"
+                        label="튜토리얼 썸네일"
+                      />
+                    )}
                   </CardHeader>
 
                   <CardBody>
@@ -499,11 +758,9 @@ export function HomePage() {
                       </h3>
 
                       <Badge
-                        variant={
-                          getTutorialLevelBadgeVariant(
-                            tutorial.level,
-                          )
-                        }
+                        variant={getTutorialLevelBadgeVariant(
+                          tutorial.level,
+                        )}
                       >
                         {
                           tutorial.level
@@ -538,8 +795,11 @@ export function HomePage() {
                     <div className="flex items-center gap-3 text-xs text-slate-400">
                       <span className="inline-flex items-center gap-1">
                         <Bookmark
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           tutorial.bookmarks
                         }
@@ -547,8 +807,11 @@ export function HomePage() {
 
                       <span className="inline-flex items-center gap-1">
                         <Clock
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           tutorial.minutes
                         }
@@ -574,6 +837,7 @@ export function HomePage() {
           </div>
         </Section>
 
+        {/* 인기 공개 워크플로우 */}
         <Section
           title="인기 공개 워크플로우"
           actionLabel="라이브러리"
@@ -620,11 +884,9 @@ export function HomePage() {
                       </h3>
 
                       <Badge
-                        variant={
-                          getTutorialLevelBadgeVariant(
-                            workflow.level,
-                          )
-                        }
+                        variant={getTutorialLevelBadgeVariant(
+                          workflow.level,
+                        )}
                       >
                         {
                           workflow.level
@@ -640,7 +902,7 @@ export function HomePage() {
 
                     <button
                       type="button"
-                      className="mt-5 text-sm font-bold text-indigo-500"
+                      className="mt-5 cursor-pointer text-sm font-bold text-indigo-500"
                       onClick={
                         goToPublicLibrary
                       }
@@ -655,8 +917,11 @@ export function HomePage() {
                     <div className="flex items-center gap-3 text-xs text-slate-400">
                       <span className="inline-flex items-center gap-1">
                         <Bookmark
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           workflow.saves
                         }
@@ -664,8 +929,11 @@ export function HomePage() {
 
                       <span className="inline-flex items-center gap-1">
                         <Copy
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         복사{' '}
                         {
                           workflow.copies
@@ -674,8 +942,11 @@ export function HomePage() {
 
                       <span className="inline-flex items-center gap-1">
                         <MessageCircle
-                          size={14}
+                          size={
+                            14
+                          }
                         />
+
                         {
                           workflow.comments
                         }
@@ -707,96 +978,104 @@ export function HomePage() {
           </div>
         </Section>
 
-        <Section
-          title="최근 저장한 항목"
-          actionLabel="내 저장소"
-          onActionClick={
-            goToMyStorage
-          }
-        >
-          <div className="grid gap-5 md:grid-cols-2">
-            {savedItems.map(
-              (item) => (
-                <Card
-                  key={
-                    item.id
-                  }
-                >
-                  <CardBody className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                    <ThumbnailBox
-                      variant="compact"
-                      label="썸네일"
-                      className="h-24 w-full sm:w-24"
-                    />
+        {/* 로그인했고 최근 저장 데이터가 있을 때만 표시 */}
+        {home &&
+          !home.isGuest &&
+          savedItems.length >
+            0 && (
+            <Section
+              title="최근 저장한 항목"
+              actionLabel="내 저장소"
+              onActionClick={
+                goToMyStorage
+              }
+            >
+              <div className="grid gap-5 md:grid-cols-2">
+                {savedItems.map(
+                  (item) => (
+                    <Card
+                      key={
+                        item.id
+                      }
+                    >
+                      <CardBody className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                        {item.thumbnailUrl ? (
+                          <img
+                            src={
+                              item.thumbnailUrl
+                            }
+                            alt={`${item.title} 썸네일`}
+                            className="h-24 w-full rounded-xl object-cover sm:w-24"
+                          />
+                        ) : (
+                          <ThumbnailBox
+                            variant="compact"
+                            label="썸네일"
+                            className="h-24 w-full sm:w-24"
+                          />
+                        )}
 
-                    <div className="flex-1">
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        {item.badges.map(
-                          (
-                            badge,
-                          ) => (
-                            <Badge
-                              key={
-                                badge
-                              }
-                              variant={
-                                isTutorialLevel(
-                                  badge,
-                                )
-                                  ? getTutorialLevelBadgeVariant(
-                                    badge,
-                                  )
-                                  : 'blue'
-                              }
-                            >
+                        <div className="flex-1">
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            <Badge variant="blue">
                               {
-                                badge
+                                item.typeLabel
                               }
                             </Badge>
-                          ),
-                        )}
-                      </div>
 
-                      <h3 className="font-bold text-slate-950">
-                        {
-                          item.title
-                        }
-                      </h3>
+                            <Badge
+                              variant={getTutorialLevelBadgeVariant(
+                                item.level,
+                              )}
+                            >
+                              {
+                                item.level
+                              }
+                            </Badge>
+                          </div>
 
-                      <p className="mt-1 text-sm text-slate-400">
-                        {
-                          item.meta
-                        }
-                      </p>
-                    </div>
+                          <h3 className="font-bold text-slate-950">
+                            {
+                              item.title
+                            }
+                          </h3>
 
-                    <Button
-                      variant="link"
-                      rightIcon={
-                        <ArrowRight
-                          size={
-                            15
+                          <p className="mt-1 text-sm text-slate-400">
+                            {
+                              item.meta
+                            }
+                          </p>
+                        </div>
+
+                        <Button
+                          variant="link"
+                          rightIcon={
+                            <ArrowRight
+                              size={
+                                15
+                              }
+                            />
                           }
-                        />
-                      }
-                      onClick={() => {
-                        navigate(
-                          item.path,
-                        )
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {
-                        item.action
-                      }
-                    </Button>
-                  </CardBody>
-                </Card>
-              ),
-            )}
-          </div>
-        </Section>
+                          onClick={() => {
+                            navigate(
+                              item.path,
+                            )
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {
+                            item.action
+                          }
+                        </Button>
+                      </CardBody>
+                    </Card>
+                  ),
+                )}
+              </div>
+            </Section>
+          )}
 
+        {/* 초보자 가이드 */}
         <Card>
           <CardBody className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
@@ -806,14 +1085,15 @@ export function HomePage() {
 
               <div>
                 <h3 className="font-bold text-slate-950">
-                  처음이신가요? 3분
-                  안내 가이드
+                  처음이신가요?
+                  3분 안내 가이드
                 </h3>
 
                 <p className="mt-1 text-sm text-slate-500">
                   블록이 무엇인지,
-                  흐름을 어떻게 만드는지
-                  빠르게 살펴보세요.
+                  흐름을 어떻게
+                  만드는지 빠르게
+                  살펴보세요.
                 </p>
               </div>
             </div>

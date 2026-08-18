@@ -11,6 +11,11 @@ import {
 
 import api from '../api/api'
 
+import {
+  clearAuthStorage,
+  getAccessToken,
+} from '../api/authStorage'
+
 interface ProtectedRouteProps {
   children: ReactNode
 }
@@ -19,6 +24,34 @@ type AuthStatus =
   | 'checking'
   | 'authenticated'
   | 'guest'
+  | 'error'
+
+function getHttpStatus(
+  error: unknown,
+): number | undefined {
+  if (
+    typeof error !==
+      'object' ||
+    error ===
+      null ||
+    !(
+      'response' in
+      error
+    )
+  ) {
+    return undefined
+  }
+
+  const candidate =
+    error as {
+      response?: {
+        status?: number
+      }
+    }
+
+  return candidate.response
+    ?.status
+}
 
 export function ProtectedRoute({
   children,
@@ -29,96 +62,111 @@ export function ProtectedRoute({
   const [
     authStatus,
     setAuthStatus,
-  ] = useState<AuthStatus>(
-    'checking',
-  )
+  ] =
+    useState<AuthStatus>(
+      'checking',
+    )
 
-  useEffect(() => {
-    let cancelled = false
+  const [
+    retryCount,
+    setRetryCount,
+  ] =
+    useState(0)
 
-    const checkAuth =
-      async () => {
-        const accessToken =
-          localStorage.getItem(
-            'accessToken',
+  useEffect(
+    () => {
+      let cancelled =
+        false
+
+      const checkAuth =
+        async () => {
+          const accessToken =
+            getAccessToken()
+
+          if (
+            !accessToken
+          ) {
+            if (
+              !cancelled
+            ) {
+              setAuthStatus(
+                'guest',
+              )
+            }
+
+            return
+          }
+
+          setAuthStatus(
+            'checking',
           )
 
-        /**
-         * Access Token 자체가 없으면
-         * 서버 요청 없이 바로 비로그인 처리
-         */
-        if (!accessToken) {
-          if (!cancelled) {
+          try {
+            await api.get(
+              '/auth/me',
+            )
+
+            if (
+              cancelled
+            ) {
+              return
+            }
+
             setAuthStatus(
-              'guest',
+              'authenticated',
+            )
+          } catch (
+            error
+          ) {
+            if (
+              cancelled
+            ) {
+              return
+            }
+
+            console.error(
+              'ProtectedRoute 인증 확인 실패:',
+              error,
+            )
+
+            const status =
+              getHttpStatus(
+                error,
+              )
+
+            if (
+              status ===
+                401 ||
+              status ===
+                403
+            ) {
+              clearAuthStorage()
+
+              setAuthStatus(
+                'guest',
+              )
+
+              return
+            }
+
+            setAuthStatus(
+              'error',
             )
           }
-
-          return
         }
 
-        try {
-          /**
-           * 실제 서버 인증 확인
-           *
-           * api.ts의 request interceptor가
-           * Authorization 헤더를 자동으로 추가합니다.
-           */
-          await api.get(
-            '/auth/me',
-          )
+      void checkAuth()
 
-          if (cancelled) {
-            return
-          }
-
-          setAuthStatus(
-            'authenticated',
-          )
-        } catch (error) {
-          if (cancelled) {
-            return
-          }
-
-          console.error(
-            'ProtectedRoute 인증 확인 실패:',
-            error,
-          )
-
-          /**
-           * 유효하지 않은 인증 정보 제거
-           */
-          localStorage.removeItem(
-            'accessToken',
-          )
-
-          localStorage.removeItem(
-            'refreshToken',
-          )
-
-          localStorage.removeItem(
-            'user',
-          )
-
-          setAuthStatus(
-            'guest',
-          )
-        }
+      return () => {
+        cancelled =
+          true
       }
+    },
+    [
+      retryCount,
+    ],
+  )
 
-    checkAuth()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  /**
-   * 인증 확인 중
-   *
-   * 확인이 끝나기 전에 보호된 페이지를
-   * 잠깐이라도 렌더링하지 않도록 막습니다.
-   */
   if (
     authStatus ===
     'checking'
@@ -129,20 +177,48 @@ export function ProtectedRoute({
           <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-[#E4E4E7] border-t-[#6366F1]" />
 
           <p className="text-[14px] font-medium text-[#666666]">
-            로그인 상태를
-            확인하고 있습니다.
+            로그인 상태를 확인하고 있습니다.
           </p>
         </div>
       </div>
     )
   }
 
-  /**
-   * 인증 실패
-   *
-   * 현재 접근하려던 주소를
-   * Login 페이지에 전달합니다.
-   */
+  if (
+    authStatus ===
+    'error'
+  ) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-[24px]">
+        <div className="w-full max-w-[460px] rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[30px] text-center">
+          <h1 className="text-[20px] font-bold text-[#27272A]">
+            로그인 상태를 확인하지 못했습니다.
+          </h1>
+
+          <p className="mt-[10px] text-[14px] leading-[22px] text-[#666666]">
+            서버 연결이 일시적으로 불안정할 수 있습니다. 잠시 후 다시 시도해 주세요.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setRetryCount(
+                (
+                  current,
+                ) =>
+                  current +
+                  1,
+              )
+            }}
+            className="mt-[20px] h-[42px] rounded-[10px] bg-[#6366F1] px-[22px] text-[14px] font-bold text-white hover:bg-[#5558DB]"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (
     authStatus ===
     'guest'
@@ -167,8 +243,5 @@ export function ProtectedRoute({
     )
   }
 
-  /**
-   * 인증 성공
-   */
   return children
 }

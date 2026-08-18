@@ -1,420 +1,402 @@
 import axios, {
-    AxiosError,
-    type InternalAxiosRequestConfig,
-} from "axios";
+  AxiosError,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 
-/**
- * API 서버 주소
- *
- * 추후 VITE_API_BASE_URL 환경변수로
- * 통합하는 것이 최종적으로는 가장 좋습니다.
- */
+import {
+  clearAuthStorage,
+  getAccessToken,
+  getRefreshToken,
+  saveReissuedAuthTokens,
+} from './authStorage'
+
 const API_BASE_URL =
-    "http://3.39.165.3:8080/api";
+  import.meta.env.VITE_API_BASE_URL
 
-/**
- * 공용 Axios 인스턴스
- */
-const api = axios.create({
-    baseURL: API_BASE_URL,
-
-    headers: {
-        "Content-Type":
-            "application/json",
-    },
-});
-
-/**
- * 401 이후 동일 요청을 다시 시도했는지
- * 확인하기 위한 확장 타입입니다.
- */
-interface RetryableRequestConfig
-    extends InternalAxiosRequestConfig {
-    _retry?: boolean;
+if (!API_BASE_URL) {
+  throw new Error(
+    'VITE_API_BASE_URL 환경변수가 설정되지 않았습니다.',
+  )
 }
 
 /**
- * 동시에 여러 API 요청이 401을 반환하는 경우
- * Refresh Token 재발급 요청이 여러 번 발생하지 않도록
- * 하나의 Promise를 공유합니다.
+ * LearningLM 공용 Axios 인스턴스입니다.
+ *
+ * Content-Type을 전역에서 application/json으로 고정하지 않습니다.
+ * JSON은 Axios가 자동 처리하고,
+ * FormData는 multipart boundary를 Axios가 자동으로 설정하게 둡니다.
  */
+const api = axios.create({
+  baseURL:
+    API_BASE_URL,
+
+  timeout:
+    10_000,
+})
+
+interface RetryableRequestConfig
+  extends InternalAxiosRequestConfig {
+  _retry?: boolean
+}
+
+interface ReissueResponse {
+  result?: {
+    accessToken?: string
+    refreshToken?: string
+  }
+}
+
 let reissuePromise:
-    | Promise<string>
-    | null = null;
-
-
+  Promise<string> | null =
+    null
 
 /**
-* 현재 로그인된 사용자의 Access Token을 가져옵니다.
-*
-* 로그인 상태 유지 O → localStorage
-* 로그인 상태 유지 X → sessionStorage
-*/
-const getAccessToken = () => {
-    return (
-        localStorage.getItem(
-            "accessToken"
-        ) ??
-        sessionStorage.getItem(
-            "accessToken"
-        )
-    );
-};
-
-/**
- * 현재 로그인된 사용자의 Refresh Token을 가져옵니다.
- */
-const getRefreshToken = () => {
-    return (
-        localStorage.getItem(
-            "refreshToken"
-        ) ??
-        sessionStorage.getItem(
-            "refreshToken"
-        )
-    );
-};
-/**
- * 인증 관련 localStorage 정보를 제거합니다.
- */
-const clearAuthStorage = () => {
-    // localStorage 삭제
-    localStorage.removeItem(
-        "accessToken"
-    );
-
-    localStorage.removeItem(
-        "refreshToken"
-    );
-
-    localStorage.removeItem(
-        "user"
-    );
-
-    // sessionStorage 삭제
-    sessionStorage.removeItem(
-        "accessToken"
-    );
-
-    sessionStorage.removeItem(
-        "refreshToken"
-    );
-
-    sessionStorage.removeItem(
-        "user"
-    );
-};
-
-/**
- * 로그인 화면으로 이동합니다.
+ * 기존 Access Token이 절대로 붙으면 안 되는 공개 인증 API입니다.
  *
- * 이미 로그인 페이지에 있다면
- * 불필요하게 location을 다시 변경하지 않습니다.
- */
-const redirectToLogin = () => {
-    if (
-        window.location.pathname !==
-        "/login"
-    ) {
-        window.location.assign(
-            "/login"
-        );
-    }
-};
-
-/**
- * Access Token 만료 시
- * 자동 재발급을 시도하지 않아야 하는 API 목록입니다.
+ * exact:
+ * 정확히 해당 endpoint만 공개
  *
- * 중요:
- * /auth/me는 여기에 포함하지 않습니다.
+ * prefix:
+ * 하위 경로까지 모두 공개
+ */
+const PUBLIC_AUTH_EXACT_PATHS = [
+  '/auth/login',
+  '/auth/signup',
+  '/auth/reissue',
+  '/auth/password',
+  '/auth/email/request',
+  '/auth/email/verify',
+]
+
+const PUBLIC_AUTH_PREFIX_PATHS = [
+  '/auth/google',
+  '/auth/oauth2',
+]
+
+function getRequestPath(
+  requestUrl: string,
+): string {
+  try {
+    const normalizedBase =
+      API_BASE_URL.endsWith(
+        '/',
+      )
+        ? API_BASE_URL
+        : `${API_BASE_URL}/`
+
+    return new URL(
+      requestUrl,
+      normalizedBase,
+    ).pathname
+  } catch {
+    return requestUrl.split(
+      '?',
+    )[0]
+  }
+}
+
+function matchesExactApiPath(
+  pathname: string,
+  targetPath: string,
+): boolean {
+  return (
+    pathname ===
+      targetPath ||
+    pathname.endsWith(
+      targetPath,
+    )
+  )
+}
+
+function matchesApiPathPrefix(
+  pathname: string,
+  targetPrefix: string,
+): boolean {
+  const index =
+    pathname.indexOf(
+      targetPrefix,
+    )
+
+  if (
+    index === -1
+  ) {
+    return false
+  }
+
+  const remainder =
+    pathname.slice(
+      index +
+        targetPrefix.length,
+    )
+
+  return (
+    remainder ===
+      '' ||
+    remainder.startsWith(
+      '/',
+    )
+  )
+}
+
+/**
+ * 공개 인증 API 여부를 request/response interceptor 양쪽에서
+ * 동일한 기준으로 사용합니다.
  *
- * /auth/me에서 401이 발생하면
- * Refresh Token으로 Access Token을 재발급하고
- * /auth/me를 다시 요청해야 하기 때문입니다.
+ * 이렇게 해야
+ * "Authorization은 붙이지 않지만 401 refresh는 시도하는"
+ * 식의 정책 불일치가 생기지 않습니다.
  */
-const reissueExcludedPaths = [
-    "/auth/login",
-    "/auth/signup",
-    "/auth/reissue",
-    "/auth/google",
-    "/auth/oauth2",
-    "/auth/email/request",
-    "/auth/email/verify",
-    "/auth/password",
-];
+export function isPublicAuthRequest(
+  requestUrl: string,
+): boolean {
+  const pathname =
+    getRequestPath(
+      requestUrl,
+    )
+
+  if (
+    PUBLIC_AUTH_EXACT_PATHS.some(
+      (
+        path,
+      ) =>
+        matchesExactApiPath(
+          pathname,
+          path,
+        ),
+    )
+  ) {
+    return true
+  }
+
+  return PUBLIC_AUTH_PREFIX_PATHS.some(
+    (
+      prefix,
+    ) =>
+      matchesApiPathPrefix(
+        pathname,
+        prefix,
+      ),
+  )
+}
+
+function redirectToLogin() {
+  if (
+    window.location.pathname !==
+    '/login'
+  ) {
+    window.location.assign(
+      '/login',
+    )
+  }
+}
 
 /**
- * 현재 요청이 Access Token 자동 재발급
- * 제외 대상인지 확인합니다.
- */
-const isReissueExcludedRequest = (
-    requestUrl: string
-) => {
-    return reissueExcludedPaths.some(
-        (path) =>
-            requestUrl.startsWith(
-                path
-            )
-    );
-};
-
-/**
- * 모든 일반 API 요청에
- * Access Token을 자동으로 추가합니다.
+ * 요청 인터셉터
+ *
+ * 공개 인증 API:
+ * 기존 Authorization을 명시적으로 제거합니다.
+ *
+ * 보호 API:
+ * 현재 Access Token이 존재할 때만 Authorization을 추가합니다.
  */
 api.interceptors.request.use(
-    (config) => {
-        const accessToken =
-            getAccessToken();
+  (config) => {
+    const requestUrl =
+      config.url ??
+      ''
 
-        if (accessToken) {
-            config.headers.Authorization =
-                `Bearer ${accessToken}`;
-        }
+    if (
+      isPublicAuthRequest(
+        requestUrl,
+      )
+    ) {
+      /*
+       * 혹시 개별 호출부에서 Authorization을 직접 넣었더라도
+       * 공개 인증 API에서는 제거합니다.
+       */
+      config.headers.delete(
+        'Authorization',
+      )
 
-        return config;
-    },
-
-    (error) => {
-        return Promise.reject(
-            error
-        );
+      return config
     }
-);
+
+    const accessToken =
+      getAccessToken()
+
+    if (
+      accessToken
+    ) {
+      config.headers.set(
+        'Authorization',
+        `Bearer ${accessToken}`,
+      )
+    }
+
+    return config
+  },
+
+  (error) =>
+    Promise.reject(
+      error,
+    ),
+)
 
 /**
- * Access Token 만료 처리
+ * 응답 인터셉터
  *
- * 일반 API 요청이 401을 반환하면:
+ * 보호 API에서 Access Token이 만료되어 401이 발생한 경우에만
+ * Refresh Token으로 재발급 후 원래 요청을 한 번 재시도합니다.
  *
- * 1. Refresh Token 확인
- * 2. /auth/reissue 호출
- * 3. 새로운 Access / Refresh Token 저장
- * 4. 실패했던 기존 요청 재시도
+ * 로그인, Google OAuth, 코드 교환 같은 공개 인증 API의 401은
+ * 재발급 대상으로 처리하지 않고 호출부에 그대로 전달합니다.
  */
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+  (response) =>
+    response,
 
-    async (
-        error: AxiosError
-    ) => {
-        const originalRequest =
-            error.config as
-            | RetryableRequestConfig
-            | undefined;
+  async (
+    error: AxiosError,
+  ) => {
+    const originalRequest =
+      error.config as
+        | RetryableRequestConfig
+        | undefined
 
-        /**
-         * 요청 정보 자체가 없다면
-         * 그대로 오류 반환
-         */
-        if (!originalRequest) {
-            return Promise.reject(
-                error
-            );
-        }
-
-        const status =
-            error.response?.status;
-
-        const requestUrl =
-            originalRequest.url ??
-            "";
-
-        /**
-         * 아래 경우에는
-         * 토큰 재발급을 시도하지 않습니다.
-         *
-         * - 401이 아닌 경우
-         * - 이미 한 번 재시도한 요청
-         * - 로그인 / 회원가입 / 재발급 등의 인증 API
-         */
-        if (
-            status !== 401 ||
-            originalRequest._retry ||
-            isReissueExcludedRequest(
-                requestUrl
-            )
-        ) {
-            return Promise.reject(
-                error
-            );
-        }
-
-        /**
-         * Refresh Token 확인
-         */
-        const refreshToken =
-            getRefreshToken();
-
-        /**
-         * Refresh Token도 없다면
-         * 더 이상 로그인 상태를 유지할 수 없습니다.
-         */
-        if (!refreshToken) {
-            clearAuthStorage();
-            redirectToLogin();
-
-            return Promise.reject(
-                error
-            );
-        }
-
-        /**
-         * 동일 요청이 무한 반복되지 않도록
-         * 재시도 표시
-         */
-        originalRequest._retry =
-            true;
-
-        try {
-            /**
-             * 여러 API가 동시에 401을 반환하더라도
-             * /auth/reissue는 한 번만 호출합니다.
-             */
-            if (!reissuePromise) {
-                reissuePromise =
-                    axios
-                        .post(
-                            `${API_BASE_URL}/auth/reissue`,
-                            {
-                                refreshToken,
-                            },
-                            {
-                                headers: {
-                                    "Content-Type":
-                                        "application/json",
-                                },
-                            }
-                        )
-                        .then(
-                            (
-                                response
-                            ) => {
-                                const {
-                                    accessToken:
-                                    newAccessToken,
-
-                                    refreshToken:
-                                    newRefreshToken,
-                                } =
-                                    response
-                                        .data
-                                        .result;
-
-                                /**
-                                 * 정상적인 재발급 응답인지 확인
-                                 */
-                                if (
-                                    !newAccessToken ||
-                                    !newRefreshToken
-                                ) {
-                                    throw new Error(
-                                        "토큰 재발급 응답이 올바르지 않습니다."
-                                    );
-                                }
-
-                                /**
-                                 * 새 토큰 저장
-                                 */
-                                /**
- * 기존 Refresh Token이
- * 어디에 저장되어 있었는지 확인합니다.
- *
- * localStorage에 있었다면
- * 로그인 상태 유지가 활성화된 상태입니다.
- */
-                                const useLocalStorage =
-                                    localStorage.getItem(
-                                        "refreshToken"
-                                    ) !== null;
-
-                                if (useLocalStorage) {
-                                    // 로그인 상태 유지
-                                    localStorage.setItem(
-                                        "accessToken",
-                                        newAccessToken
-                                    );
-
-                                    localStorage.setItem(
-                                        "refreshToken",
-                                        newRefreshToken
-                                    );
-                                } else {
-                                    // 로그인 상태 유지 안 함
-                                    sessionStorage.setItem(
-                                        "accessToken",
-                                        newAccessToken
-                                    );
-
-                                    sessionStorage.setItem(
-                                        "refreshToken",
-                                        newRefreshToken
-                                    );
-                                }
-
-                                return newAccessToken;
-                            }
-                        )
-                        .finally(
-                            () => {
-                                /**
-                                 * 재발급 작업 종료 후
-                                 * 공유 Promise 초기화
-                                 */
-                                reissuePromise =
-                                    null;
-                            }
-                        );
-            }
-
-            /**
-             * 진행 중인 재발급 요청의
-             * 결과를 기다립니다.
-             */
-            const newAccessToken =
-                await reissuePromise;
-
-            /**
-             * 실패했던 원래 요청에
-             * 새로운 Access Token 적용
-             */
-            originalRequest.headers =
-                originalRequest.headers ??
-                {};
-
-            originalRequest.headers.Authorization =
-                `Bearer ${newAccessToken}`;
-
-            /**
-             * 새 Access Token으로
-             * 원래 요청을 다시 실행합니다.
-             */
-            return api(
-                originalRequest
-            );
-        } catch (
-        reissueError
-        ) {
-            /**
-             * Refresh Token까지 만료됐거나
-             * 재발급 요청 자체가 실패한 경우
-             */
-            console.error(
-                "토큰 재발급 실패:",
-                reissueError
-            );
-
-            clearAuthStorage();
-            redirectToLogin();
-
-            return Promise.reject(
-                reissueError
-            );
-        }
+    if (
+      !originalRequest
+    ) {
+      return Promise.reject(
+        error,
+      )
     }
-);
 
-export default api;
+    const status =
+      error.response
+        ?.status
+
+    const requestUrl =
+      originalRequest.url ??
+      ''
+
+    if (
+      status !== 401 ||
+      originalRequest._retry ||
+      isPublicAuthRequest(
+        requestUrl,
+      )
+    ) {
+      return Promise.reject(
+        error,
+      )
+    }
+
+    const refreshToken =
+      getRefreshToken()
+
+    if (
+      !refreshToken
+    ) {
+      clearAuthStorage()
+      redirectToLogin()
+
+      return Promise.reject(
+        error,
+      )
+    }
+
+    originalRequest._retry =
+      true
+
+    try {
+      if (
+        !reissuePromise
+      ) {
+        /*
+         * raw axios를 사용해 /auth/reissue를 호출합니다.
+         * 따라서 공용 api interceptor를 다시 타지 않고,
+         * Access Token도 포함되지 않습니다.
+         */
+        reissuePromise =
+          axios
+            .post<ReissueResponse>(
+              `${API_BASE_URL}/auth/reissue`,
+              {
+                refreshToken,
+              },
+              {
+                headers: {
+                  'Content-Type':
+                    'application/json',
+                },
+              },
+            )
+            .then(
+              (
+                response,
+              ) => {
+                const newAccessToken =
+                  response.data
+                    .result
+                    ?.accessToken
+
+                const newRefreshToken =
+                  response.data
+                    .result
+                    ?.refreshToken
+
+                if (
+                  !newAccessToken ||
+                  !newRefreshToken
+                ) {
+                  throw new Error(
+                    '토큰 재발급 응답이 올바르지 않습니다.',
+                  )
+                }
+
+                saveReissuedAuthTokens(
+                  newAccessToken,
+                  newRefreshToken,
+                )
+
+                return newAccessToken
+              },
+            )
+            .finally(
+              () => {
+                reissuePromise =
+                  null
+              },
+            )
+      }
+
+      const newAccessToken =
+        await reissuePromise
+
+      originalRequest.headers.set(
+        'Authorization',
+        `Bearer ${newAccessToken}`,
+      )
+
+      return api(
+        originalRequest,
+      )
+    } catch (
+      reissueError
+    ) {
+      console.error(
+        '토큰 재발급 실패:',
+        reissueError,
+      )
+
+      clearAuthStorage()
+      redirectToLogin()
+
+      return Promise.reject(
+        reissueError,
+      )
+    }
+  },
+)
+
+export default api
