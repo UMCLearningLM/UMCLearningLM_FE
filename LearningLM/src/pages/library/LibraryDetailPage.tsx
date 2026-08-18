@@ -28,6 +28,7 @@ import {
   createCopiedFlow,
   type LibraryFlowDetail,
 } from '../../api/library'
+import { getAccessToken } from '../../api/authStorage'
 import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
 import type { StudioStage } from '../../features/studio/types/studioNode'
 
@@ -190,9 +191,7 @@ export function LibraryDetailPage() {
       return
     }
 
-    const accessToken =
-      localStorage.getItem('accessToken') ??
-      localStorage.getItem('token')
+    const accessToken = getAccessToken()
 
     if (!accessToken) {
       navigate('/login', {
