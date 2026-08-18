@@ -29,6 +29,7 @@ import {
 } from '../features/studio/components/node/StudioFlowNode'
 
 import {
+  hasStudioBlockInspector,
   StudioBlockInspector,
 } from '../features/studio/components/inspector/StudioBlockInspector'
 
@@ -65,8 +66,6 @@ import type {
 import {
   hydrateStudioFlowFromApi,
 } from '../features/studio/utils/hydrateStudioFlow'
-
-import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
 
 import {
   getFlow,
@@ -662,19 +661,45 @@ export function Stdio_create1() {
     ],
   )
 
-  const filteredBlocks = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase()
+    const filteredBlocks = useMemo(() => {
+      const keyword =
+        searchText.trim().toLowerCase()
 
-    if (!keyword) {
-      return studioBlockCatalog
-    }
+      /*
+      * 제출 시점에는 실제 Inspector가 완성된 블록만
+      * Palette에 노출합니다.
+      *
+      * Catalog 정의 자체는 유지하므로 저장된 Flow,
+      * block ID 및 다른 데이터 구조에는 영향을 주지 않습니다.
+      */
+      const usableBlocks =
+        studioBlockCatalog.filter(
+          (block) =>
+            block.availability ===
+              'available' &&
+            hasStudioBlockInspector(
+              block.id,
+            ),
+        )
 
-    return studioBlockCatalog.filter(
-      (block) =>
-        block.title.toLowerCase().includes(keyword) ||
-        block.description.toLowerCase().includes(keyword),
-    )
-  }, [searchText])
+      if (!keyword) {
+        return usableBlocks
+      }
+
+      return usableBlocks.filter(
+        (block) =>
+          block.title
+            .toLowerCase()
+            .includes(
+              keyword,
+            ) ||
+          block.description
+            .toLowerCase()
+            .includes(
+              keyword,
+            ),
+      )
+    }, [searchText])
 
   const workflowStructureSignature = useMemo(() => {
     return studio.nodes
@@ -964,15 +989,72 @@ export function Stdio_create1() {
       studio.nodes,
     ])
 
-  const handleValidate = () => {
-    const result = validateStudioWorkflow({
-      nodes: studio.nodes,
-      includeRecommended: true,
-    })
+      /**
+       * 현재 선택된 노드의 전체 Inspector 설정을 확인합니다.
+       *
+       * 각 Inspector의 값은 입력 즉시 studio.nodes에 반영되므로
+       * 여기서는 별도의 저장 처리를 다시 하지 않습니다.
+       *
+       * 대신 현재 노드의 필수 슬롯이 모두 완료됐는지 확인한 뒤
+       * 문제가 없을 때만 Inspector를 닫아
+       * "설정 저장" 완료 상태로 진행합니다.
+       */
+      const handleSaveSelectedNodeSettings = () => {
+        if (!selectedNode) {
+          return
+        }
 
-    studio.validateWorkflow()
-    setValidationResult(result)
-  }
+        const incompleteRequiredSlots =
+          selectedNode.data.node.slots.filter(
+            (slot) =>
+              slot.required &&
+              !hasSlotValue(slot),
+          )
+
+        if (
+          incompleteRequiredSlots.length >
+          0
+        ) {
+          const incompleteLabels =
+            incompleteRequiredSlots.map(
+              (slot) =>
+                slot.label,
+            )
+
+          window.alert(
+            [
+              '필수 설정이 완료되지 않았습니다.',
+              '',
+              incompleteLabels.join(
+                ', ',
+              ),
+            ].join('\n'),
+          )
+
+          return
+        }
+
+        /*
+        * 각 Block Inspector의 onChange에서
+        * config/value/state는 이미 Studio state에 저장된 상태입니다.
+        *
+        * 필수 설정 확인이 끝났으므로
+        * 열려 있는 세부 Inspector를 닫습니다.
+        */
+        setOpenInspectorSlotId(
+          null,
+        )
+      }
+
+
+    const handleValidate = () => {
+      const result =
+        studio.validateWorkflow()
+
+      setValidationResult(
+        result,
+      )
+    }
 
   const buildNavigationState =
     (): StudioSaveNavigationState => ({
@@ -1002,51 +1084,153 @@ export function Stdio_create1() {
         locationState?.saveDraft,
     })
 
-  const handleOpenExample = () => {
-    if (!flowId) {
-      window.alert(
-        '예시 결과를 생성할 flowId가 없습니다.',
+      /**
+     * Studio 밖의 화면으로 이동하기 전에
+     * 현재 History Entry에 최신 편집 상태를 먼저 기록합니다.
+     *
+     * 예시 결과 / 미리보기에서 브라우저 뒤로가기를 사용해도
+     * 최신 nodes / edges / slot config가 복원되도록 합니다.
+     */
+    const preserveCurrentEditorHistory = async (
+      state: StudioSaveNavigationState,
+    ) => {
+      await navigate(
+        `${location.pathname}${location.search}`,
+        {
+          replace: true,
+          state,
+        },
       )
-      return
     }
 
-    navigate(
-      `/workflows/${flowId}/preview?view=example`,
-      {
-        state: buildNavigationState(),
-      },
-    )
-  }
+    const handleOpenExample = async () => {
+      if (!flowId) {
+        window.alert(
+          '예시 결과를 생성할 flowId가 없습니다.',
+        )
+        return
+      }
 
-  const handleOpenPreview = () => {
-    if (!flowId) {
-      window.alert(
-        '미리보기에 사용할 flowId가 없습니다.',
+      const state =
+        buildNavigationState()
+
+      await preserveCurrentEditorHistory(
+        state,
       )
-      return
+
+      navigate(
+        `/workflows/${flowId}/preview?view=example`,
+        {
+          state,
+        },
+      )
     }
 
-    navigate(
-      `/workflows/${flowId}/preview`,
-      {
-        state: buildNavigationState(),
-      },
-    )
-  }
+    const handleOpenPreview = async () => {
+      if (!flowId) {
+        window.alert(
+          '미리보기에 사용할 flowId가 없습니다.',
+        )
+        return
+      }
 
-  const handleStartSave = () => {
-    if (!validationResult?.valid) {
-      return
+      const state =
+        buildNavigationState()
+
+      await preserveCurrentEditorHistory(
+        state,
+      )
+
+      navigate(
+        `/workflows/${flowId}/preview`,
+        {
+          state,
+        },
+      )
     }
 
-    navigate('/studio/save/review', {
-      state: buildNavigationState(),
-    })
-  }
+      /**
+       * 저장 버튼을 누른 시점의 최신 Studio 상태로
+       * 전체 Workflow Validation을 다시 실행합니다.
+       *
+       * 사용자가 별도로 "검증" 버튼을 누르지 않았더라도
+       * 저장 직전에 반드시 전체 설정을 확인합니다.
+       */
+      const handleStartSave = async () => {
+        const result =
+          studio.validateWorkflow()
+
+        setValidationResult(
+          result,
+        )
+
+        /*
+        * 검증에 실패하면 Review 화면으로 이동하지 않습니다.
+        * 우측 검증 결과에 오류가 표시되므로
+        * 사용자는 필요한 설정을 수정한 뒤 다시 저장할 수 있습니다.
+        */
+        if (!result.valid) {
+          return
+        }
+
+        const state: StudioSaveNavigationState = {
+          ...buildNavigationState(),
+
+          /*
+          * setValidationResult는 비동기 State 갱신이므로
+          * 지금 막 생성한 최신 결과를 Navigation State에
+          * 명시적으로 넣습니다.
+          */
+          validationResult:
+            result,
+        }
+
+        await preserveCurrentEditorHistory(
+          state,
+        )
+
+        navigate(
+          '/studio/save/review',
+          {
+            state,
+          },
+        )
+      }
 
   return (
     <div className="fixed inset-0 flex h-[100dvh] w-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
       <div className="shrink-0">
+            {/* 모바일 / 태블릿 Studio 미지원 안내 */}
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F5F5F7] px-[24px] lg:hidden">
+                <div className="w-full max-w-[420px] rounded-[16px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[34px] text-center shadow-sm">
+                  <div className="mx-auto flex h-[52px] w-[52px] items-center justify-center rounded-[12px] bg-[#EAEBFF] text-[26px]">
+                    💻
+                  </div>
+
+                  <h1 className="mt-[20px] text-[22px] font-bold text-[#27272A]">
+                    Studio는 데스크톱 전용입니다.
+                  </h1>
+
+                  <p className="mt-[12px] text-[15px] leading-[23px] text-[#666666]">
+                    블록 배치와 연결 기능은
+                    PC 환경에서 이용할 수 있습니다.
+                    <br />
+                    데스크톱에서 다시 접속해주세요.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        '/',
+                      )
+                    }
+                    className="mt-[26px] flex h-[48px] w-full items-center justify-center rounded-[10px] bg-[#6366F1] text-[16px] font-bold text-white hover:bg-[#5558DB]"
+                  >
+                    홈으로 돌아가기
+                  </button>
+                </div>
+              </div>
         <Header />
       </div>
 
@@ -1411,7 +1595,9 @@ export function Stdio_create1() {
                 <div className="flex items-center justify-center pb-[14px]">
                   <button
                     type="button"
-                    onClick={() => setOpenInspectorSlotId(null)}
+                    onClick={
+                      handleSaveSelectedNodeSettings
+                    }
                     className="flex h-[53px] w-[374px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
                   >
                     설정 저장
@@ -1516,17 +1702,12 @@ export function Stdio_create1() {
           >
             미리보기
           </button>
-
           <button
             type="button"
-            disabled={!validationResult?.valid}
-            onClick={handleStartSave}
-            className={[
-              'flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] text-[17px] font-bold',
-              validationResult?.valid
-                ? 'border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
-                : 'cursor-not-allowed border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
-            ].join(' ')}
+            onClick={
+              handleStartSave
+            }
+            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white hover:bg-[#5558DB]"
           >
             저장
           </button>
