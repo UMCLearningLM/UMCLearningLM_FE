@@ -7,11 +7,14 @@ import { useNavigate } from "react-router-dom";
 import { UserRound } from "lucide-react";
 
 import api from "../../api/api";
+import { getAccessToken, } from "../../api/authStorage";
+import axios from "axios";
 
 interface CurrentUser {
     userId: number;
     email: string;
     nickname: string;
+    profileImageUrl?: string | null;
     loginType?: "LOCAL" | "SOCIAL";
     provider?: string | null;
     role?: string;
@@ -51,6 +54,18 @@ export function MyProfile() {
 
     const [profileImage, setProfileImage] =
         useState<string | null>(null);
+
+    const [profileImageFile, setProfileImageFile] =
+        useState<File | null>(null);
+
+    const [isProfileImageEdit, setIsProfileImageEdit] =
+        useState(false);
+
+    const [isProfileImageSaving, setIsProfileImageSaving] =
+        useState(false);
+
+    const [profileImageError, setProfileImageError] =
+        useState("");
 
     // =====================================================
     // 이메일
@@ -136,6 +151,7 @@ export function MyProfile() {
 
                 setCurrentUser(user);
                 setEmail(user.email);
+                setProfileImage(user.profileImageUrl ?? null);
 
                 // 로그인 상태 저장 방식에 맞춰
                 // user 정보 갱신
@@ -444,6 +460,10 @@ export function MyProfile() {
     // 이메일 인증메일 전송
     // =====================================================
 
+    // =====================================================
+    // 이메일 인증메일 전송
+    // =====================================================
+
     const sendEmailVerification =
         async () => {
             const trimmedEmail =
@@ -489,13 +509,44 @@ export function MyProfile() {
                 return;
             }
 
+            /**
+             * 현재 로그인 Access Token 가져오기
+             */
+            const accessToken =
+                getAccessToken();
+
+            if (!accessToken) {
+                setEmailVerifyStatus(
+                    "error"
+                );
+
+                setEmailError(
+                    "로그인 인증 정보가 없습니다. 다시 로그인해주세요."
+                );
+
+                return;
+            }
+
             try {
                 setEmailVerifyStatus(
                     "sending"
                 );
 
-                await api.post(
-                    "/auth/email/request",
+                /**
+                 * api.ts를 거치지 않고
+                 * axios를 직접 사용합니다.
+                 *
+                 * 이유:
+                 * api.ts에서는 /auth/email/request를
+                 * 공개 인증 API로 설정해두었기 때문에
+                 * Authorization을 자동으로 제거합니다.
+                 */
+                const API_BASE_URL =
+                    import.meta.env
+                        .VITE_API_BASE_URL;
+
+                await axios.post(
+                    `${API_BASE_URL}/auth/email/request`,
                     {
                         verificationType:
                             "LOGIN",
@@ -505,6 +556,15 @@ export function MyProfile() {
 
                         email:
                             trimmedEmail,
+                    },
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${accessToken}`,
+
+                            "Content-Type":
+                                "application/json",
+                        },
                     }
                 );
 
@@ -520,10 +580,21 @@ export function MyProfile() {
                 setVerificationCode("");
 
                 setEmailError("");
-            } catch (error) {
+
+            } catch (error: any) {
                 console.error(
                     "이메일 인증메일 전송 실패:",
                     error
+                );
+
+                console.error(
+                    "상태 코드:",
+                    error.response?.status
+                );
+
+                console.error(
+                    "응답:",
+                    error.response?.data
                 );
 
                 setEmailVerifyStatus(
@@ -535,6 +606,10 @@ export function MyProfile() {
                 );
             }
         };
+
+    // =====================================================
+    // 이메일 인증번호 확인
+    // =====================================================
 
     // =====================================================
     // 이메일 인증번호 확인
@@ -555,10 +630,36 @@ export function MyProfile() {
             return;
         }
 
+        /**
+         * 현재 로그인 Access Token 가져오기
+         */
+        const accessToken =
+            getAccessToken();
+
+        if (!accessToken) {
+            setEmailVerifyStatus(
+                "error"
+            );
+
+            setEmailError(
+                "로그인 인증 정보가 없습니다. 다시 로그인해주세요."
+            );
+
+            return;
+        }
+
         try {
+            /**
+             * api.ts를 거치지 않고
+             * axios를 직접 사용합니다.
+             */
+            const API_BASE_URL =
+                import.meta.env
+                    .VITE_API_BASE_URL;
+
             const response =
-                await api.post(
-                    "/auth/email/verify",
+                await axios.post(
+                    `${API_BASE_URL}/auth/email/verify`,
                     {
                         verificationType:
                             "LOGIN",
@@ -571,6 +672,15 @@ export function MyProfile() {
 
                         code:
                             verificationCode.trim(),
+                    },
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${accessToken}`,
+
+                            "Content-Type":
+                                "application/json",
+                        },
                     }
                 );
 
@@ -609,10 +719,21 @@ export function MyProfile() {
             await updateEmail(
                 temporaryToken
             );
-        } catch (error) {
+
+        } catch (error: any) {
             console.error(
                 "이메일 인증 실패:",
                 error
+            );
+
+            console.error(
+                "상태 코드:",
+                error.response?.status
+            );
+
+            console.error(
+                "응답:",
+                error.response?.data
             );
 
             setEmailVerifyStatus(
@@ -624,7 +745,6 @@ export function MyProfile() {
             );
         }
     };
-
     // =====================================================
     // 이메일 변경 API
     // =====================================================
@@ -938,6 +1058,37 @@ export function MyProfile() {
     // 프로필 이미지
     // =====================================================
 
+    // =====================================================
+    // 프로필 사진 변경 시작
+    // =====================================================
+
+    const startProfileImageEdit = () => {
+        setIsProfileImageEdit(true);
+        setProfileImageFile(null);
+        setProfileImageError("");
+    };
+
+
+    // =====================================================
+    // 프로필 사진 변경 취소
+    // =====================================================
+
+    const cancelProfileImageEdit = () => {
+        setIsProfileImageEdit(false);
+        setProfileImageFile(null);
+        setProfileImageError("");
+
+        // 서버에 저장되어 있는 기존 이미지로 복구
+        setProfileImage(
+            currentUser?.profileImageUrl ?? null
+        );
+    };
+
+
+    // =====================================================
+    // 프로필 사진 파일 선택
+    // =====================================================
+
     const handleProfileImage = (
         event: ChangeEvent<HTMLInputElement>
     ) => {
@@ -948,16 +1099,145 @@ export function MyProfile() {
             return;
         }
 
-        /**
-         * 현재는 임시 기능이므로
-         * 실제 서버에는 저장하지 않음
-         */
+        // 파일 형식 검사
+        const allowedTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            setProfileImageError(
+                "JPG, GIF, PNG 또는 WebP 파일만 업로드할 수 있습니다."
+            );
+
+            event.target.value = "";
+            return;
+        }
+
+        // 5MB 제한
+        const maxSize = 5 * 1024 * 1024;
+
+        if (file.size > maxSize) {
+            setProfileImageError(
+                "프로필 이미지는 5MB 이하만 업로드할 수 있습니다."
+            );
+
+            event.target.value = "";
+            return;
+        }
+
+        setProfileImageError("");
+
+        // 이전 미리보기 URL 제거
+        if (profileImageFile && profileImage) {
+            URL.revokeObjectURL(profileImage);
+        }
+
         const imageUrl =
             URL.createObjectURL(file);
 
-        setProfileImage(
-            imageUrl
-        );
+        setProfileImageFile(file);
+        setProfileImage(imageUrl);
+    };
+
+
+    // =====================================================
+    // 프로필 사진 저장
+    // =====================================================
+
+    const saveProfileImage = async () => {
+        if (!profileImageFile) {
+            setProfileImageError(
+                "변경할 프로필 사진을 선택해주세요."
+            );
+
+            return;
+        }
+
+        try {
+            setIsProfileImageSaving(true);
+            setProfileImageError("");
+
+            const formData = new FormData();
+
+            formData.append(
+                "profileImage",
+                profileImageFile
+            );
+
+            const response = await api.post(
+                "/auth/me/profile",
+                formData
+            );
+
+            console.log(
+                "프로필 이미지 변경 성공:",
+                response.data
+            );
+
+            const updatedUser =
+                response.data?.result as
+                | CurrentUser
+                | undefined;
+
+            if (updatedUser) {
+                setCurrentUser(updatedUser);
+
+                setProfileImage(
+                    updatedUser.profileImageUrl ?? null
+                );
+
+                const userString =
+                    JSON.stringify(updatedUser);
+
+                if (
+                    localStorage.getItem("user") !== null
+                ) {
+                    localStorage.setItem(
+                        "user",
+                        userString
+                    );
+                }
+
+                if (
+                    sessionStorage.getItem("user") !== null
+                ) {
+                    sessionStorage.setItem(
+                        "user",
+                        userString
+                    );
+                }
+            }
+
+            setProfileImageFile(null);
+            setIsProfileImageEdit(false);
+
+            alert("프로필 사진이 변경되었습니다.");
+        } catch (error: any) {
+            console.error(
+                "프로필 이미지 변경 실패:",
+                error
+            );
+
+            console.error(
+                "상태 코드:",
+                error.response?.status
+            );
+
+            console.error(
+                "응답:",
+                error.response?.data
+            );
+
+            setProfileImageError(
+                "프로필 사진 변경에 실패했습니다. 다시 시도해주세요."
+            );
+        } finally {
+            setIsProfileImageSaving(false);
+        }
     };
 
     // =====================================================
@@ -1163,7 +1443,7 @@ export function MyProfile() {
                             프로필 설정
                         </h1>
 
-                        <p className="mt-[2px] text-[14px] text-[#52525B]">
+                        <p className="mt-[2px] text-[15px] text-[#52525B]">
                             {currentUser.nickname}
                             님의 프로필
                         </p>
@@ -1173,56 +1453,153 @@ export function MyProfile() {
                         프로필 사진
                     ================================================= */}
 
+                    {/* =================================================
+    프로필 사진
+================================================= */}
+
                     <div className="mt-[28px]">
+
+                        {/* 제목 + 변경/취소 */}
                         <div className="flex items-center justify-between">
+
                             <p className="text-[20px] font-medium text-[#464646]">
                                 프로필 사진
                             </p>
 
-                            {/* 임시 기능이므로 비활성화 */}
-                            <button
-                                type="button"
-                                disabled
-                                className="flex h-[30px] cursor-not-allowed items-center justify-center rounded-[8px] border-[2px] border-[#E4E4E7] bg-[#FAFAFA] px-[9px] text-[13px] font-bold text-[#B5B5BA]"
-                            >
-                                변경
-                            </button>
+                            {!isProfileImageEdit ? (
+                                <button
+                                    type="button"
+                                    onClick={startProfileImageEdit}
+                                    className="flex h-[30px] cursor-pointer items-center justify-center rounded-[8px] border-[2px] border-[#E4E4E7] bg-[#FFF] px-[9px] text-[13px] font-bold text-[#666666] hover:bg-[#F5F5F7]"
+                                >
+                                    변경
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={cancelProfileImageEdit}
+                                    className="flex h-[30px] cursor-pointer items-center justify-center rounded-[8px] border-[2px] border-[#E4E4E7] bg-[#FFF] px-[9px] text-[13px] font-bold text-[#666666] hover:bg-[#F5F5F7]"
+                                >
+                                    취소
+                                </button>
+                            )}
                         </div>
 
-                        <div className="mt-[9px] flex items-center">
-                            <div className="flex h-[146px] w-[146px] items-center justify-center overflow-hidden rounded-full border-[2px] border-[#E4E4E7] bg-white">
-                                {profileImage ? (
-                                    <img
-                                        src={
-                                            profileImage
-                                        }
-                                        alt="프로필 사진"
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <UserRound
-                                        size={
-                                            72
-                                        }
-                                        strokeWidth={
-                                            1.5
-                                        }
-                                        className="text-black"
-                                    />
-                                )}
+
+                        {/* =================================================
+        기본 보기 상태
+    ================================================= */}
+
+                        {!isProfileImageEdit && (
+                            <div className="mt-[9px] flex items-center">
+
+                                <div className="flex h-[146px] w-[146px] items-center justify-center overflow-hidden rounded-full border-[2px] border-[#E4E4E7] bg-white">
+
+                                    {profileImage ? (
+                                        <img
+                                            src={profileImage}
+                                            alt="프로필 사진"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <UserRound
+                                            size={72}
+                                            strokeWidth={1.5}
+                                            className="text-black"
+                                        />
+                                    )}
+
+                                </div>
+
                             </div>
+                        )}
 
-                            {/* 임시 기능 */}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                disabled
-                                className="hidden"
-                                onChange={
-                                    handleProfileImage
-                                }
-                            />
-                        </div>
+
+                        {/* =================================================
+        변경 상태
+    ================================================= */}
+
+                        {isProfileImageEdit && (
+                            <div className="mt-[9px]">
+
+                                <div className="flex items-center">
+
+                                    {/* 프로필 이미지 */}
+                                    <div className="flex h-[146px] w-[146px] items-center justify-center overflow-hidden rounded-full border-[2px] border-[#E4E4E7] bg-white">
+
+                                        {profileImage ? (
+                                            <img
+                                                src={profileImage}
+                                                alt="프로필 사진 미리보기"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <UserRound
+                                                size={72}
+                                                strokeWidth={1.5}
+                                                className="text-black"
+                                            />
+                                        )}
+
+                                    </div>
+
+
+                                    {/* 오른쪽 영역 */}
+                                    <div className="ml-[40px]">
+
+                                        {/* 실제 파일 input */}
+                                        <input
+                                            id="profile-image-input"
+                                            type="file"
+                                            accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp"
+                                            onChange={handleProfileImage}
+                                            className="hidden"
+                                        />
+
+                                        {/* 파일 업로드 버튼 */}
+                                        <label
+                                            htmlFor="profile-image-input"
+                                            className="flex h-[42px] w-[153px] cursor-pointer items-center justify-center rounded-[8px] border-[2px] border-[#E4E4E7] bg-white text-[16px] font-bold text-[#666666] hover:bg-[#F5F5F7]"
+                                        >
+                                            파일 업로드
+                                        </label>
+
+
+                                        {/* 안내 문구 */}
+                                        <p className="mt-[14px] text-[12px] leading-[1.5] text-[#666666]">
+                                            250 × 250 픽셀에 최적화되어 있으며,
+                                            <br />
+                                            5MB 이하의 JPG, GIF, PNG 파일을 지원합니다.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* 파일 오류 */}
+                                {profileImageError && (
+                                    <p className="mt-[10px] text-[13px] font-bold text-[#EF8888]">
+                                        {profileImageError}
+                                    </p>
+                                )}
+
+
+                                {/* 저장하기 */}
+                                <button
+                                    type="button"
+                                    onClick={saveProfileImage}
+                                    disabled={isProfileImageSaving}
+                                    className="mt-[20px] flex h-[42px] w-[164px] cursor-pointer items-center justify-center rounded-[8px] bg-[#6366F1] text-[16px] font-bold text-white hover:bg-[#5558E8] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isProfileImageSaving
+                                        ? "저장 중..."
+                                        : "저장하기"}
+                                </button>
+
+                            </div>
+                        )}
+
                     </div>
 
                     {/* =================================================
@@ -1483,7 +1860,7 @@ export function MyProfile() {
                                                     onClick={
                                                         verifyEmail
                                                     }
-                                                    className="mt-[7px] flex h-[29px] w-[110px] cursor-pointer items-center justify-center rounded-[8px] bg-[#6366F1] px-[13px] text-[13px] font-bold text-white hover:bg-[#5558E8]"
+                                                    className="mt-[7px] flex h-[31px] w-[140px] cursor-pointer items-center justify-center rounded-[8px] bg-[#6366F1] px-[13px] text-[13px] font-bold text-white hover:bg-[#5558E8]"
                                                 >
                                                     인증번호 확인
                                                 </button>
@@ -1496,7 +1873,7 @@ export function MyProfile() {
 
                                     {emailVerifyStatus ===
                                         "success" && (
-                                            <p className="text-[12px] font-bold text-[#5FAA81]">
+                                            <p className="text-[14px] font-bold text-[#5FAA81]">
                                                 이메일 인증이 완료되었습니다.
                                             </p>
                                         )}
@@ -1544,7 +1921,7 @@ export function MyProfile() {
                                 <div className="mt-[15px]">
 
                                     {/* 현재 비밀번호 */}
-                                    <p className="mb-[7px] text-[12px] text-[#52525B]">
+                                    <p className="mb-[7px] text-[14px] font-bold text-[#52525B]">
                                         현재 비밀번호
                                     </p>
 
@@ -1571,7 +1948,7 @@ export function MyProfile() {
                                     />
 
                                     {/* 변경할 비밀번호 */}
-                                    <p className="mt-[16px] mb-[7px] text-[12px] text-[#52525B]">
+                                    <p className="mt-[16px] mb-[7px] text-[14px] font-bold text-[#52525B]">
                                         변경할 비밀번호
                                     </p>
 
@@ -1619,7 +1996,7 @@ export function MyProfile() {
                                     />
 
                                     {/* 비밀번호 규칙 */}
-                                    <p className="mt-[7px] text-[11px] text-[#9A9AA3]">
+                                    <p className="mt-[7px] text-[12px] font-bold text-[#9A9AA3]">
                                         영문, 숫자 포함 8자 이상
                                     </p>
 

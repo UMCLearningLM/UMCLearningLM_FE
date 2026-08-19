@@ -79,7 +79,14 @@ export function Login() {
     setEmailFormError,
   ] = useState(false)
 
-  const [existEmail, setExistEmail] = useState(false);
+  // =====================================================
+  // 로그인 실패 오류
+  // =====================================================
+
+  const [
+    loginError,
+    setLoginError,
+  ] = useState(false)
 
   // =====================================================
   // 비밀번호
@@ -191,6 +198,7 @@ export function Login() {
   // =====================================================
 
   const login = async () => {
+
     // -----------------------------------------------------
     // 이메일 검사
     // -----------------------------------------------------
@@ -241,6 +249,10 @@ export function Login() {
       'basic',
     )
 
+    setLoginError(
+      false,
+    )
+
     // -----------------------------------------------------
     // 이전 인증정보 삭제
     // -----------------------------------------------------
@@ -248,6 +260,7 @@ export function Login() {
     clearAuthStorage()
 
     try {
+
       // ---------------------------------------------------
       // 로그인 API
       // ---------------------------------------------------
@@ -338,42 +351,63 @@ export function Login() {
           replace: true,
         },
       )
+
     } catch (error: any) {
-      console.error("===== 로그인 실패 =====")
-
-      console.log("HTTP 상태:", error.response?.status)
-
-      console.log(
-        "백엔드 에러 응답:",
-        error.response?.data
-      )
-
-      console.log(
-        "에러 코드:",
-        error.response?.data?.code
-      )
-
-      console.log(
-        "에러 메시지:",
-        error.response?.data?.message
-      )
-
-      console.log("======================")
-
-      const errorCode =
-        error.response?.data?.code
-
-      if (errorCode === "AUTH40101") {
-        setExistEmail(true);
-        setPasswordState("basic")
-        return
-      } else {
-        setExistEmail(false);
-      }
-
 
       console.error(
-        "로그인 요청 중 알 수 없는 오류가 발생했습니다."
+        '===== 로그인 실패 =====',
+      )
+
+      console.log(
+        'HTTP 상태:',
+        error.response?.status,
+      )
+
+      console.log(
+        '백엔드 에러 응답:',
+        error.response?.data,
+      )
+
+      console.log(
+        '에러 코드:',
+        error.response?.data?.code,
+      )
+
+      console.log(
+        '에러 메시지:',
+        error.response?.data?.message,
+      )
+
+      console.log(
+        '======================',
+      )
+
+      // ===================================================
+      // 이메일 또는 비밀번호가 잘못된 경우
+      //
+      // HTTP 401이면 로그인 정보 오류로 처리
+      // ===================================================
+
+      if (
+        error.response?.status === 401
+      ) {
+        setLoginError(
+          true,
+        )
+
+        return
+      }
+
+      // ---------------------------------------------------
+      // 그 외 오류
+      // ---------------------------------------------------
+
+      setLoginError(
+        false,
+      )
+
+      console.error(
+        '로그인 요청 중 알 수 없는 오류가 발생했습니다.',
       )
     }
   }
@@ -382,53 +416,54 @@ export function Login() {
   // Google 로그인
   // =====================================================
 
-  const googleLogin =
-    () => {
-      /*
-       * Google 로그인도 새로운 로그인 시도이므로
-       * 기존 인증정보를 먼저 제거합니다.
-       */
-      clearAuthStorage()
+  const googleLogin = () => {
 
-      // ---------------------------------------------------
-      // 로그인 상태 유지 여부 저장
-      // ---------------------------------------------------
+    /*
+     * Google 로그인도 새로운 로그인 시도이므로
+     * 기존 인증정보를 먼저 제거합니다.
+     */
 
+    clearAuthStorage()
+
+    // ---------------------------------------------------
+    // 로그인 상태 유지 여부 저장
+    // ---------------------------------------------------
+
+    sessionStorage.setItem(
+      'googleLoginRememberMe',
+      rememberMe
+        ? 'true'
+        : 'false',
+    )
+
+    // ---------------------------------------------------
+    // 원래 접근하려던 페이지 저장
+    // ---------------------------------------------------
+
+    const redirectPath =
+      getRedirectPath()
+
+    if (
+      redirectPath
+    ) {
       sessionStorage.setItem(
-        'googleLoginRememberMe',
-        rememberMe
-          ? 'true'
-          : 'false',
+        'googleLoginRedirect',
+        redirectPath,
       )
-
-      // ---------------------------------------------------
-      // 원래 접근하려던 페이지 저장
-      // ---------------------------------------------------
-
-      const redirectPath =
-        getRedirectPath()
-
-      if (
-        redirectPath
-      ) {
-        sessionStorage.setItem(
-          'googleLoginRedirect',
-          redirectPath,
-        )
-      } else {
-        sessionStorage.removeItem(
-          'googleLoginRedirect',
-        )
-      }
-
-      // ---------------------------------------------------
-      // Google 로그인 로딩 페이지
-      // ---------------------------------------------------
-
-      navigate(
-        '/auth/google/loading',
+    } else {
+      sessionStorage.removeItem(
+        'googleLoginRedirect',
       )
     }
+
+    // ---------------------------------------------------
+    // Google 로그인 로딩 페이지
+    // ---------------------------------------------------
+
+    navigate(
+      '/auth/google/loading',
+    )
+  }
 
   // =====================================================
   // 화면
@@ -444,10 +479,12 @@ export function Login() {
 
         <div className="px-[10px] flex flex-col items-center mb-[34px]">
 
-          <div className="cursor-pointer flex flex-row gap-[8px]"
+          <div
+            className="cursor-pointer flex flex-row gap-[8px]"
             onClick={() => {
-              navigate("/");
-            }}>
+              navigate("/")
+            }}
+          >
 
             <div className="h-[40px] flex flex-col rounded-[8px] bg-[#6366F1] px-[15px] justify-center items-center text-[21px] font-bold text-[#FFF]">
               L
@@ -509,8 +546,6 @@ export function Login() {
                       event.target.value,
                     )
 
-                    // 이메일을 다시 입력하면
-                    // 기존 이메일 오류 제거
                     setEmailState(
                       'basic',
                     )
@@ -518,23 +553,21 @@ export function Login() {
                     setEmailFormError(
                       false,
                     )
+
+                    // 다시 입력하면
+                    // 로그인 오류 문구 제거
+                    setLoginError(
+                      false,
+                    )
                   }}
                   placeholder="you@example.com"
                   className="hover:border-[#666666] w-full h-[51px] flex items-center pl-[20px] rounded-[8px] border-2 border-[#E4E4E7]"
                 />
 
-                {/* 존재하지 않는 이메일 */}
-
-                {existEmail && (
-                  <p className="mt-[6.5px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                    존재하지 않는 이메일입니다.
-                  </p>
-                )}
-
                 {/* 이메일 형식 오류 */}
 
                 {emailFormError && (
-                  <p className="mt-[4px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
+                  <p className="mt-[6.5px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
                     유효한 이메일이 아닙니다. 다시 작성해 주세요.
                   </p>
                 )}
@@ -563,17 +596,33 @@ export function Login() {
                     event.target.value,
                   )
 
-                  // 비밀번호를 다시 입력하면
-                  // 기존 비밀번호 오류 제거
                   setPasswordState(
                     'basic',
+                  )
+
+                  // 다시 입력하면
+                  // 로그인 오류 문구 제거
+                  setLoginError(
+                    false,
                   )
                 }}
                 placeholder="********"
                 className="hover:border-[#666666] h-[51px] flex items-center rounded-[8px] mt-[8px] pl-[20px] border-2 border-[#E4E4E7]"
               />
 
-              {/* 비밀번호 오류 */}
+              {/* =================================================
+                  이메일 또는 비밀번호 오류
+              ================================================= */}
+
+              {loginError && (
+                <p className="mt-[6px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
+                  이메일 또는 비밀번호가 올바르지 않습니다
+                </p>
+              )}
+
+              {/* =================================================
+                  비밀번호 오류
+              ================================================= */}
 
               {passwordState ===
                 'incorrect' && (
@@ -582,7 +631,9 @@ export function Login() {
                   </p>
                 )}
 
-              {/* 비밀번호 길이 오류 */}
+              {/* =================================================
+                  비밀번호 길이 오류
+              ================================================= */}
 
               {passwordLengthState ===
                 'incorrect' && (
@@ -625,12 +676,14 @@ export function Login() {
                   ' ',
                 )}
               >
+
                 {rememberMe && (
                   <Check
                     size={18}
                     className="text-white stroke-[3]"
                   />
                 )}
+
               </div>
 
               <span className="text-[15.5px] text-[#52525B] tracking-tighter">
@@ -650,9 +703,11 @@ export function Login() {
                 void login()
               }}
             >
+
               <span className="text-[24px] font-bold tracking-tighter">
                 로그인
               </span>
+
             </button>
 
           </div>
@@ -713,9 +768,11 @@ export function Login() {
                   )
                 }}
               >
+
                 <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
                   회원가입
                 </span>
+
               </button>
 
             </p>
@@ -732,9 +789,11 @@ export function Login() {
                   )
                 }}
               >
+
                 <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
                   비밀번호 찾기
                 </span>
+
               </button>
 
             </p>
@@ -753,13 +812,11 @@ export function Login() {
             ©2026LearningLM
           </p>
 
-          <p
-            className='cursor-pointer hover:text-[#666] hover:font-bold'>
+          <p className="cursor-pointer hover:text-[#666] hover:font-bold">
             이용약관
           </p>
 
-          <p
-            className='cursor-pointer hover:text-[#666] hover:font-bold'>
+          <p className="cursor-pointer hover:text-[#666] hover:font-bold">
             개인정보처리방침
           </p>
 
