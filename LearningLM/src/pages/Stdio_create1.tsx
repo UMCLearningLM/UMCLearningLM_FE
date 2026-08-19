@@ -452,6 +452,22 @@ export function Stdio_create1() {
   const inspectorScrollRef =
     useRef<HTMLDivElement | null>(null)
 
+  /*
+   * Inspector 내부 컨트롤, 특히 native radio input이 focus될 때
+   * 브라우저가 overflow 컨테이너를 강제로 스크롤하는 현상을 막기 위해
+   * pointer down 시점의 scrollTop을 잠깐 보관합니다.
+   */
+  const inspectorPointerScrollRef =
+    useRef<{
+      scrollTop: number
+      capturedAt: number
+    } | null>(null)
+
+  const inspectorRestoreFrameRef =
+    useRef<number | null>(
+      null,
+    )
+
   const [openInspectorSlotId, setOpenInspectorSlotId] =
     useState<string | null>(null)
   const [openValidationId, setOpenValidationId] =
@@ -1453,6 +1469,104 @@ export function Stdio_create1() {
       studio.nodes,
     ])
 
+  /*
+   * Radio/checkbox 등 Inspector 컨트롤이 focus를 가져간 뒤
+   * React state 업데이트로 DOM이 다시 그려져도 사용자가 보고 있던
+   * Inspector 위치를 유지합니다.
+   *
+   * 마우스/터치 조작은 pointer down 시점의 위치를 복원하고,
+   * 키보드 조작처럼 pointer 정보가 없으면 현재 위치를 기준으로 합니다.
+   */
+  const restoreInspectorScrollAfterUpdate =
+    () => {
+      const container =
+        inspectorScrollRef.current
+
+      if (!container) {
+        return
+      }
+
+      const captured =
+        inspectorPointerScrollRef.current
+
+      const capturedIsFresh =
+        Boolean(captured) &&
+        performance.now() -
+          (
+            captured?.capturedAt ??
+            0
+          ) <
+          1000
+
+      const scrollTop =
+        capturedIsFresh &&
+        captured
+          ? captured.scrollTop
+          : container.scrollTop
+
+      inspectorPointerScrollRef.current =
+        null
+
+      if (
+        inspectorRestoreFrameRef.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          inspectorRestoreFrameRef.current,
+        )
+      }
+
+      inspectorRestoreFrameRef.current =
+        window.requestAnimationFrame(
+          () => {
+            container.scrollTop =
+              scrollTop
+
+            inspectorRestoreFrameRef.current =
+              window.requestAnimationFrame(
+                () => {
+                  container.scrollTop =
+                    scrollTop
+
+                  inspectorRestoreFrameRef.current =
+                    null
+                },
+              )
+          },
+        )
+    }
+
+  const handleDeleteSelectedNode =
+    () => {
+      if (
+        !selectedNode ||
+        isResearchGuidedTutorial
+      ) {
+        return
+      }
+
+      const shouldDelete =
+        window.confirm(
+          [
+            `'${selectedNode.data.node.title}' 노드를 삭제할까요?`,
+            '',
+            '노드에 연결된 선도 함께 삭제됩니다.',
+          ].join(
+            '\n',
+          ),
+        )
+
+      if (!shouldDelete) {
+        return
+      }
+
+      setOpenInspectorSlotId(
+        null,
+      )
+
+      studio.deleteSelectedElements()
+    }
+
       /**
        * 현재 선택된 노드의 전체 Inspector 설정을 확인합니다.
        *
@@ -1954,6 +2068,15 @@ export function Stdio_create1() {
 
           <div
             ref={inspectorScrollRef}
+            onPointerDownCapture={(event) => {
+              inspectorPointerScrollRef.current = {
+                scrollTop:
+                  event.currentTarget.scrollTop,
+
+                capturedAt:
+                  performance.now(),
+              }
+            }}
             className="min-h-0 flex-1 overflow-y-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
           >
             {!selectedNode && (
@@ -2107,6 +2230,8 @@ export function Stdio_create1() {
                                     state:
                                       options?.state,
                                   })
+
+                                  restoreInspectorScrollAfterUpdate()
                                 }}
                                 onValueChange={(value) => {
                                   studio.updateSlotValue({
@@ -2116,6 +2241,8 @@ export function Stdio_create1() {
                                       slot.id,
                                     value,
                                   })
+
+                                  restoreInspectorScrollAfterUpdate()
                                 }}
                               />
                             </div>
@@ -2128,13 +2255,30 @@ export function Stdio_create1() {
 
                 <div className="my-[14px] border-t-[1.5px] border-[#EEEEF1]" />
 
-                <div className="flex items-center justify-center pb-[14px]">
+                <div className="flex items-center justify-center gap-[10px] pb-[14px]">
+                  {!isResearchGuidedTutorial && (
+                    <button
+                      type="button"
+                      onClick={
+                        handleDeleteSelectedNode
+                      }
+                      className="flex h-[53px] w-[112px] items-center justify-center rounded-[12px] border-[1.5px] border-[#E9C9C9] bg-white text-[15px] font-bold text-[#B4453A] transition hover:bg-[#FBF1F0]"
+                    >
+                      노드 삭제
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={
                       handleSaveSelectedNodeSettings
                     }
-                    className="flex h-[53px] w-[374px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+                    className={[
+                      'flex h-[53px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white',
+                      isResearchGuidedTutorial
+                        ? 'w-[374px]'
+                        : 'w-[252px]',
+                    ].join(' ')}
                   >
                     설정 저장
                   </button>
