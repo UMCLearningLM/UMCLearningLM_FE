@@ -1,23 +1,15 @@
+import axios from 'axios'
+import { Check } from 'lucide-react'
 import {
-  useEffect,
   useState,
 } from 'react'
-
-import {
-  Check,
-} from 'lucide-react'
-
-import {
-  FcGoogle,
-} from 'react-icons/fc'
-
+import { FcGoogle } from 'react-icons/fc'
 import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
 
 import api from '../api/api'
-
 import {
   clearAuthStorage,
   saveAuthSession,
@@ -44,6 +36,37 @@ function isSafeInternalPath(
   )
 }
 
+function validateEmail(
+  value: string,
+): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    value,
+  )
+}
+
+function getApiErrorMessage(
+  error: unknown,
+  fallback: string,
+): string {
+  if (
+    axios.isAxiosError(error)
+  ) {
+    const message =
+      error.response?.data
+        ?.message
+
+    if (
+      typeof message ===
+        'string' &&
+      message.trim()
+    ) {
+      return message
+    }
+  }
+
+  return fallback
+}
+
 export function Login() {
   const navigate =
     useNavigate()
@@ -54,97 +77,37 @@ export function Login() {
   const [
     rememberMe,
     setRememberMe,
-  ] =
-    useState(false)
+  ] = useState(false)
 
   const [
     email,
     setEmail,
-  ] =
-    useState('')
+  ] = useState('')
 
   const [
     password,
     setPassword,
-  ] =
-    useState('')
+  ] = useState('')
 
   const [
-    emailState,
-    setEmailState,
-  ] =
-    useState<
-      'basic' |
-      'incorrect' |
-      'success'
-    >(
-      'basic',
-    )
+    emailError,
+    setEmailError,
+  ] = useState('')
 
   const [
-    emailFormError,
-    setEmailFormError,
-  ] =
-    useState(false)
+    passwordError,
+    setPasswordError,
+  ] = useState('')
 
   const [
-    passwordState,
-    setPasswordState,
-  ] =
-    useState<
-      'basic' |
-      'incorrect' |
-      'success'
-    >(
-      'basic',
-    )
+    loginError,
+    setLoginError,
+  ] = useState('')
 
   const [
-    passwordLengthState,
-    setPasswordLengthState,
-  ] =
-    useState<
-      'basic' |
-      'incorrect' |
-      'success'
-    >(
-      'basic',
-    )
-
-  const validateEmail = (
-    value: string,
-  ) => {
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    return emailRegex.test(
-      value,
-    )
-  }
-
-  useEffect(
-    () => {
-      if (
-        password.length >
-          0 &&
-        password.length <
-          8
-      ) {
-        setPasswordLengthState(
-          'incorrect',
-        )
-
-        return
-      }
-
-      setPasswordLengthState(
-        'success',
-      )
-    },
-    [
-      password,
-    ],
-  )
+    isLoggingIn,
+    setIsLoggingIn,
+  ] = useState(false)
 
   const getRedirectPath =
     (): string | null => {
@@ -174,51 +137,50 @@ export function Login() {
 
   const login =
     async () => {
+      const normalizedEmail =
+        email.trim()
+
+      setEmailError(
+        '',
+      )
+      setPasswordError(
+        '',
+      )
+      setLoginError(
+        '',
+      )
+
       if (
         !validateEmail(
-          email,
+          normalizedEmail,
         )
       ) {
-        setEmailFormError(
-          true,
+        setEmailError(
+          '유효한 이메일이 아닙니다. 다시 작성해 주세요.',
         )
 
         return
       }
-
-      setEmailFormError(
-        false,
-      )
 
       if (
         password.length <
         8
       ) {
-        setPasswordLengthState(
-          'incorrect',
+        setPasswordError(
+          '비밀번호를 8자리 이상 입력해 주세요.',
         )
 
         return
       }
 
-      setPasswordLengthState(
-        'success',
-      )
-
-      setEmailState(
-        'basic',
-      )
-
-      setPasswordState(
-        'basic',
+      setIsLoggingIn(
+        true,
       )
 
       /*
-       * 로그인 재시도 전에 이전 인증정보를 먼저 정리합니다.
-       *
-       * api.ts에서도 /auth/login에는 Authorization을 붙이지 않지만,
-       * 오래된 인증정보가 로그인 성공 이후의 상태 판단에 섞이지 않도록
-       * 로그인 시작 시점에도 한 번 정리합니다.
+       * 새 로그인 요청 전에 이전 인증정보를 정리합니다.
+       * 공개 로그인 API에는 Authorization을 보내지 않지만,
+       * 성공 이후 상태가 과거 세션과 섞이는 것도 방지합니다.
        */
       clearAuthStorage()
 
@@ -227,109 +189,96 @@ export function Login() {
           await api.post(
             '/auth/login',
             {
-              email,
-
+              email:
+                normalizedEmail,
               password,
-
               rememberMe,
             },
           )
 
-        const {
-          accessToken,
-          refreshToken,
-        } =
+        const result =
           response.data
-            .result
+            ?.result
+
+        const accessToken =
+          result?.accessToken
+
+        const refreshToken =
+          result?.refreshToken
+
+        if (
+          typeof accessToken !==
+            'string' ||
+          !accessToken ||
+          typeof refreshToken !==
+            'string' ||
+          !refreshToken
+        ) {
+          throw new Error(
+            '로그인 응답의 인증정보가 올바르지 않습니다.',
+          )
+        }
 
         saveAuthSession(
           {
             accessToken,
-
             refreshToken,
-
-            /*
-             * 기존 코드와의 호환을 위해 로그인 result를
-             * 그대로 user 저장값으로 유지합니다.
-             */
             user:
-              response.data
-                .result,
+              result,
           },
-
           rememberMe,
         )
 
         const redirectPath =
           getRedirectPath()
 
-        if (
-          redirectPath
-        ) {
-          navigate(
-            redirectPath,
-            {
-              replace:
-                true,
-            },
-          )
-
-          return
-        }
-
         navigate(
-          '/',
+          redirectPath ??
+            '/',
           {
             replace:
               true,
           },
         )
       } catch (
-        error: any
+        error
       ) {
         console.error(
           '로그인 실패:',
           error,
         )
 
-        if (
-          error.response
-        ) {
-          console.error(
-            '상태 코드:',
-            error.response
-              .status,
-          )
-
-          console.error(
-            '에러 응답:',
-            error.response
-              .data,
-          )
-        }
+        clearAuthStorage()
 
         if (
-          error.response
-            ?.status ===
-          401
+          axios.isAxiosError(
+            error,
+          ) &&
+          error.response?.status ===
+            401
         ) {
-          setEmailState(
-            'incorrect',
+          setLoginError(
+            '이메일 또는 비밀번호가 맞지 않습니다.',
           )
 
-          setPasswordState(
-            'incorrect',
-          )
+          return
         }
+
+        setLoginError(
+          getApiErrorMessage(
+            error,
+            '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          ),
+        )
+      } finally {
+        setIsLoggingIn(
+          false,
+        )
       }
     }
 
   const googleLogin =
     () => {
-      /*
-       * Google 로그인도 명시적인 새 로그인 시도이므로
-       * 이전 Access/Refresh Token을 제거합니다.
-       */
       clearAuthStorage()
 
       sessionStorage.setItem(
@@ -361,85 +310,117 @@ export function Login() {
     }
 
   return (
-    <>
-      <div className="min-h-screen flex flex-col items-center bg-[#F5F5F7] text-[#464646] text-[18px] pt-[91px]">
-        <div className="px-[10px] flex flex-col items-center mb-[34px]">
-          <div className="flex flex-row gap-[8px]">
-            <div className="h-[40px] flex flex-col rounded-[8px] bg-[#6366F1] px-[15px] justify-center items-center text-[21px] font-bold text-[#FFF]">
+    <div className="min-h-screen bg-[#F5F5F7] pb-[86px] pt-[36px] text-[18px] text-[#464646]">
+      <div className="mx-auto w-[600px] max-w-[calc(100%_-_32px)]">
+        <button
+          type="button"
+          onClick={() => {
+            navigate('/')
+          }}
+          className="mb-[28px] text-[14px] font-bold text-[#6366F1] transition-colors hover:text-[#3A3DC2]"
+        >
+          ← 홈으로 돌아가기
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            navigate('/')
+          }}
+          aria-label="LearningLM 홈으로 이동"
+          className="mx-auto mb-[34px] flex flex-col items-center"
+        >
+          <span className="flex items-center gap-[8px]">
+            <span className="flex h-[40px] items-center justify-center rounded-[8px] bg-[#6366F1] px-[15px] text-[21px] font-bold text-white">
               L
-            </div>
+            </span>
 
-            <p className="mt-[-1.5px] text-[#27272A] text-[26px] font-bold">
+            <span className="text-[26px] font-bold text-[#27272A]">
               LearningLM
-            </p>
-          </div>
+            </span>
+          </span>
 
-          <p className="text-[#52525B] text-[15px] mt-[9.5px] tracking-tighter">
-            AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼
-          </p>
-        </div>
+          <span className="mt-[9.5px] text-[15px] tracking-tighter text-[#52525B]">
+            AI활용 흐름을 블록형
+            튜토리얼로 배우는 플랫폼
+          </span>
+        </button>
 
-        <div className="bg-white w-[600px] min-h-[791px] flex flex-col items-center px-[10px] py-[39px] rounded-[12px] border-[#E4E4E7] border-[2px]">
-          <div className="flex flex-col w-[529px]">
-            <p className="text-[28px] font-bold text-[#27272A] tracking-tighter">
+        <div className="flex min-h-[791px] flex-col items-center rounded-[12px] border-2 border-[#E4E4E7] bg-white px-[39px] py-[39px]">
+          <div className="flex w-full flex-col">
+            <p className="text-[28px] font-bold tracking-tighter text-[#27272A]">
               로그인
             </p>
 
-            <p className="text-[15px] text-[#52525B] tracking-tighter">
-              학습을 이어서 진행하려면 로그인하세요.
+            <p className="text-[15px] tracking-tighter text-[#52525B]">
+              학습을 이어서 진행하려면
+              로그인하세요.
             </p>
           </div>
 
-          <div className="flex flex-col gap-[30px]">
-            <div className="flex flex-col mt-[26px] w-[519px]">
+          <div className="mt-[26px] flex w-full flex-col gap-[22px]">
+            <div className="flex flex-col">
               <p className="text-[20px]">
                 이메일
               </p>
 
-              <div className="mt-[8px]">
-                <input
-                  type="email"
-                  onChange={(
-                    event,
-                  ) => {
-                    setEmail(
-                      event.target
-                        .value,
-                    )
-
-                    setEmailState(
-                      'basic',
-                    )
-                  }}
-                  value={
-                    email
+              <input
+                type="email"
+                value={
+                  email
+                }
+                onChange={(
+                  event,
+                ) => {
+                  setEmail(
+                    event.target
+                      .value,
+                  )
+                  setEmailError(
+                    '',
+                  )
+                  setLoginError(
+                    '',
+                  )
+                }}
+                onKeyDown={(
+                  event,
+                ) => {
+                  if (
+                    event.key ===
+                    'Enter'
+                  ) {
+                    void login()
                   }
-                  placeholder="you@example.com"
-                  className="hover:border-[#666666] w-full h-[51px] flex items-center pl-[20px] rounded-[8px] border-2 border-[#E4E4E7]"
-                />
-
-                {emailState ===
-                  'incorrect' && (
-                  <p className="mt-[6.5px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                    이메일이 맞지 않습니다. 다시 입력해주세요.
-                  </p>
+                }}
+                placeholder="you@example.com"
+                className={[
+                  'mt-[8px] h-[51px] w-full rounded-[8px] border-2 pl-[20px] outline-none hover:border-[#666666]',
+                  emailError
+                    ? 'border-[#F8A3A3]'
+                    : 'border-[#E4E4E7]',
+                ].join(
+                  ' ',
                 )}
+              />
 
-                {emailFormError && (
-                  <p className="mt-[4px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                    유효한 이메일이 아닙니다. 다시 작성해 주세요.
-                  </p>
-                )}
-              </div>
+              {emailError && (
+                <p className="mt-[6px] text-[16px] font-bold tracking-tighter text-[#EF8888]">
+                  {emailError}
+                </p>
+              )}
             </div>
 
-            <div className="flex flex-col w-[519px] mt-[-8px]">
+            <div className="flex flex-col">
               <p className="text-[20px] tracking-tighter">
                 비밀번호
               </p>
 
               <input
                 type="password"
+                value={
+                  password
+                }
                 onChange={(
                   event,
                 ) => {
@@ -447,40 +428,47 @@ export function Login() {
                     event.target
                       .value,
                   )
-
-                  setPasswordState(
-                    'basic',
+                  setPasswordError(
+                    '',
+                  )
+                  setLoginError(
+                    '',
                   )
                 }}
-                value={
-                  password
-                }
+                onKeyDown={(
+                  event,
+                ) => {
+                  if (
+                    event.key ===
+                    'Enter'
+                  ) {
+                    void login()
+                  }
+                }}
                 placeholder="********"
-                className="hover:border-[#666666] h-[51px] flex items-center rounded-[8px] mt-[8px] pl-[20px] border-2 border-[#E4E4E7]"
+                className={[
+                  'mt-[8px] h-[51px] rounded-[8px] border-2 pl-[20px] outline-none hover:border-[#666666]',
+                  passwordError
+                    ? 'border-[#F8A3A3]'
+                    : 'border-[#E4E4E7]',
+                ].join(
+                  ' ',
+                )}
               />
 
-              {passwordState ===
-                'incorrect' && (
-                <p className="mt-[6px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                  비밀번호가 맞지 않습니다. 다시 입력해주세요.
-                </p>
-              )}
-
-              {passwordLengthState ===
-                'incorrect' && (
-                <p className="mt-[4px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
-                  비밀번호 8자리 이상 입력해주세요.
+              {passwordError && (
+                <p className="mt-[6px] text-[16px] font-bold tracking-tighter text-[#EF8888]">
+                  {passwordError}
                 </p>
               )}
             </div>
 
-            <label className="w-[519px] mt-[-7px] cursor-pointer agreement flex items-center">
+            <label className="flex cursor-pointer items-center gap-[7px]">
               <input
                 type="checkbox"
                 checked={
                   rememberMe
                 }
-                className="hidden"
                 onChange={(
                   event,
                 ) => {
@@ -489,75 +477,85 @@ export function Login() {
                       .checked,
                   )
                 }}
+                className="sr-only"
               />
 
-              <div
+              <span
                 className={[
-                  'w-[17px] h-[17px] flex items-center justify-center text-center border-2 rounded-[2px] border-[#6366F1]',
-
+                  'flex h-[17px] w-[17px] items-center justify-center rounded-[2px] border-2 border-[#6366F1]',
                   rememberMe
                     ? 'bg-[#6366F1]'
-                    : 'border-[#6366F1]',
+                    : 'bg-white',
                 ].join(
                   ' ',
                 )}
               >
                 {rememberMe && (
                   <Check
-                    size={18}
-                    className="text-white stroke-[3]"
+                    size={
+                      15
+                    }
+                    className="stroke-[3] text-white"
                   />
                 )}
-              </div>
+              </span>
 
-              <span className="text-[15.5px] text-[#52525B] tracking-tighter">
+              <span className="text-[15.5px] tracking-tighter text-[#52525B]">
                 로그인 상태 유지
               </span>
             </label>
 
+            {loginError && (
+              <p className="rounded-[8px] bg-[#FFF4F4] px-[14px] py-[11px] text-[15px] font-bold text-[#EF8888]">
+                {loginError}
+              </p>
+            )}
+
             <button
               type="button"
-              className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[51px] mt-[-4px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+              disabled={
+                isLoggingIn
+              }
               onClick={() => {
                 void login()
               }}
+              className="h-[51px] w-full cursor-pointer rounded-[8px] border border-[#6366F1] text-[22px] font-bold tracking-tighter text-[#6366F1] transition-colors hover:bg-[#6366F1] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <span className="text-[24px] font-bold tracking-tighter">
-                로그인
-              </span>
+              {isLoggingIn
+                ? '로그인 중...'
+                : '로그인'}
             </button>
           </div>
 
-          <div className="flex items-center w-[519px] mt-[30px]">
-            <div className="flex-1 h-px bg-[#E4E4E7]" />
+          <div className="mt-[30px] flex w-full items-center">
+            <div className="h-px flex-1 bg-[#E4E4E7]" />
 
-            <span className="mx-[16px] text-[#9A9AA3] text-[15px] tracking-tighter">
+            <span className="mx-[16px] text-[15px] tracking-tighter text-[#9A9AA3]">
               또는
             </span>
 
-            <div className="flex-1 h-px bg-[#E4E4E7]" />
+            <div className="h-px flex-1 bg-[#E4E4E7]" />
           </div>
 
           <button
             type="button"
-            className="cursor-pointer w-[522px] h-[56px] mt-[28px] flex items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7]"
             onClick={
               googleLogin
             }
+            className="mt-[28px] flex h-[56px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7] transition-colors hover:border-[#BDBDC5] hover:bg-[#FAFAFB]"
           >
             <FcGoogle
               size={32}
             />
 
-            <span className="cursor-pointer text-[18px] font-bold text-[#27272A] tracking-tighter">
+            <span className="text-[18px] font-bold tracking-tighter text-[#27272A]">
               Google 계정으로 계속하기
             </span>
           </button>
 
-          <div className="mb-[3px]">
-            <p className="text-[#52525B] text-[16px] mt-[20.5px] tracking-tighter">
+          <div className="mt-[20px] w-full text-[16px] tracking-tighter text-[#52525B]">
+            <p>
               아직 계정이 없으신가요?{' '}
-
               <button
                 type="button"
                 onClick={() => {
@@ -565,16 +563,14 @@ export function Login() {
                     '/register',
                   )
                 }}
+                className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
               >
-                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
-                  회원가입
-                </span>
+                회원가입
               </button>
             </p>
 
-            <p className="text-[#52525B] text-[16px] mt-[8px] tracking-tighter">
+            <p className="mt-[8px]">
               비밀번호를 잊으셨나요?{' '}
-
               <button
                 type="button"
                 onClick={() => {
@@ -582,29 +578,44 @@ export function Login() {
                     '/pw-find',
                   )
                 }}
+                className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
               >
-                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
-                  비밀번호 찾기
-                </span>
+                비밀번호 찾기
               </button>
             </p>
           </div>
         </div>
 
-        <div className="flex flex-row mt-[32px] mb-[86px] text-[16px] text-[#9A9AA3] gap-[38px]">
+        <div className="mt-[32px] flex items-center justify-center gap-[38px] text-[16px] text-[#9A9AA3]">
           <p>
-            ©2026LearningLM
+            ©2026 LearningLM
           </p>
 
-          <p>
+          <button
+            type="button"
+            onClick={() => {
+              navigate(
+                '/terms',
+              )
+            }}
+            className="transition-colors hover:text-[#6366F1]"
+          >
             이용약관
-          </p>
+          </button>
 
-          <p>
+          <button
+            type="button"
+            onClick={() => {
+              navigate(
+                '/privacy',
+              )
+            }}
+            className="transition-colors hover:text-[#6366F1]"
+          >
             개인정보처리방침
-          </p>
+          </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }

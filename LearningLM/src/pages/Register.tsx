@@ -1,536 +1,1235 @@
-import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from 'axios'
+import { Check } from 'lucide-react'
+import {
+  useEffect,
+  useState,
+} from 'react'
+import { useNavigate } from 'react-router-dom'
+
 import api from '../api/api'
-//.\gradlew bootRun 스프링부트 서버 키는 방법
+import { saveAuthSession } from '../api/authStorage'
+
+type VerificationStatus =
+  | 'idle'
+  | 'code-sent'
+  | 'verified'
+  | 'verification-error'
+
+interface FeedbackMessage {
+  type: 'error' | 'success'
+  text: string
+}
+
+function validateEmail(
+  value: string,
+): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    value,
+  )
+}
+
+function validatePassword(
+  value: string,
+): boolean {
+  return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/.test(
+    value,
+  )
+}
+
+function getApiErrorMessage(
+  error: unknown,
+  fallback: string,
+): string {
+  if (
+    axios.isAxiosError(error)
+  ) {
+    const message =
+      error.response?.data
+        ?.message
+
+    if (
+      typeof message ===
+        'string' &&
+      message.trim()
+    ) {
+      return message
+    }
+  }
+
+  if (
+    error instanceof Error &&
+    error.message.trim()
+  ) {
+    return error.message
+  }
+
+  return fallback
+}
+
+function isDuplicateEmailError(
+  error: unknown,
+): boolean {
+  if (
+    !axios.isAxiosError(error)
+  ) {
+    return false
+  }
+
+  if (
+    error.response?.status ===
+    409
+  ) {
+    return true
+  }
+
+  const responseData =
+    error.response?.data as
+      | {
+          code?: unknown
+          message?: unknown
+        }
+      | undefined
+
+  const searchableText = [
+    responseData?.code,
+    responseData?.message,
+  ]
+    .filter(
+      (
+        value,
+      ): value is string =>
+        typeof value ===
+        'string',
+    )
+    .join(' ')
+    .toLowerCase()
+
+  return (
+    searchableText.includes(
+      'duplicate',
+    ) ||
+    searchableText.includes(
+      'already',
+    ) ||
+    searchableText.includes(
+      'exist',
+    ) ||
+    searchableText.includes(
+      '이미',
+    ) ||
+    searchableText.includes(
+      '가입',
+    ) ||
+    searchableText.includes(
+      '중복',
+    )
+  )
+}
 
 export function Register() {
-    const navigate = useNavigate();
-    const [checked, setChecked] = useState(false);
-    //이메일 인증
-    const [email, setEmail] = useState("");
-    //이메일 인증 확인
-    const [emailCheck, setEmailCheck] = useState<"basic" | "false" | "true">("basic");
-    //이메일 형식 검사
-    const [emailFormErr, setEmailFormErr] = useState(false);
-    // const [emailState, setEmailState] = useState<"basic" | "formErr" | "NoSame" | "formErr&NoSame" | "pass">("basic");
-    //비밀번호 인증
-    const [pw, setPw] = useState("");
-    const [pwCheck, setPwCheck] = useState("");
-    //비밀번호 통과 여부
-    const [pwOk, setPwOk] = useState<"basic" | "notSame" | "same">("basic");
-    //비밀번호 비었는지
-    const [pwNull, setPwNull] = useState<"basic" | "null" | "notNull" | "lengNo">("basic");
-    //비밀번호 형식 올바른지
-    const [pwForm, setPwForm] = useState<"basic" | "formErr" | "formOk">("basic");
-    //인증번호
-    const [code, setCode] = useState("");
+  const navigate =
+    useNavigate()
 
-    // 이메일 인증 완료 후 받은 임시 토큰
-    const [temporaryAccessToken, setTemporaryAccessToken] = useState("");
+  const [
+    email,
+    setEmail,
+  ] = useState('')
 
-    //인증번호 보낸 여부
-    const [isSendCode, setIsSendCode] = useState(false);
-    //인증 남은 시간
-    const [count, setCount] = useState(180);
-    //닉네임 작성 여부
-    const [name, setName] = useState("");
-    //닉네임 비었는지
-    const [nameNull, setNameNull] = useState(false);
+  const [
+    verificationCode,
+    setVerificationCode,
+  ] = useState('')
 
-    //----------------동의 확인-----------------
-    const [ckBox, setCkBox] = useState(false);
-    const [noAgree, setNoAgree] = useState(false);
-    const [mem, setMem] = useState(false);
-
-    //회원가입 버튼 클릭시
-    const [verifiedStatus, setVerifiedStatus] = useState<
-        "none" | "sendCode" | "fail" | "succ" | "emailError" | "emailcertificationNo">("none");
-
-    //이메일 형식 검사
-    const validateEmail = (email: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-    //인증번호
-
-
-    //이메일 형식 유효한지
-    useEffect(() => {
-        if (0 < email.length) {
-            if (!validateEmail(email)) {
-                setEmailFormErr(true);
-            } else {
-                setEmailFormErr(false);
-            }
-        }
-    }, [email]);
-    //인증번호 전송 버튼 클릭 시
-    useEffect(() => {
-        if (!emailFormErr && emailCheck == "true") {
-            setIsSendCode(true);
-            setVerifiedStatus("sendCode");
-        } else {
-            // setVerifiedStatus("fail");
-        }
-    }, [emailFormErr, emailCheck]);
-
-
-    const sendEmail = async () => {
-        // console.log("인증번호 전송 버튼 클릭");
-
-        //이메일 형식이 유효하지 않을 때
-        if (!validateEmail(email)) {
-            setEmailFormErr(true);
-            return;
-        }
-        setEmailFormErr(false);
-
-        try {
-            const res = await api.post(
-                "/auth/email/request",
-                {
-                    verificationType: "NON_LOGIN",
-                    purpose: "SIGNUP",
-                    email: email,
-                }
-            );
-            console.log("인증번호 전송 성공");
-            console.log("응답 status:", res.status);
-            console.log("응답 data:", JSON.stringify(res.data, null, 2));
-            setEmailCheck("true");
-            setIsSendCode(true);
-            setVerifiedStatus("sendCode");
-            setCount(180);
-        }
-        catch (error) {
-            console.log("인증번호 전송 실패");
-            console.log(error);
-            setEmailCheck("false");
-        }
-    }
-    useEffect(() => {
-        if (!isSendCode) return;
-        if (count <= 0) {
-            alert("인증시간 만료");
-            setIsSendCode(false);
-            return;
-        }
-        //1초마다 카운트-1 표시
-        const timer = setTimeout(() => {
-            setCount((prev) => prev - 1);
-        }, 1000);
-        //이전 타이머 제거
-        return () => clearTimeout(timer);
-    }, [count, isSendCode]);
-
-
-    const verifyCode = async () => {
-        //이메일&&인증번호 백엔드 전송
-        try {
-            const res = await api.post(
-                "auth/email/verify",
-                {
-                    verificationType: "NON_LOGIN",
-                    purpose: "SIGNUP",
-                    email: email,
-                    code: code,
-                }
-            )
-            console.log("이메일 인증 성공");
-            console.log("응답 data: ", res.data);
-            const temporaryToken = res.data?.result?.temporaryAccessToken;
-
-            console.log("verify 응답 전체:", res.data);
-            console.log("임시 토큰 존재:", Boolean(temporaryToken));
-
-            if (!temporaryToken) {
-                console.error("이메일 인증 응답:", res.data);
-                throw new Error("이메일 인증 토큰을 받지 못했습니다.");
-            }
-
-            setTemporaryAccessToken(temporaryToken);
-            setIsSendCode(false);
-            setVerifiedStatus("succ");
-        } catch (error) {
-            console.log("이메일 인증 성공");
-            console.log(error);
-
-            setVerifiedStatus("fail");
-        }
-
-    }
-    //회원가입 클릭 시 이메일 인증 여부에 따른 상태값
-
-    const renderVerifyCode = () => {
-
-        switch (verifiedStatus) {
-            case "none":
-                return (
-                    <>
-                        <div
-                            className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer flex items-center justify-center 
-                        w-[145px] h-[49px] border-[#6366F1] mt-[13px] bg-[#6366F1] 
-                        text-white text-[17px] font-bold rounded-[12px] border-[2px]"
-                            onClick={() => {
-                                sendEmail()
-                                //api 완성되면 제거 ((; 테스트용 생성))
-                                if (emailCheck == "true") {
-                                    setIsSendCode(true);
-                                    setVerifiedStatus("sendCode");
-                                }
-                            }}
-                        >인증번호 전송</div>
-                        {(emailFormErr || emailCheck == "false") && (
-                            <>
-                                <p className="mt-[11px] font-bold text-[#EF8888]">유효한 이메일이 아닙니다. 다시 작성해 주세요.</p>
-                            </>
-                        )}
-
-                    </>
-                )
-            case "sendCode":
-                return (
-                    <>
-                        <input type="text"
-                            onChange={(e) => setCode(e.target.value)}
-                            placeholder="인증번호 6자리를 입력해주세요." className="hover:border-[#666666] h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#E4E4E7]" />
-                        <div className="flex justify-center items-center">
-                            <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
-                                <span className="cursor-pointer text-[#6366F1] ml-[12px]"
-                                    onClick={() => {
-                                        console.log("이메일 재전송")
-                                        sendEmail()
-                                    }
-                                    }
-                                >인증번호 재전송</span>
-                            </p>
-                            <span className="font-bold text-[#EF8888] ml-[98px]"
-                            >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
-                            </span>
-                        </div>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[112px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={verifyCode}
-                        >인증 완료</button>
-                    </>
-                )
-            case "fail":
-                return (
-                    <>
-                        <input type="text"
-                            onChange={(e) => setCode(e.target.value)}
-                            placeholder="인증번호 6자리를 입력해주세요." className="h-[54px] flex items-center pl-[20px] mt-[15px] rounded-[8px] border-2 border-[#F8A3A3]" />
-                        <p className="text-[#EF8888] font-bold mt-[15px]">인증번호가 유효하지 않습니다. 다시 입력해주세요.</p>
-                        <div className="flex justify-center items-center">
-                            <p className="text-[#666] my-[15px]">인증번호를 받지 못하셨나요?
-                                <span className="cursor-pointer text-[#6366F1] ml-[12px]"
-                                    onClick={sendEmail}
-                                >인증번호 재전송</span>
-                            </p>
-                            <span className="font-bold text-[#EF8888] ml-[98px]"
-                            >{Math.floor(count / 60)}:{String(count % 60).padStart(2, "0")}
-                            </span>
-                        </div>
-                        <button className="hover:bg-[#6366F1] hover:text-white cursor-pointer w-[112px] h-[54px] border-[#6366F1] mt-[15px] text-[#6366F1] text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={verifyCode}
-                        >인증 완료</button>
-                    </>
-                )
-            case "succ":
-                return (
-                    <p className="text-[#5FAA81] font-bold mt-[15px]">인증을 완료했습니다.</p>
-                )
-            case "emailError":
-                return (
-                    <>
-                        <p className="text-[#EF8888] my-[15px]">유요한 이메일이 아닙니다. 다시 작성해 주세요.</p>
-                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={() => {
-                                sendEmail();
-                                //api 완성되면 제거 ((; 테스트용 생성))
-                                // setIsSendCode(true)
-                            }}
-                        >
-                            인증번호 전송</button>
-                    </>
-                )
-            case "emailcertificationNo":
-                return (
-                    <>
-                        <button className="hover:bg-[#3A3DC2] hover:border-[#3A3DC2] cursor-pointer w-[145px] h-[54px] mt-[11px] border-[#] bg-[#6366F1] text-white text-[20px] font-bold rounded-[12px] border-[2px]"
-                            onClick={() => {
-                                sendEmail();
-                                //api 완성되면 제거 ((; 테스트용 생성))
-                                setIsSendCode(true)
-                            }}
-                        >
-                            인증번호 전송</button>
-                        <p className="text-[#EF8888] font-bold my-[11px]">이메일 인증을 완료해주세요.</p>
-                    </>
-                )
-        }
-
-    }
-
-    //----------------비밀번호 확인-----------------
-    const validatePw = (value: string) => {
-        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/;
-
-        return pwRegex.test(value);
-    };
-    useEffect(() => {
-        if (pw.length === 0) {
-            setPwForm("basic");
-            return;
-        }
-
-        setPwForm(
-            validatePw(pw)
-                ? "formOk"
-                : "formErr",
-        );
-    }, [pw]);
-    //비밀번호 확인
-
-    useEffect(() => {
-        console.log("pw:", pw);
-        console.log("pwCheck: ", pwCheck);
-        console.log("validatePw: ", validatePw(pw));
-        if (pw != "") {
-            if (pw == pwCheck) {
-                setPwOk("same");
-            } else {
-                setPwOk("notSame");
-            }
-            console.log("pwOk: ", pwOk);
-        } else {
-            setPwOk("basic");
-        }
-
-
-    }, [pw, pwCheck, pwOk]);
-
-    //----------------닉네임 확인-----------------
-    useEffect(() => {
-        if (name != "") {
-            setNameNull(false);
-        }
-    }, [name])
-
-    //----------------동의 확인-----------------
-    useEffect(() => {
-        if (!ckBox) {
-            setNoAgree(true);
-        } else {
-            setNoAgree(false);
-            setMem(true);
-        }
-    }, [ckBox]);
-
-    //----------------회원가입 확인-----------------
-    const memberOk = async () => {
-        if (verifiedStatus !== "succ" || !temporaryAccessToken.trim()) {
-            setVerifiedStatus("emailcertificationNo");
-            console.error("이메일 인증 토큰 없음:", temporaryAccessToken);
-            return;
-        }
-
-        if (!validatePw(pw)) {
-            setPwForm("formErr");
-            setPwNull("lengNo");
-            return;
-        }
-
-        if (pw !== pwCheck) {
-            setPwOk("notSame");
-            return;
-        }
-
-        if (!name.trim()) {
-            setNameNull(true);
-            return;
-        }
-
-        if (!ckBox) {
-            setNoAgree(true);
-            setMem(true);
-            return;
-        }
-        console.log(
-            "signup에 보낼 이메일 인증 토큰 존재:",
-            Boolean(temporaryAccessToken.trim()),
-        );
-        try {
-            const emailVerificationToken = temporaryAccessToken.trim();
-            const res = await api.post(
-                "auth/signup",
-                {
-                    email,
-                    password: pw,
-                    nickname: name.trim(),
-                    termsAgreed: true,
-                },
-                {
-                    headers: {
-                        "X-Email-Verification-Token": emailVerificationToken,
-                    },
-                }
-            );
-
-            const { accessToken, refreshToken } = res.data.result;
-            localStorage.setItem("accessToken", accessToken);
-            localStorage.setItem("refreshToken", refreshToken);
-            navigate("/home");
-        } catch (error: any) {
-            console.error("회원가입 실패:", error.response?.data ?? error);
-        }
-    };
-    useEffect(() => {
-        if ((pw == "" || pwCheck == "") && pwNull != "lengNo")
-            setPwNull("null");
-    }, [pwNull]);
-    // console.log("pwNull", pwNull);
-
-    return (
-        <>
-            <div className="min-h-screen flex flex-col items-center bg-[#F5F5F7] text-[#52525B] text-[18px] pt-[90px] pb-[100px]">
-                {/* branding */}
-                <div className="px-[10px] flex flex-col items-center mb-[37px]">
-                    <div className="flex flex-row items-center gap-[8px]">
-                        <div className="w-[40px] h-[39px] flex flex-col rounded-[8px] bg-[#6366F1] justify-center items-center
-                        text-[22px] font-bold text-[#FFF]
-                        ">L</div>
-                        <p className="text-[#27272A] text-[26px] font-bold">LearningLM</p>
-                    </div>
-                    <p className="text-[15px] text-[#52525B] mt-[11px] tracking-tighter">AI활용 흐름을 블록형 튜토리얼로 배우는 플랫폼</p>
-                </div>
-                {/*white box */}
-                <div className="bg-white w-[580px] min-h-[858px] flex flex-col items-center px-[10px] pt-[41px] pb-[44px] rounded-[12px] border-[1px] border-[#E4E4E7]">
-                    {/* title */}
-                    <div className="flex flex-col w-[529px] tracking-tighter">
-                        <p className="text-[27px] font-bold text-[#27272A]">회원가입</p>
-                        <p className="text-[#52525B] mt-[1px] text-[15px]">무료로 시작하고 첫 튜토리얼을 진행해 보세요.</p>
-                    </div>
-                    {/*main content */}
-                    {/*email */}
-                    <div className="flex flex-col gap-[20px]">
-                        <div className="flex flex-col mt-[39px] w-[519px] tracking-tighter">
-                            <p className="font-bold text-[16.5px] text-[#52525B]">이메일</p>
-                            <input type="email" value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com" className={`hover:border-[#666666] h-[50px] flex items-center pl-[20px] mt-[5px] rounded-[8px] border-2 ${verifiedStatus != "emailcertificationNo" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-
-                            {renderVerifyCode()}
-                        </div>
-                        <div className="mt-[-4.5px] flex flex-col w-[519px] tracking-tighter">
-                            <p className="flex text-[#52525B] text-[16.5px] font-bold">비밀번호</p>
-                            <input type="password"
-                                onChange={(e) => {
-                                    setPw(e.target.value)
-                                }}
-                                placeholder="********"
-                                className={`hover:border-[#666666] h-[51px] flex items-center rounded-[8px] 
-                                mt-[6px] mb-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwNull == "null" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                            <p className="mt-[-5px] text-[15px] text-[#9A9AA3]">영문 숫자 포함 8자 이상</p>
-                            {(pwNull == "lengNo") && (
-                                <p className="text-[#EF8888] font-bold mt-[11px]">
-                                    비밀번호는 영문·숫자 포함 8자 이상 작성해주세요.
-                                </p>
-                            )}
-                            {(pwForm == "formErr") && (
-                                <p className="text-[#EF8888] font-bold mt-[11px]">
-                                    비밀번호는 영문·숫자만 포함할 수 있습니다
-                                </p>
-                            )}
-
-                        </div>
-                        <div className="mt-[-5px] w-[519px] flex flex-col tracking-tighter">
-                            <p className="text-[#52525B] text-[15px] font-bold">비밀번호 확인</p>
-                            <input type="password"
-                                onChange={(e) => {
-                                    setPwCheck(e.target.value)
-                                }}
-                                placeholder="********"
-                                className={`hover:border-[#666666] h-[51px] flex items-center rounded-[8px] 
-                                mt-[6px] mb-[11px] pl-[20px] border-2 ${pwNull == "basic" || pwNull == "null" || pwOk == "same" ? "border-[#E4E4E7]" : "border-[#F8A3A3]"}`} />
-                            {pwNull == "null" ? (<>{pwOk == "same" ? (
-                                <>
-                                    <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
-                                </>
-                            ) : (
-                                <>
-                                </>
-                            )}</>) : (<>{pwOk == "same" ? (
-                                <>
-                                    <p className="font-bold text-[#5FAA81] mt-[11px]">입력한 비밀번호가 맞습니다.</p>
-                                </>
-                            ) : (
-                                <>
-                                    <p className="font-bold text-[#EF8888] mt-[11px]">입력한 비밀번호가 같지 않습니다.</p>
-                                </>
-                            )}</>)}
-
-                        </div>
-
-                        <div className="flex flex-col w-[519px] mt-[-15.5px]">
-                            <p className="text-[#52525B] text-[15px] font-bold">닉네임</p>
-                            <input type="text"
-                                onChange={(e) => {
-                                    setName(e.target.value);
-                                }}
-                                placeholder="학습자 닉네임을 입력하세요." className={`hover:border-[#666666] h-[51px] 
-                                items-center pl-[20px] mt-[6.5px] text-[20px] text-[#9A9AA3] border-[2px] rounded-[8px] ${nameNull ? "border-[#F8A3A3]" : "border-[#E4E4E7]"}`} />
-                            {nameNull &&
-                                (
-                                    <p className="font-bold text-[#EF8888] mt-[11px]">닉네임이 입력되지 않았습니다.</p>
-                                )
-                            }
-                        </div>
-                    </div>
-                    <div className="w-[519px] mt-[40px]">
-                        <label className="cursor-pointer agreement flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={checked}
-                                className="hidden"
-                                onChange={(e) => setChecked(e.target.checked)}
-                                onClick={() => {
-                                    setCkBox(!ckBox);
-                                }}
-                            />
-                            <div className={`w-[17px] h-[17px] flex items-center justify-center 
-                            text-center border-2 rounded-[2px] border-[#6366F1] 
-                            ${checked ? "bg-[#6366F1]" : "border-[#6366F1]"
-                                }`}
-                            >
-                                {checked && <Check size={18} className="text-white stroke-[3]" />}
-                            </div>
-                            <span className="text-[#52525B] text-[16.5px] tracking-tighter">
-                                <span className="link pl-[7px] font-bold  text-[#6366F1]">이용약관</span> 및{" "}
-                                <span className="link font-bold text-[#6366F1]">개인정보 처리방침</span>에 동의합니다.
-                            </span>
-                        </label>
-                        {noAgree && mem && (
-                            <p className="font-bold text-[#EF8888] mt-[20px]">이용약관 및 개인정보 처리에 체크해주세요.</p>
-                        )}
-                    </div>
-                    <button className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[52px] mt-[16px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
-                        onClick={() => {
-                            memberOk();
-                        }}><span className="cursor-pointer text-[21px] font-bold ">회원가입</span></button>
-
-                    <p className="text-[#52525B] text-[15px] tracking-tighter mt-[61px]">이미 계정이 있으신가요? {" "}
-                        <button onClick={() => {
-                            navigate("/login")
-                        }}>
-                            <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">로그인</span>
-                        </button>
-                    </p>
-                </div >
-                {/*white box 끝 */}
-                < p className="mt-[44px]" >©2026LearningLM</p >
-            </div >
-        </>
+  const [
+    verificationStatus,
+    setVerificationStatus,
+  ] =
+    useState<VerificationStatus>(
+      'idle',
     )
+
+  const [
+    temporaryAccessToken,
+    setTemporaryAccessToken,
+  ] = useState('')
+
+  const [
+    emailMessage,
+    setEmailMessage,
+  ] =
+    useState<FeedbackMessage | null>(
+      null,
+    )
+
+  const [
+    isSendingEmail,
+    setIsSendingEmail,
+  ] = useState(false)
+
+  const [
+    isVerifyingCode,
+    setIsVerifyingCode,
+  ] = useState(false)
+
+  const [
+    countdown,
+    setCountdown,
+  ] = useState(180)
+
+  const [
+    password,
+    setPassword,
+  ] = useState('')
+
+  const [
+    passwordConfirm,
+    setPasswordConfirm,
+  ] = useState('')
+
+  const [
+    nickname,
+    setNickname,
+  ] = useState('')
+
+  const [
+    agreed,
+    setAgreed,
+  ] = useState(false)
+
+  const [
+    showAgreementError,
+    setShowAgreementError,
+  ] = useState(false)
+
+  const [
+    showPasswordError,
+    setShowPasswordError,
+  ] = useState(false)
+
+  const [
+    showPasswordMismatch,
+    setShowPasswordMismatch,
+  ] = useState(false)
+
+  const [
+    showNicknameError,
+    setShowNicknameError,
+  ] = useState(false)
+
+  const [
+    signupMessage,
+    setSignupMessage,
+  ] =
+    useState<FeedbackMessage | null>(
+      null,
+    )
+
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false)
+
+  const emailVerified =
+    verificationStatus ===
+      'verified' &&
+    Boolean(
+      temporaryAccessToken.trim(),
+    )
+
+  const passwordValid =
+    validatePassword(
+      password,
+    )
+
+  const passwordsMatch =
+    Boolean(password) &&
+    password ===
+      passwordConfirm
+
+  useEffect(
+    () => {
+      if (
+        verificationStatus !==
+        'code-sent'
+      ) {
+        return
+      }
+
+      if (
+        countdown <=
+        0
+      ) {
+        setVerificationStatus(
+          'idle',
+        )
+        setVerificationCode(
+          '',
+        )
+        setEmailMessage({
+          type:
+            'error',
+          text:
+            '인증 시간이 만료되었습니다. 인증번호를 다시 요청해 주세요.',
+        })
+
+        return
+      }
+
+      const timer =
+        window.setTimeout(
+          () => {
+            setCountdown(
+              (
+                current,
+              ) =>
+                current -
+                1,
+            )
+          },
+          1000,
+        )
+
+      return () => {
+        window.clearTimeout(
+          timer,
+        )
+      }
+    },
+    [
+      countdown,
+      verificationStatus,
+    ],
+  )
+
+  const resetVerification =
+    () => {
+      setVerificationStatus(
+        'idle',
+      )
+      setTemporaryAccessToken(
+        '',
+      )
+      setVerificationCode(
+        '',
+      )
+      setCountdown(
+        180,
+      )
+      setEmailMessage(
+        null,
+      )
+    }
+
+  const handleEmailChange =
+    (
+      value: string,
+    ) => {
+      setEmail(
+        value,
+      )
+
+      if (
+        verificationStatus !==
+          'idle' ||
+        temporaryAccessToken
+      ) {
+        resetVerification()
+      }
+
+      setSignupMessage(
+        null,
+      )
+    }
+
+  const sendEmail =
+    async () => {
+      const normalizedEmail =
+        email.trim()
+
+      setSignupMessage(
+        null,
+      )
+
+      if (
+        !validateEmail(
+          normalizedEmail,
+        )
+      ) {
+        setEmailMessage({
+          type:
+            'error',
+          text:
+            '유효한 이메일이 아닙니다. 다시 작성해 주세요.',
+        })
+
+        return
+      }
+
+      setIsSendingEmail(
+        true,
+      )
+      setEmailMessage(
+        null,
+      )
+
+      try {
+        await api.post(
+          '/auth/email/request',
+          {
+            verificationType:
+              'NON_LOGIN',
+            purpose:
+              'SIGNUP',
+            email:
+              normalizedEmail,
+          },
+        )
+
+        setVerificationStatus(
+          'code-sent',
+        )
+        setVerificationCode(
+          '',
+        )
+        setCountdown(
+          180,
+        )
+        setEmailMessage({
+          type:
+            'success',
+          text:
+            '인증번호를 전송했습니다. 이메일을 확인해 주세요.',
+        })
+      } catch (
+        error
+      ) {
+        console.error(
+          '인증번호 전송 실패:',
+          error,
+        )
+
+        setVerificationStatus(
+          'idle',
+        )
+        setTemporaryAccessToken(
+          '',
+        )
+
+        if (
+          isDuplicateEmailError(
+            error,
+          )
+        ) {
+          setEmailMessage({
+            type:
+              'error',
+            text:
+              '이미 가입된 이메일입니다. 로그인해 주세요.',
+          })
+
+          return
+        }
+
+        setEmailMessage({
+          type:
+            'error',
+          text:
+            getApiErrorMessage(
+              error,
+              '인증메일을 전송하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            ),
+        })
+      } finally {
+        setIsSendingEmail(
+          false,
+        )
+      }
+    }
+
+  const verifyCode =
+    async () => {
+      const code =
+        verificationCode.trim()
+
+      if (!code) {
+        setEmailMessage({
+          type:
+            'error',
+          text:
+            '인증번호를 입력해 주세요.',
+        })
+
+        return
+      }
+
+      setIsVerifyingCode(
+        true,
+      )
+      setEmailMessage(
+        null,
+      )
+
+      try {
+        const response =
+          await api.post(
+            '/auth/email/verify',
+            {
+              verificationType:
+                'NON_LOGIN',
+              purpose:
+                'SIGNUP',
+              email:
+                email.trim(),
+              code,
+            },
+          )
+
+        const temporaryToken =
+          response.data
+            ?.result
+            ?.temporaryAccessToken
+
+        if (
+          typeof temporaryToken !==
+            'string' ||
+          !temporaryToken.trim()
+        ) {
+          throw new Error(
+            '이메일 인증 토큰을 받지 못했습니다.',
+          )
+        }
+
+        setTemporaryAccessToken(
+          temporaryToken,
+        )
+        setVerificationStatus(
+          'verified',
+        )
+        setEmailMessage({
+          type:
+            'success',
+          text:
+            '이메일 인증을 완료했습니다.',
+        })
+      } catch (
+        error
+      ) {
+        console.error(
+          '이메일 인증 실패:',
+          error,
+        )
+
+        setTemporaryAccessToken(
+          '',
+        )
+        setVerificationStatus(
+          'verification-error',
+        )
+        setEmailMessage({
+          type:
+            'error',
+          text:
+            getApiErrorMessage(
+              error,
+              '인증번호가 유효하지 않습니다. 다시 입력해 주세요.',
+            ),
+        })
+      } finally {
+        setIsVerifyingCode(
+          false,
+        )
+      }
+    }
+
+  const memberOk =
+    async () => {
+      setSignupMessage(
+        null,
+      )
+
+      if (
+        !emailVerified
+      ) {
+        setEmailMessage({
+          type:
+            'error',
+          text:
+            '이메일 인증을 완료해 주세요.',
+        })
+
+        return
+      }
+
+      if (
+        !passwordValid
+      ) {
+        setShowPasswordError(
+          true,
+        )
+
+        return
+      }
+
+      setShowPasswordError(
+        false,
+      )
+
+      if (
+        !passwordsMatch
+      ) {
+        setShowPasswordMismatch(
+          true,
+        )
+
+        return
+      }
+
+      setShowPasswordMismatch(
+        false,
+      )
+
+      if (
+        !nickname.trim()
+      ) {
+        setShowNicknameError(
+          true,
+        )
+
+        return
+      }
+
+      setShowNicknameError(
+        false,
+      )
+
+      if (!agreed) {
+        setShowAgreementError(
+          true,
+        )
+
+        return
+      }
+
+      setShowAgreementError(
+        false,
+      )
+      setIsSubmitting(
+        true,
+      )
+
+      try {
+        const response =
+          await api.post(
+            '/auth/signup',
+            {
+              email:
+                email.trim(),
+              password,
+              nickname:
+                nickname.trim(),
+              termsAgreed:
+                true,
+            },
+            {
+              headers: {
+                'X-Email-Verification-Token':
+                  temporaryAccessToken.trim(),
+              },
+            },
+          )
+
+        const result =
+          response.data
+            ?.result
+
+        const accessToken =
+          result?.accessToken
+
+        const refreshToken =
+          result?.refreshToken
+
+        if (
+          typeof accessToken ===
+            'string' &&
+          accessToken &&
+          typeof refreshToken ===
+            'string' &&
+          refreshToken
+        ) {
+          saveAuthSession(
+            {
+              accessToken,
+              refreshToken,
+              user:
+                result,
+            },
+            true,
+          )
+        }
+
+        setSignupMessage({
+          type:
+            'success',
+          text:
+            '회원가입이 완료되었습니다.',
+        })
+
+        navigate(
+          '/',
+          {
+            replace:
+              true,
+          },
+        )
+      } catch (
+        error
+      ) {
+        console.error(
+          '회원가입 실패:',
+          error,
+        )
+
+        if (
+          isDuplicateEmailError(
+            error,
+          )
+        ) {
+          setSignupMessage({
+            type:
+              'error',
+            text:
+              '이미 가입된 이메일입니다. 로그인해 주세요.',
+          })
+
+          return
+        }
+
+        setSignupMessage({
+          type:
+            'error',
+          text:
+            getApiErrorMessage(
+              error,
+              '회원가입을 완료하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.',
+            ),
+        })
+      } finally {
+        setIsSubmitting(
+          false,
+        )
+      }
+    }
+
+  const verificationArea =
+    () => {
+      if (
+        emailVerified
+      ) {
+        return (
+          <p className="mt-[11px] font-bold text-[#5FAA81]">
+            이메일 인증을
+            완료했습니다.
+          </p>
+        )
+      }
+
+      if (
+        verificationStatus ===
+          'code-sent' ||
+        verificationStatus ===
+          'verification-error'
+      ) {
+        return (
+          <>
+            <input
+              type="text"
+              value={
+                verificationCode
+              }
+              onChange={(
+                event,
+              ) => {
+                setVerificationCode(
+                  event.target
+                    .value,
+                )
+              }}
+              placeholder="인증번호 6자리를 입력해주세요."
+              className={[
+                'mt-[15px] h-[54px] rounded-[8px] border-2 pl-[20px] outline-none',
+                verificationStatus ===
+                'verification-error'
+                  ? 'border-[#F8A3A3]'
+                  : 'border-[#E4E4E7] hover:border-[#666666]',
+              ].join(
+                ' ',
+              )}
+            />
+
+            <div className="flex items-center justify-between">
+              <p className="my-[15px] text-[15px] text-[#666666]">
+                인증번호를 받지
+                못하셨나요?{' '}
+                <button
+                  type="button"
+                  disabled={
+                    isSendingEmail
+                  }
+                  onClick={() => {
+                    void sendEmail()
+                  }}
+                  className="font-bold text-[#6366F1] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  인증번호 재전송
+                </button>
+              </p>
+
+              <span className="font-bold text-[#EF8888]">
+                {Math.floor(
+                  countdown /
+                    60,
+                )}
+                :
+                {String(
+                  countdown %
+                    60,
+                ).padStart(
+                  2,
+                  '0',
+                )}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              disabled={
+                isVerifyingCode
+              }
+              onClick={() => {
+                void verifyCode()
+              }}
+              className="mt-[2px] h-[48px] w-[112px] cursor-pointer rounded-[10px] border-2 border-[#6366F1] text-[17px] font-bold text-[#6366F1] transition-colors hover:bg-[#6366F1] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isVerifyingCode
+                ? '확인 중'
+                : '인증 완료'}
+            </button>
+          </>
+        )
+      }
+
+      return (
+        <button
+          type="button"
+          disabled={
+            isSendingEmail
+          }
+          onClick={() => {
+            void sendEmail()
+          }}
+          className="mt-[13px] flex h-[49px] w-[145px] cursor-pointer items-center justify-center rounded-[12px] border-2 border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white transition-colors hover:border-[#3A3DC2] hover:bg-[#3A3DC2] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSendingEmail
+            ? '전송 중'
+            : '인증번호 전송'}
+        </button>
+      )
+    }
+
+  return (
+    <div className="min-h-screen bg-[#F5F5F7] pb-[100px] pt-[36px] text-[18px] text-[#52525B]">
+      <div className="mx-auto w-[580px] max-w-[calc(100%_-_32px)]">
+        <button
+          type="button"
+          onClick={() => {
+            navigate('/')
+          }}
+          className="mb-[28px] text-[14px] font-bold text-[#6366F1] hover:text-[#3A3DC2]"
+        >
+          ← 홈으로 돌아가기
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            navigate('/')
+          }}
+          aria-label="LearningLM 홈으로 이동"
+          className="mx-auto mb-[37px] flex flex-col items-center"
+        >
+          <span className="flex items-center gap-[8px]">
+            <span className="flex h-[39px] w-[40px] items-center justify-center rounded-[8px] bg-[#6366F1] text-[22px] font-bold text-white">
+              L
+            </span>
+
+            <span className="text-[26px] font-bold text-[#27272A]">
+              LearningLM
+            </span>
+          </span>
+
+          <span className="mt-[11px] text-[15px] tracking-tighter text-[#52525B]">
+            AI활용 흐름을 블록형
+            튜토리얼로 배우는 플랫폼
+          </span>
+        </button>
+
+        <div className="flex min-h-[858px] flex-col items-center rounded-[12px] border border-[#E4E4E7] bg-white px-[25px] pb-[44px] pt-[41px]">
+          <div className="flex w-full flex-col tracking-tighter">
+            <p className="text-[27px] font-bold text-[#27272A]">
+              회원가입
+            </p>
+
+            <p className="mt-[1px] text-[15px] text-[#52525B]">
+              무료로 시작하고 첫
+              튜토리얼을 진행해 보세요.
+            </p>
+          </div>
+
+          <div className="mt-[39px] flex w-full flex-col gap-[20px]">
+            <div className="flex flex-col tracking-tighter">
+              <p className="text-[16.5px] font-bold text-[#52525B]">
+                이메일
+              </p>
+
+              <input
+                type="email"
+                value={
+                  email
+                }
+                disabled={
+                  emailVerified
+                }
+                onChange={(
+                  event,
+                ) => {
+                  handleEmailChange(
+                    event.target
+                      .value,
+                  )
+                }}
+                placeholder="you@example.com"
+                className="mt-[5px] h-[50px] rounded-[8px] border-2 border-[#E4E4E7] pl-[20px] outline-none hover:border-[#666666] disabled:bg-[#F5F5F7] disabled:text-[#9A9AA3]"
+              />
+
+              {verificationArea()}
+
+              {emailMessage && (
+                <div className="mt-[11px]">
+                  <p
+                    className={[
+                      'font-bold',
+                      emailMessage.type ===
+                      'success'
+                        ? 'text-[#5FAA81]'
+                        : 'text-[#EF8888]',
+                    ].join(
+                      ' ',
+                    )}
+                  >
+                    {
+                      emailMessage.text
+                    }
+                  </p>
+
+                  {emailMessage.type ===
+                    'error' &&
+                    emailMessage.text.includes(
+                      '이미 가입',
+                    ) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate(
+                            '/login',
+                          )
+                        }}
+                        className="mt-[7px] text-[15px] font-bold text-[#6366F1] hover:text-[#3A3DC2]"
+                      >
+                        로그인으로 이동
+                      </button>
+                    )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col tracking-tighter">
+              <p className="text-[16.5px] font-bold text-[#52525B]">
+                비밀번호
+              </p>
+
+              <input
+                type="password"
+                value={
+                  password
+                }
+                onChange={(
+                  event,
+                ) => {
+                  setPassword(
+                    event.target
+                      .value,
+                  )
+                  setShowPasswordError(
+                    false,
+                  )
+                  setSignupMessage(
+                    null,
+                  )
+                }}
+                placeholder="********"
+                className={[
+                  'mb-[11px] mt-[6px] h-[51px] rounded-[8px] border-2 pl-[20px] outline-none hover:border-[#666666]',
+                  showPasswordError
+                    ? 'border-[#F8A3A3]'
+                    : 'border-[#E4E4E7]',
+                ].join(
+                  ' ',
+                )}
+              />
+
+              <p className="mt-[-5px] text-[15px] text-[#9A9AA3]">
+                영문·숫자 포함 8~20자
+              </p>
+
+              {showPasswordError && (
+                <p className="mt-[11px] font-bold text-[#EF8888]">
+                  비밀번호는 영문·숫자를
+                  포함한 8~20자로 작성해
+                  주세요.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col tracking-tighter">
+              <p className="text-[15px] font-bold text-[#52525B]">
+                비밀번호 확인
+              </p>
+
+              <input
+                type="password"
+                value={
+                  passwordConfirm
+                }
+                onChange={(
+                  event,
+                ) => {
+                  setPasswordConfirm(
+                    event.target
+                      .value,
+                  )
+                  setShowPasswordMismatch(
+                    false,
+                  )
+                  setSignupMessage(
+                    null,
+                  )
+                }}
+                placeholder="********"
+                className={[
+                  'mb-[11px] mt-[6px] h-[51px] rounded-[8px] border-2 pl-[20px] outline-none hover:border-[#666666]',
+                  showPasswordMismatch
+                    ? 'border-[#F8A3A3]'
+                    : 'border-[#E4E4E7]',
+                ].join(
+                  ' ',
+                )}
+              />
+
+              {passwordConfirm &&
+                passwordsMatch && (
+                  <p className="font-bold text-[#5FAA81]">
+                    입력한 비밀번호가
+                    일치합니다.
+                  </p>
+                )}
+
+              {showPasswordMismatch && (
+                <p className="font-bold text-[#EF8888]">
+                  입력한 비밀번호가
+                  같지 않습니다.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <p className="text-[15px] font-bold text-[#52525B]">
+                닉네임
+              </p>
+
+              <input
+                type="text"
+                value={
+                  nickname
+                }
+                onChange={(
+                  event,
+                ) => {
+                  setNickname(
+                    event.target
+                      .value,
+                  )
+                  setShowNicknameError(
+                    false,
+                  )
+                  setSignupMessage(
+                    null,
+                  )
+                }}
+                placeholder="학습자 닉네임을 입력하세요."
+                className={[
+                  'mt-[6.5px] h-[51px] rounded-[8px] border-2 pl-[20px] text-[18px] outline-none hover:border-[#666666]',
+                  showNicknameError
+                    ? 'border-[#F8A3A3]'
+                    : 'border-[#E4E4E7]',
+                ].join(
+                  ' ',
+                )}
+              />
+
+              {showNicknameError && (
+                <p className="mt-[11px] font-bold text-[#EF8888]">
+                  닉네임을 입력해 주세요.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-[40px] w-full">
+            <div className="flex items-start gap-[8px]">
+              <label className="mt-[3px] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={
+                    agreed
+                  }
+                  onChange={(
+                    event,
+                  ) => {
+                    setAgreed(
+                      event.target
+                        .checked,
+                    )
+                    setShowAgreementError(
+                      false,
+                    )
+                    setSignupMessage(
+                      null,
+                    )
+                  }}
+                  className="sr-only"
+                />
+
+                <span
+                  className={[
+                    'flex h-[17px] w-[17px] items-center justify-center rounded-[2px] border-2 border-[#6366F1]',
+                    agreed
+                      ? 'bg-[#6366F1]'
+                      : 'bg-white',
+                  ].join(
+                    ' ',
+                  )}
+                >
+                  {agreed && (
+                    <Check
+                      size={
+                        15
+                      }
+                      className="stroke-[3] text-white"
+                    />
+                  )}
+                </span>
+              </label>
+
+              <p className="text-[16.5px] tracking-tighter text-[#52525B]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(
+                      '/terms',
+                    )
+                  }}
+                  className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
+                >
+                  이용약관
+                </button>{' '}
+                및{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(
+                      '/privacy',
+                    )
+                  }}
+                  className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
+                >
+                  개인정보 처리방침
+                </button>
+                에 동의합니다.
+              </p>
+            </div>
+
+            {showAgreementError && (
+              <p className="mt-[20px] font-bold text-[#EF8888]">
+                이용약관 및 개인정보
+                처리방침 동의가
+                필요합니다.
+              </p>
+            )}
+          </div>
+
+          {signupMessage && (
+            <p
+              className={[
+                'mt-[18px] w-full text-center text-[15px] font-bold',
+                signupMessage.type ===
+                'success'
+                  ? 'text-[#5FAA81]'
+                  : 'text-[#EF8888]',
+              ].join(
+                ' ',
+              )}
+            >
+              {
+                signupMessage.text
+              }
+            </p>
+          )}
+
+          <button
+            type="button"
+            disabled={
+              isSubmitting
+            }
+            onClick={() => {
+              void memberOk()
+            }}
+            className="mt-[16px] h-[52px] w-full cursor-pointer rounded-[8px] border border-[#6366F1] text-[21px] font-bold text-[#6366F1] transition-colors hover:bg-[#6366F1] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting
+              ? '가입 중...'
+              : '회원가입'}
+          </button>
+
+          <p className="mt-[48px] text-[15px] tracking-tighter text-[#52525B]">
+            이미 계정이 있으신가요?{' '}
+            <button
+              type="button"
+              onClick={() => {
+                navigate(
+                  '/login',
+                )
+              }}
+              className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
+            >
+              로그인
+            </button>
+          </p>
+        </div>
+
+        <p className="mt-[44px] text-center text-[15px] text-[#9A9AA3]">
+          ©2026 LearningLM
+        </p>
+      </div>
+    </div>
+  )
 }
