@@ -81,7 +81,7 @@ export interface TutorialDetailResponse {
     input: string
     result: string
     source: string
-  }
+  } | null
   // 토큰이 있고 학습 이력이 있는 경우에만 서버가 진행 정보를 반환한다.
   progress: TutorialDetailProgress | null
 }

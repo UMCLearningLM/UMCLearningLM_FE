@@ -160,6 +160,34 @@ export function TutorialDetailPage() {
           return
         }
 
+        const fallbackTutorial =
+          getTutorialById(
+            tutorialId,
+          )
+
+        const exampleInput =
+          result.example?.input ??
+          fallbackTutorial?.exampleInput ??
+          ''
+
+        const exampleResult =
+          result.example?.result
+            ? result.example.result
+                .split('\n')
+                .filter(Boolean)
+            : fallbackTutorial?.exampleResult ??
+              []
+
+        const resultSource:
+          Tutorial['resultSource'] =
+          result.example
+            ? result.example.source ===
+              'TEMPLATE'
+              ? 'Template'
+              : 'AI'
+            : fallbackTutorial?.resultSource ??
+              'Template'
+
         // 백엔드 난이도 코드를 기존 카드 UI의 한글 값으로 변환한다.
         const levelMap: Record<
           string,
@@ -251,20 +279,11 @@ export function TutorialDetailPage() {
               }),
             ),
 
-          exampleInput:
-            result.example.input,
+          exampleInput,
 
-          // 문자열 예시 결과를 기존 줄 단위 UI에서 사용할 배열로 바꾼다.
-          exampleResult:
-            result.example.result
-              .split('\n')
-              .filter(Boolean),
+          exampleResult,
 
-          resultSource:
-            result.example.source ===
-            'TEMPLATE'
-              ? 'Template'
-              : 'AI',
+          resultSource,
 
           // API 함수에서 토큰이 있는 경우에만 유지한 진행 정보를 화면 모델에 반영한다.
           progress:
