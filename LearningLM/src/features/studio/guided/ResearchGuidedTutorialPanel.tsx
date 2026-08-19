@@ -1,234 +1,66 @@
-import type {
-  Edge,
-} from '@xyflow/react'
-
 import {
   Check,
   Circle,
-  Sparkles,
+  LockKeyhole,
 } from 'lucide-react'
 
 import type {
-  StudioFlowNodeInstance,
-} from '../components/node/StudioFlowNode'
+  ResearchGuidedStepStatus,
+} from './researchGuidedTutorial'
 
-import type {
-  StudioStage,
-} from '../types/studioNode'
+import {
+  RESEARCH_GUIDED_STEPS,
+} from './researchGuidedTutorial'
 
-/**
- * 제출용 메인 공식 튜토리얼에서 사용하는 블록입니다.
- *
- * Guided mode에서는 이 블록들만 Palette에 노출합니다.
- */
-export const RESEARCH_GUIDED_TUTORIAL_BLOCK_IDS:
-  readonly string[] = [
-    'input-topic',
-    'context-direct-input',
-    'process-extract-core',
-    'review-evidence',
-    'output-text',
-  ]
-
-interface ResearchGuideStep {
-  stage: StudioStage
-  blockId: string
-  title: string
-  instruction: string
-  inspectorHint: string
-}
-
-const researchGuideSteps:
-  readonly ResearchGuideStep[] = [
-    {
-      stage: 'INPUT',
-      blockId:
-        'input-topic',
-      title:
-        '조사 주제 정하기',
-      instruction:
-        '왼쪽 INPUT 영역의 ‘주제 입력하기’ 블록을 캔버스로 끌어오세요.',
-      inspectorHint:
-        '노드를 선택한 뒤 Inspector에서 조사할 주제를 입력하세요.',
-    },
-    {
-      stage: 'CONTEXT',
-      blockId:
-        'context-direct-input',
-      title:
-        '참고 자료 추가하기',
-      instruction:
-        '‘직접 입력 내용 사용하기’ 블록을 추가하고 INPUT 노드와 연결하세요.',
-      inspectorHint:
-        'Inspector에 조사에 참고할 배경 내용이나 알고 있는 사실을 입력하세요.',
-    },
-    {
-      stage: 'PROCESS',
-      blockId:
-        'process-extract-core',
-      title:
-        '핵심 내용 추출하기',
-      instruction:
-        '‘핵심 내용 추출하기’ 블록을 추가하고 CONTEXT 노드와 연결하세요.',
-      inspectorHint:
-        'Inspector의 추출 대상에서 사실, 키워드 등 하나 이상을 선택하세요.',
-    },
-    {
-      stage: 'REVIEW',
-      blockId:
-        'review-evidence',
-      title:
-        '근거 확인하기',
-      instruction:
-        '‘근거 확인하기’ 블록을 추가하고 PROCESS 노드와 연결하세요.',
-      inspectorHint:
-        'Inspector에서 확인할 근거나 검사 옵션을 한 번 설정하세요.',
-    },
-    {
-      stage: 'OUTPUT',
-      blockId:
-        'output-text',
-      title:
-        '조사 결과 출력하기',
-      instruction:
-        '‘텍스트로 출력하기’ 블록을 추가하고 REVIEW 노드와 연결하세요.',
-      inspectorHint:
-        'Inspector에서 결과의 텍스트 구조와 분량을 설정하세요.',
-    },
-  ]
-
-const stageLabelMap:
-  Record<
-    StudioStage,
-    string
-  > = {
-    INPUT:
-      '입력',
-    CONTEXT:
-      '컨텍스트',
-    PROCESS:
-      '프로세스',
-    REVIEW:
-      '검토',
-    OUTPUT:
-      '결과',
-  }
-
-function hasSlotValue(
-  slot:
-    StudioFlowNodeInstance[
-      'data'
-    ]['node']['slots'][number],
-): boolean {
-  if (
-    slot.state ===
-    'filled'
-  ) {
-    return true
-  }
-
-  return (
-    typeof slot.value ===
-      'string' &&
-    slot.value.trim().length >
-      0
-  )
-}
-
-function findNodeWithBlock(
-  nodes:
-    readonly StudioFlowNodeInstance[],
-  blockId: string,
-) {
-  return nodes.find(
-    (
-      node,
-    ) =>
-      node.data.node.slots.some(
-        (
-          slot,
-        ) =>
-          slot.id ===
-          blockId,
-      ),
-  )
-}
-
-function getBlockConfigured(
-  node:
-    StudioFlowNodeInstance |
-    undefined,
-  blockId: string,
-): boolean {
-  if (!node) {
-    return false
-  }
-
-  const slot =
-    node.data.node.slots.find(
-      (
-        item,
-      ) =>
-        item.id ===
-        blockId,
-    )
-
-  return Boolean(
-    slot &&
-      hasSlotValue(
-        slot,
-      ),
-  )
-}
-
-function hasConnection(
-  edges:
-    readonly Edge[],
-  sourceNodeId:
-    string |
-    undefined,
-  targetNodeId:
-    string |
-    undefined,
-): boolean {
-  if (
-    !sourceNodeId ||
-    !targetNodeId
-  ) {
-    return false
-  }
-
-  return edges.some(
-    (
-      edge,
-    ) =>
-      edge.source ===
-        sourceNodeId &&
-      edge.target ===
-        targetNodeId,
-  )
-}
+const stageLabelMap = {
+  INPUT:
+    '입력',
+  CONTEXT:
+    '컨텍스트',
+  PROCESS:
+    '프로세스',
+  REVIEW:
+    '검토',
+  OUTPUT:
+    '결과',
+} as const
 
 interface ResearchGuidedTutorialPanelProps {
-  nodes:
-    readonly StudioFlowNodeInstance[]
+  currentStepIndex: number
 
-  edges:
-    readonly Edge[]
+  currentStatus:
+    ResearchGuidedStepStatus
+
+  stepStatuses:
+    readonly ResearchGuidedStepStatus[]
+
+  canGoPrevious: boolean
+  canGoNext: boolean
+  isLastStep: boolean
+  isTutorialComplete: boolean
+
+  onPrevious:
+    () => void
+
+  onNext:
+    () => void
+
+  onComplete:
+    () => void
 }
 
-interface GuideStatusRowProps {
-  completed: boolean
-  children: string
+interface StatusRowProps {
+  complete: boolean
+  label: string
 }
 
-function GuideStatusRow({
-  completed,
-  children,
-}: GuideStatusRowProps) {
+function StatusRow({
+  complete,
+  label,
+}: StatusRowProps) {
   return (
     <div className="flex items-center gap-[8px]">
-      {completed ? (
+      {complete ? (
         <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#6366F1] text-white">
           <Check
             size={12}
@@ -245,269 +77,274 @@ function GuideStatusRow({
       <span
         className={[
           'text-[13px] leading-[19px]',
-          completed
+          complete
             ? 'font-bold text-[#52525B]'
             : 'text-[#9A9AA3]',
-        ].join(
-          ' ',
-        )}
+        ].join(' ')}
       >
-        {children}
+        {label}
       </span>
     </div>
   )
 }
 
 export function ResearchGuidedTutorialPanel({
-  nodes,
-  edges,
+  currentStepIndex,
+  currentStatus,
+  stepStatuses,
+  canGoPrevious,
+  canGoNext,
+  isLastStep,
+  isTutorialComplete,
+  onPrevious,
+  onNext,
+  onComplete,
 }: ResearchGuidedTutorialPanelProps) {
-  const stepStatuses =
-    researchGuideSteps.map(
-      (
-        step,
-        index,
-      ) => {
-        const node =
-          findNodeWithBlock(
-            nodes,
-            step.blockId,
-          )
-
-        const placed =
-          Boolean(
-            node,
-          )
-
-        const configured =
-          getBlockConfigured(
-            node,
-            step.blockId,
-          )
-
-        const previousNode =
-          index >
-          0
-            ? findNodeWithBlock(
-                nodes,
-                researchGuideSteps[
-                  index -
-                    1
-                ].blockId,
-              )
-            : undefined
-
-        const connected =
-          index ===
-          0
-            ? true
-            : hasConnection(
-                edges,
-                previousNode?.id,
-                node?.id,
-              )
-
-        return {
-          step,
-          node,
-          placed,
-          configured,
-          connected,
-
-          complete:
-            placed &&
-            configured &&
-            connected,
-        }
-      },
-    )
-
-  const incompleteIndex =
-    stepStatuses.findIndex(
-      (
-        status,
-      ) =>
-        !status.complete,
-    )
-
-  const allComplete =
-    incompleteIndex ===
-    -1
-
-  const currentIndex =
-    allComplete
-      ? researchGuideSteps.length -
-        1
-      : incompleteIndex
-
-  const currentStatus =
-    stepStatuses[
-      currentIndex
+  const currentStep =
+    RESEARCH_GUIDED_STEPS[
+      currentStepIndex
     ]
 
-  const completedCount =
-    stepStatuses.filter(
-      (
-        status,
-      ) =>
-        status.complete,
-    ).length
-
   if (
-    allComplete
+    !currentStep ||
+    !currentStatus
   ) {
-    return (
-      <section className="absolute left-[20px] top-[20px] z-30 w-[420px] rounded-[16px] border-[1.5px] border-[#CFCFFF] bg-white px-[22px] py-[20px] shadow-[0_8px_28px_rgba(39,39,42,0.12)]">
-        <div className="flex items-start gap-[13px]">
-          <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[12px] bg-[#EAEBFF] text-[#6366F1]">
-            <Sparkles
-              size={21}
-            />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-bold text-[#6366F1]">
-              공식 튜토리얼 · 5/5
-            </p>
-
-            <h2 className="mt-[3px] text-[19px] font-bold text-[#27272A]">
-              자료조사 흐름 완성
-            </h2>
-          </div>
-        </div>
-
-        <p className="mt-[15px] text-[14px] leading-[22px] text-[#52525B]">
-          입력부터 결과까지
-          다섯 단계가 모두
-          설정되고 연결되었습니다.
-        </p>
-
-        <div className="mt-[14px] rounded-[10px] bg-[#F5F5FF] px-[14px] py-[12px] text-[13px] leading-[20px] text-[#6366F1]">
-          아래의 예시 결과 또는
-          미리보기에서 완성된
-          흐름을 확인할 수 있습니다.
-        </div>
-      </section>
-    )
+    return null
   }
 
   return (
-    <section className="absolute left-[20px] top-[20px] z-30 w-[420px] rounded-[16px] border-[1.5px] border-[#E4E4E7] bg-white px-[22px] py-[20px] shadow-[0_8px_28px_rgba(39,39,42,0.12)]">
-      <div className="flex items-start justify-between gap-[16px]">
-        <div>
-          <p className="text-[13px] font-bold text-[#6366F1]">
-            AI로 자료조사 흐름 만들기
-          </p>
+    <>
+      {/* 상단 5단계 진행 Strip */}
+      <section className="pointer-events-none absolute left-[18px] right-[18px] top-[18px] z-30">
+        <div className="pointer-events-auto flex min-h-[72px] items-center gap-[18px] rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[20px] shadow-[0_6px_20px_rgba(39,39,42,0.08)]">
+          <div className="w-[190px] shrink-0">
+            <p className="text-[14px] font-bold text-[#6366F1]">
+              AI로 자료조사 흐름
+            </p>
 
-          <h2 className="mt-[4px] text-[19px] font-bold text-[#27272A]">
-            {currentIndex +
-              1}
-            단계 ·{' '}
-            {
-              currentStatus
-                .step
-                .title
-            }
-          </h2>
+            <p className="mt-[2px] text-[12px] text-[#9A9AA3]">
+              진행{' '}
+              <b className="text-[#52525B]">
+                {currentStepIndex + 1}/5
+              </b>
+            </p>
+          </div>
+
+          <div className="flex min-w-0 flex-1 items-center justify-center">
+            {RESEARCH_GUIDED_STEPS.map(
+              (
+                step,
+                index,
+              ) => {
+                const isCurrent =
+                  index ===
+                  currentStepIndex
+
+                const isCompleted =
+                  index <
+                    currentStepIndex ||
+                  stepStatuses[
+                    index
+                  ]?.complete
+
+                const isLocked =
+                  index >
+                  currentStepIndex
+
+                return (
+                  <div
+                    key={step.stage}
+                    className="flex items-center"
+                  >
+                    <div
+                      className={[
+                        'flex items-center gap-[7px] whitespace-nowrap text-[13px] font-bold',
+                        isCurrent
+                          ? 'text-[#6366F1]'
+                          : isCompleted
+                            ? 'text-[#52525B]'
+                            : 'text-[#B0B0B8]',
+                      ].join(' ')}
+                    >
+                      <span
+                        className={[
+                          'flex h-[24px] w-[24px] items-center justify-center rounded-full border text-[11px] font-bold',
+                          isCurrent
+                            ? 'border-[#6366F1] bg-[#6366F1] text-white'
+                            : isCompleted
+                              ? 'border-[#CFCFFF] bg-[#EAEBFF] text-[#6366F1]'
+                              : 'border-[#E4E4E7] bg-[#F7F7F9] text-[#B0B0B8]',
+                        ].join(' ')}
+                      >
+                        {isCompleted &&
+                        !isCurrent ? (
+                          <Check
+                            size={13}
+                            strokeWidth={3}
+                          />
+                        ) : isLocked ? (
+                          <LockKeyhole
+                            size={11}
+                          />
+                        ) : (
+                          index + 1
+                        )}
+                      </span>
+
+                      {
+                        stageLabelMap[
+                          step.stage
+                        ]
+                      }
+                    </div>
+
+                    {index <
+                      RESEARCH_GUIDED_STEPS.length -
+                        1 && (
+                      <div className="mx-[10px] h-px w-[28px] bg-[#E4E4E7]" />
+                    )}
+                  </div>
+                )
+              },
+            )}
+          </div>
         </div>
 
-        <span className="shrink-0 rounded-[8px] bg-[#EAEBFF] px-[10px] py-[6px] text-[12px] font-bold text-[#6366F1]">
-          {stageLabelMap[
-            currentStatus
-              .step
-              .stage
-          ]}
-        </span>
-      </div>
+        {/* 현재 단계 행동 안내 */}
+        <div className="pointer-events-auto mt-[10px] w-[390px] rounded-[12px] border-[1.5px] border-[#E4E4E7] bg-white px-[16px] py-[14px] shadow-[0_6px_18px_rgba(39,39,42,0.08)]">
+          <div className="flex items-center justify-between gap-[12px]">
+            <div>
+              <p className="text-[12px] font-bold text-[#6366F1]">
+                {currentStepIndex + 1}
+                단계 ·{' '}
+                {
+                  stageLabelMap[
+                    currentStep.stage
+                  ]
+                }
+              </p>
 
-      <div className="mt-[15px] flex gap-[6px]">
-        {stepStatuses.map(
-          (
-            status,
-            index,
-          ) => (
-            <div
-              key={
-                status.step
-                  .blockId
+              <h2 className="mt-[2px] text-[17px] font-bold text-[#27272A]">
+                {currentStep.title}
+              </h2>
+            </div>
+
+            <span className="rounded-[7px] bg-[#F0F0FF] px-[9px] py-[5px] text-[11px] font-bold text-[#6366F1]">
+              {currentStep.stage}
+            </span>
+          </div>
+
+          <p className="mt-[10px] text-[13px] font-bold leading-[20px] text-[#52525B]">
+            {currentStep.instruction}
+          </p>
+
+          <p className="mt-[5px] text-[12px] leading-[18px] text-[#9A9AA3]">
+            {currentStep.inspectorHint}
+          </p>
+
+          <div className="mt-[12px] space-y-[7px] border-t border-[#EEEEF1] pt-[11px]">
+            <StatusRow
+              complete={
+                currentStatus.placed
+              }
+              label="필요한 블록 추가"
+            />
+
+            <StatusRow
+              complete={
+                currentStatus.configured
+              }
+              label="Inspector 설정 완료"
+            />
+
+            {currentStepIndex >
+              0 && (
+              <StatusRow
+                complete={
+                  currentStatus.connected
+                }
+                label="이전 단계 노드와 연결"
+              />
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 하단 단계 이동 Bar */}
+      <section className="pointer-events-none absolute bottom-[18px] left-[18px] right-[18px] z-30">
+        <div className="pointer-events-auto flex h-[62px] items-center rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[16px] shadow-[0_6px_20px_rgba(39,39,42,0.08)]">
+          <button
+            type="button"
+            disabled={
+              !canGoPrevious
+            }
+            onClick={
+              onPrevious
+            }
+            className={[
+              'flex h-[38px] min-w-[110px] items-center justify-center rounded-[8px] border px-[14px] text-[13px] font-bold',
+              canGoPrevious
+                ? 'border-[#E4E4E7] bg-white text-[#52525B] hover:bg-[#F7F7F9]'
+                : 'cursor-not-allowed border-[#EEEEF1] bg-[#F7F7F9] text-[#C7C7CF]',
+            ].join(' ')}
+          >
+            ← 이전 노드
+          </button>
+
+          <p className="ml-[16px] min-w-0 flex-1 truncate text-[13px] text-[#777780]">
+            노드 {currentStepIndex + 1}/5 ·{' '}
+            {
+              stageLabelMap[
+                currentStep.stage
+              ]
+            }
+            {' · '}
+            {
+              currentStatus.complete
+                ? '현재 단계가 완료되었습니다.'
+                : '필수 작업을 완료하면 다음 노드로 진행할 수 있습니다.'
+            }
+          </p>
+
+          {isLastStep ? (
+            <button
+              type="button"
+              disabled={
+                !isTutorialComplete
+              }
+              onClick={
+                onComplete
               }
               className={[
-                'h-[5px] flex-1 rounded-full',
-                status.complete
-                  ? 'bg-[#6366F1]'
-                  : index ===
-                      currentIndex
-                    ? 'bg-[#BFC0FF]'
-                    : 'bg-[#E4E4E7]',
-              ].join(
-                ' ',
-              )}
-            />
-          ),
-        )}
-      </div>
-
-      <div className="mt-[17px] rounded-[10px] bg-[#F7F7F9] px-[14px] py-[13px]">
-        <p className="text-[14px] font-bold leading-[21px] text-[#3F3F46]">
-          {
-            currentStatus
-              .step
-              .instruction
-          }
-        </p>
-
-        <p className="mt-[7px] text-[13px] leading-[20px] text-[#777780]">
-          {
-            currentStatus
-              .step
-              .inspectorHint
-          }
-        </p>
-      </div>
-
-      <div className="mt-[16px] space-y-[9px]">
-        <GuideStatusRow
-          completed={
-            currentStatus
-              .placed
-          }
-        >
-          블록을 캔버스에 추가
-        </GuideStatusRow>
-
-        <GuideStatusRow
-          completed={
-            currentStatus
-              .configured
-          }
-        >
-          Inspector 설정 완료
-        </GuideStatusRow>
-
-        {currentIndex >
-          0 && (
-          <GuideStatusRow
-            completed={
-              currentStatus
-                .connected
-            }
-          >
-            이전 단계 노드와 연결
-          </GuideStatusRow>
-        )}
-      </div>
-
-      <div className="mt-[17px] flex items-center justify-between border-t border-[#EEEEF1] pt-[13px]">
-        <span className="text-[12px] text-[#9A9AA3]">
-          조건을 완료하면
-          다음 단계로 자동 진행됩니다.
-        </span>
-
-        <span className="text-[12px] font-bold text-[#6366F1]">
-          {completedCount}
-          /5 완료
-        </span>
-      </div>
-    </section>
+                'flex h-[38px] min-w-[128px] items-center justify-center rounded-[8px] px-[16px] text-[13px] font-bold',
+                isTutorialComplete
+                  ? 'bg-[#6366F1] text-white hover:bg-[#5558DB]'
+                  : 'cursor-not-allowed bg-[#E7E7EC] text-[#A5A5AE]',
+              ].join(' ')}
+            >
+              튜토리얼 완료
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={
+                !canGoNext
+              }
+              onClick={
+                onNext
+              }
+              className={[
+                'flex h-[38px] min-w-[110px] items-center justify-center rounded-[8px] px-[14px] text-[13px] font-bold',
+                canGoNext
+                  ? 'bg-[#6366F1] text-white hover:bg-[#5558DB]'
+                  : 'cursor-not-allowed bg-[#E7E7EC] text-[#A5A5AE]',
+              ].join(' ')}
+            >
+              다음 노드 →
+            </button>
+          )}
+        </div>
+      </section>
+    </>
   )
 }
