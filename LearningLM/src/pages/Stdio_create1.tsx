@@ -7,6 +7,7 @@ import {
 } from 'react'
 
 import {
+  Controls,
   MarkerType,
   ReactFlow,
   type Edge,
@@ -19,6 +20,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom'
+
+import {
+  Trash2,
+} from 'lucide-react'
 
 import { Header } from '../components/layout/Header'
 import searchRound from '../assets/searchRound.svg'
@@ -1567,6 +1572,85 @@ export function Stdio_create1() {
       studio.deleteSelectedElements()
     }
 
+  const handleDeleteNodeBlock =
+    (slot: StudioNodeSlot) => {
+      if (
+        !selectedNode ||
+        isResearchGuidedTutorial
+      ) {
+        return
+      }
+
+      const isLastBlock =
+        selectedNode.data.node.slots.length ===
+        1
+
+      const shouldDelete =
+        window.confirm(
+          isLastBlock
+            ? [
+                `'${slot.label}' 블록을 삭제할까요?`,
+                '',
+                '이 노드의 마지막 블록이므로 노드와 연결선도 함께 삭제됩니다.',
+              ].join('\n')
+            : `'${slot.label}' 블록을 이 노드에서 삭제할까요?`,
+        )
+
+      if (!shouldDelete) {
+        return
+      }
+
+      if (isLastBlock) {
+        setOpenInspectorSlotId(
+          null,
+        )
+
+        studio.deleteSelectedElements()
+        return
+      }
+
+      studio.setNodes(
+        (currentNodes) =>
+          currentNodes.map(
+            (node) =>
+              node.id ===
+              selectedNode.id
+                ? {
+                    ...node,
+
+                    data: {
+                      ...node.data,
+
+                      node: {
+                        ...node.data.node,
+
+                        slots:
+                          node.data.node.slots.filter(
+                            (currentSlot) =>
+                              currentSlot.id !==
+                              slot.id,
+                          ),
+                      },
+                    },
+                  }
+                : node,
+          ),
+      )
+
+      if (
+        openInspectorSlotId ===
+        slot.id
+      ) {
+        setOpenInspectorSlotId(
+          null,
+        )
+      }
+
+      setValidationResult(
+        null,
+      )
+    }
+
       /**
        * 현재 선택된 노드의 전체 Inspector 설정을 확인합니다.
        *
@@ -1964,8 +2048,8 @@ export function Stdio_create1() {
 
               studio.clearSelection()
             }}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
+            zoomOnScroll
+            zoomOnPinch
             zoomOnDoubleClick={false}
             panOnScroll={false}
             panOnDrag
@@ -1999,7 +2083,19 @@ export function Stdio_create1() {
               strokeWidth: 2,
             }}
             className="h-full w-full"
-          />
+          >
+            <Controls
+              position="bottom-right"
+              showInteractive={false}
+              style={{
+                bottom:
+                  isResearchGuidedTutorial
+                    ? 94
+                    : 16,
+                right: 16,
+              }}
+            />
+          </ReactFlow>
           {isResearchGuidedTutorial &&
             guidedTutorial.currentStatus && (
               <ResearchGuidedTutorialPanel
@@ -2196,6 +2292,25 @@ export function Stdio_create1() {
                               {slot.required ? '필수' : '선택'}
                             </span>
 
+                            {!isResearchGuidedTutorial && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteNodeBlock(
+                                    slot,
+                                  )
+                                }
+                                aria-label={`${slot.label} 블록 삭제`}
+                                title="블록 삭제"
+                                className="ml-[12px] flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[8px] text-[#B4453A] transition hover:bg-[#FBF1F0]"
+                              >
+                                <Trash2
+                                  size={16}
+                                  strokeWidth={2}
+                                />
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() =>
@@ -2203,7 +2318,8 @@ export function Stdio_create1() {
                                   isOpen ? null : slot.id,
                                 )
                               }
-                              className="ml-[22px] mt-[-6px] text-[18px] text-[#9A9AA3]"
+                              aria-label={`${slot.label} 설정 ${isOpen ? '접기' : '펼치기'}`}
+                              className="ml-[8px] mt-[-2px] flex h-[30px] w-[30px] shrink-0 items-center justify-center text-[18px] text-[#9A9AA3]"
                             >
                               {isOpen ? '⌃' : '⌄'}
                             </button>
