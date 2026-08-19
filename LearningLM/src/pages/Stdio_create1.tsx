@@ -10,6 +10,7 @@ import {
   MarkerType,
   ReactFlow,
   type Edge,
+  type IsValidConnection,
 } from '@xyflow/react'
 
 import {
@@ -32,6 +33,17 @@ import {
   hasStudioBlockInspector,
   StudioBlockInspector,
 } from '../features/studio/components/inspector/StudioBlockInspector'
+
+import {
+  ResearchGuidedTutorialPanel,
+} from '../features/studio/guided/ResearchGuidedTutorialPanel'
+
+import {
+  RESEARCH_GUIDED_STEPS,
+  createResearchGuidedInitialEdges,
+  createResearchGuidedInitialNodes,
+  useResearchGuidedTutorial,
+} from '../features/studio/guided/researchGuidedTutorial'
 
 import {
   STUDIO_STAGE_ORDER,
@@ -403,6 +415,16 @@ export function Stdio_create1() {
       locationState?.flowId,
     )
 
+  const tutorialId =
+    parseFlowId(
+      searchParams.get(
+        'tutorialId',
+      ),
+    ) ??
+    parseFlowId(
+      locationState?.tutorialId,
+    )
+
   const mode =
     locationState?.mode ??
     parseStudioMode(
@@ -413,6 +435,17 @@ export function Stdio_create1() {
         ? 'edit'
         : 'create'
     )
+
+  /*
+   * 제출용 공식 튜토리얼은 현재 하나만 지원하므로
+   * guided mode 전체를 자료조사 Guided Studio로 사용합니다.
+   *
+   * BE에서 tutorialId가 달라져도
+   * Guided UI가 사라지지 않도록 ID 자체에는 묶지 않습니다.
+   */
+  const isResearchGuidedTutorial =
+    mode ===
+    'guided'
 
   const [searchText, setSearchText] = useState('')
 
@@ -458,13 +491,408 @@ export function Stdio_create1() {
    * state가 없는 경우에는 아래 hydration effect가
    * GET /flows/{flowId} 응답으로 캔버스를 복원합니다.
    */
-  const studio = useStudioEditor({
-    initialNodes: locationState?.nodes ?? [],
-    initialEdges: locationState?.edges ?? [],
-  })
+  /*
+   * Guided Tutorial 최초 진입은 빈 Canvas가 아니라
+   * 5개 Stage Node에 일부 블록이 미리 배치된 상태로 시작합니다.
+   *
+   * Preview 등에서 돌아와 location.state에 작업 상태가 있다면
+   * 새 preset을 만들지 않고 기존 편집 상태를 그대로 사용합니다.
+   */
+  const guidedInitialNodes =
+    useMemo(
+      () =>
+        isResearchGuidedTutorial &&
+        !locationState?.nodes?.length
+          ? createResearchGuidedInitialNodes()
+          : [],
+      [
+        isResearchGuidedTutorial,
+        locationState?.nodes,
+      ],
+    )
+
+  const guidedInitialEdges =
+    useMemo(
+      () =>
+        isResearchGuidedTutorial &&
+        !locationState?.edges?.length
+          ? createResearchGuidedInitialEdges()
+          : [],
+      [
+        isResearchGuidedTutorial,
+        locationState?.edges,
+      ],
+    )
+
+  const studio =
+    useStudioEditor({
+      initialNodes:
+        locationState?.nodes?.length
+          ? locationState.nodes
+          : guidedInitialNodes,
+
+      initialEdges:
+        locationState?.edges?.length
+          ? locationState.edges
+          : guidedInitialEdges,
+    })
 
   const selectedNode =
-    studio.nodes.find((node) => node.selected) ?? null
+    studio.nodes.find(
+      (node) =>
+        node.selected,
+    ) ?? null
+
+  /*
+   * Guided Tutorial의 현재 단계는 Studio 페이지에서 단일하게 관리합니다.
+   *
+   * Panel, Palette, Node 잠금, 연결 가능 여부가 모두 같은 currentStepIndex를
+   * 바라보게 해 단계가 서로 어긋나는 문제를 막습니다.
+   */
+  const guidedTutorial =
+    useResearchGuidedTutorial({
+      enabled:
+        isResearchGuidedTutorial,
+
+      tutorialId,
+
+      flowId,
+
+      nodes:
+        studio.nodes,
+
+      edges:
+        studio.edges,
+    })
+
+  const currentGuidedStep =
+    isResearchGuidedTutorial
+      ? guidedTutorial.currentStep
+      : undefined
+
+  const currentGuidedStage =
+    currentGuidedStep?.stage
+
+  const currentGuidedTargetBlockId =
+    currentGuidedStep?.targetBlockId
+
+  /*
+   * Guided에서는 현재 단계 Node만 직접 편집할 수 있습니다.
+   *
+   * 바로 이전 단계 Node는 현재 단계와 연결해야 하므로 Handle만 활성화하고,
+   * 그보다 이전 단계와 미래 단계는 편집/연결을 모두 잠급니다.
+   */
+  const guidedFlowNodes =
+    useMemo(
+      () => {
+        if (
+          !isResearchGuidedTutorial ||
+          !currentGuidedStage
+        ) {
+          return studio.nodes
+        }
+
+        const currentStageIndex =
+          RESEARCH_GUIDED_STEPS.findIndex(
+            (step) =>
+              step.stage ===
+              currentGuidedStage,
+          )
+
+        return studio.nodes.map(
+          (node) => {
+            const nodeStageIndex =
+              RESEARCH_GUIDED_STEPS.findIndex(
+                (step) =>
+                  step.stage ===
+                  node.data.node.stage,
+              )
+
+            const isCurrentStage =
+              nodeStageIndex ===
+              currentStageIndex
+
+            const isImmediatelyPreviousStage =
+              nodeStageIndex ===
+              currentStageIndex -
+                1
+
+            const isFutureStage =
+              nodeStageIndex >
+              currentStageIndex
+
+            const handlesConnectable =
+              isCurrentStage ||
+              isImmediatelyPreviousStage
+
+            return {
+              ...node,
+
+              draggable:
+                isCurrentStage,
+
+              selectable:
+                isCurrentStage,
+
+              selected:
+                isCurrentStage
+                  ? node.selected
+                  : false,
+
+              connectable:
+                handlesConnectable,
+
+              data: {
+                ...node.data,
+
+                handlesConnectable,
+              },
+
+              style: {
+                ...(node.style ?? {}),
+
+                opacity:
+                  isFutureStage
+                    ? 0.42
+                    : isCurrentStage
+                      ? 1
+                      : 0.72,
+              },
+            }
+          },
+        )
+      },
+      [
+        currentGuidedStage,
+        isResearchGuidedTutorial,
+        studio.nodes,
+      ],
+    )
+
+  const findGuidedStageNode =
+    (
+      stepIndex: number,
+    ) => {
+      const stage =
+        RESEARCH_GUIDED_STEPS[
+          stepIndex
+        ]?.stage
+
+      if (!stage) {
+        return undefined
+      }
+
+      return studio.nodes.find(
+        (node) =>
+          node.data.node.stage ===
+          stage,
+      )
+    }
+
+  const focusGuidedStep =
+    (
+      stepIndex: number,
+    ) => {
+      const node =
+        findGuidedStageNode(
+          stepIndex,
+        )
+
+      if (!node) {
+        return
+      }
+
+      studio.selectNode(
+        node.id,
+      )
+
+      const instance =
+        studio.reactFlowInstance
+
+      if (!instance) {
+        return
+      }
+
+      const centerX =
+        node.position.x +
+        180
+
+      const centerY =
+        node.position.y +
+        120
+
+      void instance.setCenter(
+        centerX,
+        centerY,
+        {
+          zoom:
+            1,
+
+          duration:
+            300,
+        },
+      )
+    }
+
+  const handleGuidedPrevious =
+    () => {
+      if (
+        !guidedTutorial.canGoPrevious
+      ) {
+        return
+      }
+
+      const nextIndex =
+        guidedTutorial.currentStepIndex -
+        1
+
+      guidedTutorial.goPrevious()
+
+      window.requestAnimationFrame(
+        () =>
+          focusGuidedStep(
+            nextIndex,
+          ),
+      )
+    }
+
+  const handleGuidedNext =
+    () => {
+      if (
+        !guidedTutorial.canGoNext
+      ) {
+        return
+      }
+
+      const nextIndex =
+        guidedTutorial.currentStepIndex +
+        1
+
+      guidedTutorial.goNext()
+
+      window.requestAnimationFrame(
+        () =>
+          focusGuidedStep(
+            nextIndex,
+          ),
+      )
+    }
+
+  const handleGuidedComplete =
+    () => {
+      if (
+        !guidedTutorial.isTutorialComplete
+      ) {
+        return
+      }
+
+      window.alert(
+        '튜토리얼을 완료했습니다.',
+      )
+
+      navigate(
+        tutorialId
+          ? `/official-tutorials/${tutorialId}`
+          : '/official-tutorials',
+      )
+    }
+
+  /*
+   * Guided 연결은 현재 단계와 바로 이전 단계 사이에서만 허용합니다.
+   */
+  const isGuidedConnectionAllowed:
+    IsValidConnection<Edge> =
+    (connection) => {
+      if (
+        !isResearchGuidedTutorial
+      ) {
+        return studio.isValidConnection(
+          connection,
+        )
+      }
+
+      const currentIndex =
+        guidedTutorial.currentStepIndex
+
+      if (
+        currentIndex <=
+        0
+      ) {
+        return false
+      }
+
+      const previousStage =
+        RESEARCH_GUIDED_STEPS[
+          currentIndex -
+            1
+        ]?.stage
+
+      const currentStage =
+        RESEARCH_GUIDED_STEPS[
+          currentIndex
+        ]?.stage
+
+      const sourceNode =
+        studio.nodes.find(
+          (node) =>
+            node.id ===
+            connection.source,
+        )
+
+      const targetNode =
+        studio.nodes.find(
+          (node) =>
+            node.id ===
+            connection.target,
+        )
+
+      if (
+        sourceNode?.data.node.stage !==
+          previousStage ||
+        targetNode?.data.node.stage !==
+          currentStage
+      ) {
+        return false
+      }
+
+      return studio.isValidConnection(
+        connection,
+      )
+    }
+
+  /*
+   * 현재 단계가 바뀌면 해당 Stage Node를 자동 선택합니다.
+   * 첫 진입 시에도 저장된 Guided 단계에 맞는 Node가 활성화됩니다.
+   */
+  useEffect(
+    () => {
+      if (
+        !isResearchGuidedTutorial
+      ) {
+        return
+      }
+
+      const node =
+        findGuidedStageNode(
+          guidedTutorial.currentStepIndex,
+        )
+
+      if (
+        !node ||
+        node.selected
+      ) {
+        return
+      }
+
+      studio.selectNode(
+        node.id,
+      )
+    },
+    [
+      guidedTutorial.currentStepIndex,
+      isResearchGuidedTutorial,
+    ],
+  )
 
   /*
    * Studio는 자체적으로 좌측 Palette / 중앙 Canvas / 우측 Inspector를
@@ -540,6 +968,7 @@ export function Stdio_create1() {
         Boolean(
           flowId,
         ) &&
+        !isResearchGuidedTutorial &&
         !hasNavigationNodes &&
         (
           Boolean(
@@ -655,31 +1084,60 @@ export function Stdio_create1() {
     },
     [
       flowId,
+      isResearchGuidedTutorial,
       locationState?.nodes,
       mode,
       routeFlowId,
     ],
   )
 
-    const filteredBlocks = useMemo(() => {
+  const filteredBlocks =
+    useMemo(() => {
       const keyword =
-        searchText.trim().toLowerCase()
+        searchText
+          .trim()
+          .toLowerCase()
 
       /*
-      * 제출 시점에는 실제 Inspector가 완성된 블록만
-      * Palette에 노출합니다.
-      *
-      * Catalog 정의 자체는 유지하므로 저장된 Flow,
-      * block ID 및 다른 데이터 구조에는 영향을 주지 않습니다.
-      */
+       * 제출 시점에는 실제 Inspector가
+       * 완성된 블록만 Palette에 노출합니다.
+       */
       const usableBlocks =
         studioBlockCatalog.filter(
-          (block) =>
-            block.availability ===
-              'available' &&
-            hasStudioBlockInspector(
-              block.id,
-            ),
+          (
+            block,
+          ) => {
+            const hasInspector =
+              block.availability ===
+                'available' &&
+              hasStudioBlockInspector(
+                block.id,
+              )
+
+            if (
+              !hasInspector
+            ) {
+              return false
+            }
+
+            /*
+             * Guided mode에서는 현재 단계에서 사용자가 직접 추가해야 하는
+             * 목표 블록 하나만 Palette에 노출합니다.
+             */
+            if (
+              isResearchGuidedTutorial
+            ) {
+              return (
+                Boolean(
+                  currentGuidedTargetBlockId,
+                ) &&
+                block.id ===
+                  currentGuidedTargetBlockId
+              )
+            }
+
+            return true
+          },
         )
 
       if (!keyword) {
@@ -687,7 +1145,9 @@ export function Stdio_create1() {
       }
 
       return usableBlocks.filter(
-        (block) =>
+        (
+          block,
+        ) =>
           block.title
             .toLowerCase()
             .includes(
@@ -699,7 +1159,11 @@ export function Stdio_create1() {
               keyword,
             ),
       )
-    }, [searchText])
+    }, [
+      currentGuidedTargetBlockId,
+      isResearchGuidedTutorial,
+      searchText,
+    ])
 
   const workflowStructureSignature = useMemo(() => {
     return studio.nodes
@@ -1063,7 +1527,7 @@ export function Stdio_create1() {
       flowId,
 
       tutorialId:
-        locationState?.tutorialId,
+        tutorialId,
 
       originFlowId:
         locationState?.originFlowId,
@@ -1338,20 +1802,54 @@ export function Stdio_create1() {
         {/* 메인 캔버스 */}
         <main className="relative z-10 min-h-0 min-w-0 flex-1 overflow-hidden bg-[#F7F7F9]">
           <ReactFlow<StudioFlowNodeInstance, Edge>
-            nodes={studio.nodes}
+            nodes={
+              guidedFlowNodes
+            }
             edges={studio.edges}
             nodeTypes={studioNodeTypes}
             onNodesChange={studio.onNodesChange}
             onEdgesChange={studio.onEdgesChange}
-            onConnect={studio.onConnect}
-            isValidConnection={studio.isValidConnection}
+            onConnect={(connection) => {
+              if (
+                !isGuidedConnectionAllowed(
+                  connection,
+                )
+              ) {
+                return
+              }
+
+              studio.onConnect(
+                connection,
+              )
+            }}
+            isValidConnection={
+              isGuidedConnectionAllowed
+            }
             onInit={studio.onInit}
             onDragOver={studio.onDragOver}
             onDrop={studio.onDrop}
-            onNodeClick={(_event, node) =>
-              studio.selectNode(node.id)
-            }
-            onPaneClick={studio.clearSelection}
+            onNodeClick={(_event, node) => {
+              if (
+                isResearchGuidedTutorial &&
+                node.data.node.stage !==
+                  currentGuidedStage
+              ) {
+                return
+              }
+
+              studio.selectNode(
+                node.id,
+              )
+            }}
+            onPaneClick={() => {
+              if (
+                isResearchGuidedTutorial
+              ) {
+                return
+              }
+
+              studio.clearSelection()
+            }}
             zoomOnScroll={false}
             zoomOnPinch={false}
             zoomOnDoubleClick={false}
@@ -1360,7 +1858,11 @@ export function Stdio_create1() {
             nodesDraggable
             nodesConnectable
             elementsSelectable
-            deleteKeyCode={['Backspace', 'Delete']}
+            deleteKeyCode={
+              isResearchGuidedTutorial
+                ? null
+                : ['Backspace', 'Delete']
+            }
             snapToGrid={studio.snapToGrid}
             snapGrid={studio.snapGrid}
             defaultViewport={{
@@ -1384,7 +1886,41 @@ export function Stdio_create1() {
             }}
             className="h-full w-full"
           />
-
+          {isResearchGuidedTutorial &&
+            guidedTutorial.currentStatus && (
+              <ResearchGuidedTutorialPanel
+                currentStepIndex={
+                  guidedTutorial.currentStepIndex
+                }
+                currentStatus={
+                  guidedTutorial.currentStatus
+                }
+                stepStatuses={
+                  guidedTutorial.stepStatuses
+                }
+                canGoPrevious={
+                  guidedTutorial.canGoPrevious
+                }
+                canGoNext={
+                  guidedTutorial.canGoNext
+                }
+                isLastStep={
+                  guidedTutorial.isLastStep
+                }
+                isTutorialComplete={
+                  guidedTutorial.isTutorialComplete
+                }
+                onPrevious={
+                  handleGuidedPrevious
+                }
+                onNext={
+                  handleGuidedNext
+                }
+                onComplete={
+                  handleGuidedComplete
+                }
+              />
+            )}
           {isHydratingFlow && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
               <div className="rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[22px] text-center shadow-sm">
@@ -1674,18 +2210,25 @@ export function Stdio_create1() {
       {/* 하단 작업 바 */}
       <footer className="flex h-[85px] shrink-0 items-center justify-between border-t-[1.5px] border-[#E4E4E7] bg-white px-[27px] text-[20px]">
         <p className="text-[14px] text-[#9A9AA3]">
-          자유 제작 · 노드 {studio.nodes.length} ·
+          {isResearchGuidedTutorial
+            ? '가이드 모드 · AI로 자료조사 흐름 만들기'
+            : '자유 제작'}{' '}
+          · 노드 {studio.nodes.length} ·
           입력→컨텍스트→프로세스→검토→결과
         </p>
 
         <div className="flex items-center gap-[19px]">
-          <button
-            type="button"
-            onClick={handleValidate}
-            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
-          >
-            검증
-          </button>
+          {!isResearchGuidedTutorial && (
+            <button
+              type="button"
+              onClick={
+                handleValidate
+              }
+              className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            >
+              검증
+            </button>
+          )}
 
           <button
             type="button"
@@ -1702,15 +2245,17 @@ export function Stdio_create1() {
           >
             미리보기
           </button>
-          <button
-            type="button"
-            onClick={
-              handleStartSave
-            }
-            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white hover:bg-[#5558DB]"
-          >
-            저장
-          </button>
+          {!isResearchGuidedTutorial && (
+            <button
+              type="button"
+              onClick={
+                handleStartSave
+              }
+              className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white hover:bg-[#5558DB]"
+            >
+              저장
+            </button>
+          )}
         </div>
       </footer>
     </div>

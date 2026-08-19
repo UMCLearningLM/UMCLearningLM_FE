@@ -6,10 +6,11 @@ import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
-import type {
-  Tutorial,
-  TutorialBlock,
-  TutorialLevel,
+import {
+  getTutorialById,
+  type Tutorial,
+  type TutorialBlock,
+  type TutorialLevel,
 } from '../../features/tutorial/data/tutorials'
 import {
   getTutorialDetail,
@@ -20,6 +21,9 @@ import {
   startTutorial,
   type TutorialDetailProgress,
 } from '../../api/tutorial'
+import {
+  createFlow,
+} from '../api/StudioApi'
 
 type TutorialDetailViewModel = Tutorial & {
   progress: TutorialDetailProgress | null
@@ -276,6 +280,31 @@ export function TutorialDetailPage() {
             return
           }
 
+          /*
+           * 제출용 메인 공식 튜토리얼은
+           * BE 상세 데이터가 없더라도
+           * FE에 이미 정의된 데이터를 사용합니다.
+           */
+          const fallbackTutorial =
+            tutorialId === 1
+              ? getTutorialById(
+                  1,
+                )
+              : undefined
+
+          if (fallbackTutorial) {
+            setTutorial({
+              ...fallbackTutorial,
+
+              progress:
+                null,
+            })
+
+            setError('')
+
+            return
+          }
+
           setError(
             requestError instanceof
               Error
@@ -424,10 +453,39 @@ export function TutorialDetailPage() {
     }
 
   // 시작 버튼 한 번으로 가이드 작업 공간 생성과 학습 시작을 순서대로 처리한다.
+
+  /**
+   * 공식 튜토리얼에서 사용하는 Studio 진입 경로입니다.
+   *
+   * Studio 내부 mode 타입은 lowercase `guided`를 사용하므로
+   * URL과 navigation state를 동일하게 맞춥니다.
+   */
+  const openGuidedStudio = (
+    flowId: number,
+  ) => {
+    navigate(
+      `/studio/create?flowId=${flowId}&mode=guided&tutorialId=${tutorialId}`,
+      {
+        state: {
+          flowId,
+
+          tutorialId,
+
+          mode:
+            'guided',
+        },
+      },
+    )
+  }
+
+  // 시작 버튼 한 번으로 가이드 작업 공간 생성과 학습 시작을 처리한다.
   const handleStartTutorial =
     async () => {
       const accessToken =
         localStorage.getItem(
+          'accessToken',
+        ) ??
+        sessionStorage.getItem(
           'accessToken',
         )
 
@@ -438,73 +496,195 @@ export function TutorialDetailPage() {
         return
       }
 
-      // 이미 진행 중이면 기존 flow를 새로 만들지 않고 바로 이어서 연다.
+      /*
+       * 이미 진행 중이고 기존 Flow가 있다면
+       * 새 Flow를 만들지 않고 그대로 이어서 엽니다.
+       */
       if (
         tutorial?.progress
           ?.status ===
           'IN_PROGRESS' &&
         tutorial.progress.flowId
       ) {
-        navigate(
-          `/studio/create?flowId=${tutorial.progress.flowId}&mode=GUIDED&tutorialId=${tutorialId}`,
-          {
-            state: {
-              flowId:
-                tutorial.progress
-                  .flowId,
-
-              tutorialId,
-
-              mode:
-                'GUIDED',
-            },
-          },
+        openGuidedStudio(
+          tutorial.progress.flowId,
         )
 
         return
       }
 
-      setIsStarting(true)
-      setStartMessage('')
+      setIsStarting(
+        true,
+      )
+
+      setStartMessage(
+        '',
+      )
 
       try {
-        // 1. 이 튜토리얼을 기반으로 한 GUIDED flow를 생성한다.
-        const flow =
-          await createGuidedFlow(
-            tutorialId,
-          )
+        let flowId:
+          number
 
-        // 2. 생성 응답의 flowId로 진행 상태를 IN_PROGRESS로 변경한다.
-        const progress =
-          await startTutorial(
-            tutorialId,
-            flow.flowId,
-          )
+        let serverGuidedFlow =
+          true
 
-        setTutorial(
-          (previous) =>
-            previous
-              ? {
-                  ...previous,
-                  progress,
-                }
-              : previous,
-        )
-
-        // 생성된 작업 공간 번호를 전달해 스튜디오로 이동한다.
-        navigate(
-          `/studio/create?flowId=${flow.flowId}&mode=GUIDED&tutorialId=${tutorialId}`,
-          {
-            state: {
-              flowId:
-                flow.flowId,
-
+        try {
+          /*
+           * 우선 정식 API 흐름을 사용합니다.
+           *
+           * POST /flows
+           * mode = GUIDED
+           * tutorialId = 현재 튜토리얼
+           */
+          const flow =
+            await createGuidedFlow(
               tutorialId,
+            )
 
+          flowId =
+            flow.flowId
+        } catch (
+          guidedFlowError
+        ) {
+          /*
+           * 제출용 메인 시나리오인 tutorialId=1만
+           * FE fallback을 허용합니다.
+           *
+           * 다른 튜토리얼 오류까지 조용히 우회하지 않습니다.
+           */
+          if (
+            tutorialId !==
+            1
+          ) {
+            throw guidedFlowError
+          }
+
+          /*
+           * BE에 공식 튜토리얼 데이터가 없어
+           * GUIDED Flow 생성을 거부하는 경우,
+           *
+           * 일반 CREATE DRAFT Flow를 먼저 만든 뒤
+           * FE에서는 guided 모드로 열어
+           * 가이드 UI를 진행할 수 있게 합니다.
+           */
+          const fallbackFlow =
+            await createFlow({
               mode:
-                'GUIDED',
-            },
-          },
+                'CREATE',
+
+              originFlowId:
+                null,
+            })
+
+          if (
+            !fallbackFlow.success ||
+            !fallbackFlow.result
+              ?.flowId
+          ) {
+            throw new Error(
+              fallbackFlow.message ||
+                '튜토리얼 작업 공간을 만들지 못했습니다.',
+            )
+          }
+
+          flowId =
+            fallbackFlow.result.flowId
+
+          serverGuidedFlow =
+            false
+        }
+
+        /*
+         * 정식 GUIDED Flow 생성에 성공했다면
+         * 기존 진행률 API도 정상적으로 연결합니다.
+         */
+        if (
+          serverGuidedFlow
+        ) {
+          try {
+            const progress =
+              await startTutorial(
+                tutorialId,
+                flowId,
+              )
+
+            setTutorial(
+              (
+                previous,
+              ) =>
+                previous
+                  ? {
+                      ...previous,
+
+                      progress,
+                    }
+                  : previous,
+            )
+          } catch (
+            progressError
+          ) {
+            /*
+             * 메인 데모 튜토리얼은 Progress API만 실패해도
+             * 만들어진 Flow를 버리지 않습니다.
+             */
+            if (
+              tutorialId !==
+              1
+            ) {
+              throw progressError
+            }
+
+            setTutorial(
+              (
+                previous,
+              ) =>
+                previous
+                  ? {
+                      ...previous,
+
+                      progress: {
+                        currentStepOrder:
+                          1,
+
+                        status:
+                          'IN_PROGRESS',
+
+                        flowId,
+                      },
+                    }
+                  : previous,
+            )
+          }
+        } else {
+          /*
+           * CREATE Flow fallback으로 들어온 경우에는
+           * BE Tutorial Progress가 없으므로
+           * 현재 화면 세션에서만 진행 중 상태를 유지합니다.
+           */
+          setTutorial(
+            (
+              previous,
+            ) =>
+              previous
+                ? {
+                    ...previous,
+
+                    progress: {
+                      currentStepOrder:
+                        1,
+
+                      status:
+                        'IN_PROGRESS',
+
+                      flowId,
+                    },
+                  }
+                : previous,
+          )
+        }
+
+        openGuidedStudio(
+          flowId,
         )
       } catch (
         requestError
@@ -516,7 +696,9 @@ export function TutorialDetailPage() {
             : '튜토리얼을 시작하지 못했습니다.',
         )
       } finally {
-        setIsStarting(false)
+        setIsStarting(
+          false,
+        )
       }
     }
 
