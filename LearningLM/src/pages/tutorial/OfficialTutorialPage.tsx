@@ -1,10 +1,11 @@
 import { ArrowLeft, ArrowRight, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Footer } from '../../components/layout/Footer'
 import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
 import {
+  getTutorialById,
   tutorialCategories,
   tutorialLevels,
   type TutorialCategory,
@@ -122,15 +123,22 @@ function FilterButton({
 }
 
 export function OfficialTutorialPage() {
-  
-
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedCategory = searchParams.get('category')
+  const initialCategories: TutorialCategory[] =
+    requestedCategory &&
+    tutorialCategories.includes(
+      requestedCategory as TutorialCategory,
+    )
+      ? [requestedCategory as TutorialCategory]
+      : []
   const [keyword, setKeyword] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedLevels, setSelectedLevels] = useState<TutorialLevel[]>([])
   const [selectedCategories, setSelectedCategories] = useState<
     TutorialCategory[]
-  >([])
+  >(initialCategories)
   const [currentPage, setCurrentPage] = useState(0)
   // 서버에서 받은 튜토리얼 목록
   const [tutorialItems, setTutorialItems] = useState<TutorialListItem[]>([])
@@ -181,25 +189,71 @@ export function OfficialTutorialPage() {
   }
 
   // 서버 데이터를 기존 튜토리얼 카드 형식으로 변환
-  const apiTutorials = useMemo(
-    () => tutorialItems.map((tutorial) => ({
-      id: tutorial.tutorialId,
-      title: tutorial.title,
-      description: tutorial.summary,
-      level:
-        levelMap[tutorial.difficulty] ??
-        '입문',
-      categories:
-        tutorial.categories.map(
-          (category) =>
-            category.name as TutorialCategory,
-        ),
-      blockCount: tutorial.blockCount,
-      estimatedMinutes:
-        tutorial.estimatedMinutes,
-    })),
-    [tutorialItems],
-  )
+  const apiTutorials = useMemo(() => {
+    const mappedTutorials =
+      tutorialItems.map(
+        (tutorial) => ({
+          id:
+            tutorial.tutorialId,
+
+          title:
+            tutorial.title,
+
+          description:
+            tutorial.summary,
+
+          level:
+            levelMap[
+              tutorial.difficulty
+            ] ?? '입문',
+
+          categories:
+            tutorial.categories.map(
+              (category) =>
+                category.name as TutorialCategory,
+            ),
+
+          blockCount:
+            tutorial.blockCount,
+
+          estimatedMinutes:
+            tutorial.estimatedMinutes,
+        }),
+      )
+
+    /*
+     * 제출용 공식 튜토리얼의 기준 시나리오.
+     *
+     * BE에서 같은 튜토리얼을 정상적으로 내려주면
+     * 서버 데이터를 우선 사용합니다.
+     */
+    const serverResearchTutorial =
+      mappedTutorials.find(
+        (tutorial) =>
+          tutorial.title ===
+          'AI로 자료조사 흐름 만들기',
+      )
+
+    if (serverResearchTutorial) {
+      return [
+        serverResearchTutorial,
+      ]
+    }
+
+    /*
+     * BE 튜토리얼 데이터가 없거나
+     * 다른 데이터만 존재하는 경우에는
+     * FE에 이미 정의된 공식 튜토리얼을 fallback으로 사용합니다.
+     */
+    const fallbackTutorial =
+      getTutorialById(1)
+
+    return fallbackTutorial
+      ? [
+          fallbackTutorial,
+        ]
+      : []
+  }, [tutorialItems])
 
   const normalizedKeyword = keyword.trim()
 
@@ -400,13 +454,6 @@ export function OfficialTutorialPage() {
               <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-slate-500">
                 튜토리얼 목록을 불러오는 중입니다.
               </div>
-            ) : error ? (
-              <div
-                role="alert"
-                className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm font-semibold text-red-700"
-              >
-                {error}
-              </div>
             ) : paginatedTutorials.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {paginatedTutorials.map((tutorial) => (
@@ -414,16 +461,26 @@ export function OfficialTutorialPage() {
                     key={tutorial.id}
                     tutorial={tutorial}
                     onStart={(tutorialId) =>
-                      navigate(`/official-tutorials/${tutorialId}`)
+                      navigate(
+                        `/official-tutorials/${tutorialId}`,
+                      )
                     }
                   />
                 ))}
+              </div>
+            ) : error ? (
+              <div
+                role="alert"
+                className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm font-semibold text-red-700"
+              >
+                {error}
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
                 <p className="text-xl font-black text-slate-700">
                   조건에 맞는 튜토리얼이 없습니다.
                 </p>
+
                 <p className="mt-2 text-sm font-medium text-slate-400">
                   검색어 또는 필터를 조정해 다시 찾아보세요.
                 </p>

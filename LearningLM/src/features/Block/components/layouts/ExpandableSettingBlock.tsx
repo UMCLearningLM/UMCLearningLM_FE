@@ -382,12 +382,12 @@ export function ExpandableSettingBlock({
               {children}
             </div>
           </div>
-
-          {footer && (
-            <div className="border-t border-slate-200 px-6 py-3">
-              {footer}
-            </div>
-          )}
+          {footer &&
+            !embeddedInStudioInspector && (
+              <div className="border-t border-slate-200 px-6 py-3">
+                {footer}
+              </div>
+            )}
         </div>
       )}
     </section>

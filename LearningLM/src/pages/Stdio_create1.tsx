@@ -7,9 +7,11 @@ import {
 } from 'react'
 
 import {
+  Controls,
   MarkerType,
   ReactFlow,
   type Edge,
+  type IsValidConnection,
 } from '@xyflow/react'
 
 import {
@@ -18,6 +20,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom'
+
+import {
+  Trash2,
+} from 'lucide-react'
 
 import { Header } from '../components/layout/Header'
 import searchRound from '../assets/searchRound.svg'
@@ -29,8 +35,20 @@ import {
 } from '../features/studio/components/node/StudioFlowNode'
 
 import {
+  hasStudioBlockInspector,
   StudioBlockInspector,
 } from '../features/studio/components/inspector/StudioBlockInspector'
+
+import {
+  ResearchGuidedTutorialPanel,
+} from '../features/studio/guided/ResearchGuidedTutorialPanel'
+
+import {
+  RESEARCH_GUIDED_STEPS,
+  createResearchGuidedInitialEdges,
+  createResearchGuidedInitialNodes,
+  useResearchGuidedTutorial,
+} from '../features/studio/guided/researchGuidedTutorial'
 
 import {
   STUDIO_STAGE_ORDER,
@@ -65,8 +83,6 @@ import type {
 import {
   hydrateStudioFlowFromApi,
 } from '../features/studio/utils/hydrateStudioFlow'
-
-import { validateStudioWorkflow } from '../features/studio/validation/validateStudioWorkflow'
 
 import {
   getFlow,
@@ -404,6 +420,16 @@ export function Stdio_create1() {
       locationState?.flowId,
     )
 
+  const tutorialId =
+    parseFlowId(
+      searchParams.get(
+        'tutorialId',
+      ),
+    ) ??
+    parseFlowId(
+      locationState?.tutorialId,
+    )
+
   const mode =
     locationState?.mode ??
     parseStudioMode(
@@ -415,10 +441,37 @@ export function Stdio_create1() {
         : 'create'
     )
 
+  /*
+   * 제출용 공식 튜토리얼은 현재 하나만 지원하므로
+   * guided mode 전체를 자료조사 Guided Studio로 사용합니다.
+   *
+   * BE에서 tutorialId가 달라져도
+   * Guided UI가 사라지지 않도록 ID 자체에는 묶지 않습니다.
+   */
+  const isResearchGuidedTutorial =
+    mode ===
+    'guided'
+
   const [searchText, setSearchText] = useState('')
 
   const inspectorScrollRef =
     useRef<HTMLDivElement | null>(null)
+
+  /*
+   * Inspector 내부 컨트롤, 특히 native radio input이 focus될 때
+   * 브라우저가 overflow 컨테이너를 강제로 스크롤하는 현상을 막기 위해
+   * pointer down 시점의 scrollTop을 잠깐 보관합니다.
+   */
+  const inspectorPointerScrollRef =
+    useRef<{
+      scrollTop: number
+      capturedAt: number
+    } | null>(null)
+
+  const inspectorRestoreFrameRef =
+    useRef<number | null>(
+      null,
+    )
 
   const [openInspectorSlotId, setOpenInspectorSlotId] =
     useState<string | null>(null)
@@ -459,13 +512,408 @@ export function Stdio_create1() {
    * state가 없는 경우에는 아래 hydration effect가
    * GET /flows/{flowId} 응답으로 캔버스를 복원합니다.
    */
-  const studio = useStudioEditor({
-    initialNodes: locationState?.nodes ?? [],
-    initialEdges: locationState?.edges ?? [],
-  })
+  /*
+   * Guided Tutorial 최초 진입은 빈 Canvas가 아니라
+   * 5개 Stage Node에 일부 블록이 미리 배치된 상태로 시작합니다.
+   *
+   * Preview 등에서 돌아와 location.state에 작업 상태가 있다면
+   * 새 preset을 만들지 않고 기존 편집 상태를 그대로 사용합니다.
+   */
+  const guidedInitialNodes =
+    useMemo(
+      () =>
+        isResearchGuidedTutorial &&
+        !locationState?.nodes?.length
+          ? createResearchGuidedInitialNodes()
+          : [],
+      [
+        isResearchGuidedTutorial,
+        locationState?.nodes,
+      ],
+    )
+
+  const guidedInitialEdges =
+    useMemo(
+      () =>
+        isResearchGuidedTutorial &&
+        !locationState?.edges?.length
+          ? createResearchGuidedInitialEdges()
+          : [],
+      [
+        isResearchGuidedTutorial,
+        locationState?.edges,
+      ],
+    )
+
+  const studio =
+    useStudioEditor({
+      initialNodes:
+        locationState?.nodes?.length
+          ? locationState.nodes
+          : guidedInitialNodes,
+
+      initialEdges:
+        locationState?.edges?.length
+          ? locationState.edges
+          : guidedInitialEdges,
+    })
 
   const selectedNode =
-    studio.nodes.find((node) => node.selected) ?? null
+    studio.nodes.find(
+      (node) =>
+        node.selected,
+    ) ?? null
+
+  /*
+   * Guided Tutorial의 현재 단계는 Studio 페이지에서 단일하게 관리합니다.
+   *
+   * Panel, Palette, Node 잠금, 연결 가능 여부가 모두 같은 currentStepIndex를
+   * 바라보게 해 단계가 서로 어긋나는 문제를 막습니다.
+   */
+  const guidedTutorial =
+    useResearchGuidedTutorial({
+      enabled:
+        isResearchGuidedTutorial,
+
+      tutorialId,
+
+      flowId,
+
+      nodes:
+        studio.nodes,
+
+      edges:
+        studio.edges,
+    })
+
+  const currentGuidedStep =
+    isResearchGuidedTutorial
+      ? guidedTutorial.currentStep
+      : undefined
+
+  const currentGuidedStage =
+    currentGuidedStep?.stage
+
+  const currentGuidedTargetBlockId =
+    currentGuidedStep?.targetBlockId
+
+  /*
+   * Guided에서는 현재 단계 Node만 직접 편집할 수 있습니다.
+   *
+   * 바로 이전 단계 Node는 현재 단계와 연결해야 하므로 Handle만 활성화하고,
+   * 그보다 이전 단계와 미래 단계는 편집/연결을 모두 잠급니다.
+   */
+  const guidedFlowNodes =
+    useMemo(
+      () => {
+        if (
+          !isResearchGuidedTutorial ||
+          !currentGuidedStage
+        ) {
+          return studio.nodes
+        }
+
+        const currentStageIndex =
+          RESEARCH_GUIDED_STEPS.findIndex(
+            (step) =>
+              step.stage ===
+              currentGuidedStage,
+          )
+
+        return studio.nodes.map(
+          (node) => {
+            const nodeStageIndex =
+              RESEARCH_GUIDED_STEPS.findIndex(
+                (step) =>
+                  step.stage ===
+                  node.data.node.stage,
+              )
+
+            const isCurrentStage =
+              nodeStageIndex ===
+              currentStageIndex
+
+            const isImmediatelyPreviousStage =
+              nodeStageIndex ===
+              currentStageIndex -
+                1
+
+            const isFutureStage =
+              nodeStageIndex >
+              currentStageIndex
+
+            const handlesConnectable =
+              isCurrentStage ||
+              isImmediatelyPreviousStage
+
+            return {
+              ...node,
+
+              draggable:
+                isCurrentStage,
+
+              selectable:
+                isCurrentStage,
+
+              selected:
+                isCurrentStage
+                  ? node.selected
+                  : false,
+
+              connectable:
+                handlesConnectable,
+
+              data: {
+                ...node.data,
+
+                handlesConnectable,
+              },
+
+              style: {
+                ...(node.style ?? {}),
+
+                opacity:
+                  isFutureStage
+                    ? 0.42
+                    : isCurrentStage
+                      ? 1
+                      : 0.72,
+              },
+            }
+          },
+        )
+      },
+      [
+        currentGuidedStage,
+        isResearchGuidedTutorial,
+        studio.nodes,
+      ],
+    )
+
+  const findGuidedStageNode =
+    (
+      stepIndex: number,
+    ) => {
+      const stage =
+        RESEARCH_GUIDED_STEPS[
+          stepIndex
+        ]?.stage
+
+      if (!stage) {
+        return undefined
+      }
+
+      return studio.nodes.find(
+        (node) =>
+          node.data.node.stage ===
+          stage,
+      )
+    }
+
+  const focusGuidedStep =
+    (
+      stepIndex: number,
+    ) => {
+      const node =
+        findGuidedStageNode(
+          stepIndex,
+        )
+
+      if (!node) {
+        return
+      }
+
+      studio.selectNode(
+        node.id,
+      )
+
+      const instance =
+        studio.reactFlowInstance
+
+      if (!instance) {
+        return
+      }
+
+      const centerX =
+        node.position.x +
+        180
+
+      const centerY =
+        node.position.y +
+        120
+
+      void instance.setCenter(
+        centerX,
+        centerY,
+        {
+          zoom:
+            1,
+
+          duration:
+            300,
+        },
+      )
+    }
+
+  const handleGuidedPrevious =
+    () => {
+      if (
+        !guidedTutorial.canGoPrevious
+      ) {
+        return
+      }
+
+      const nextIndex =
+        guidedTutorial.currentStepIndex -
+        1
+
+      guidedTutorial.goPrevious()
+
+      window.requestAnimationFrame(
+        () =>
+          focusGuidedStep(
+            nextIndex,
+          ),
+      )
+    }
+
+  const handleGuidedNext =
+    () => {
+      if (
+        !guidedTutorial.canGoNext
+      ) {
+        return
+      }
+
+      const nextIndex =
+        guidedTutorial.currentStepIndex +
+        1
+
+      guidedTutorial.goNext()
+
+      window.requestAnimationFrame(
+        () =>
+          focusGuidedStep(
+            nextIndex,
+          ),
+      )
+    }
+
+  const handleGuidedComplete =
+    () => {
+      if (
+        !guidedTutorial.isTutorialComplete
+      ) {
+        return
+      }
+
+      window.alert(
+        '튜토리얼을 완료했습니다.',
+      )
+
+      navigate(
+        tutorialId
+          ? `/official-tutorials/${tutorialId}`
+          : '/official-tutorials',
+      )
+    }
+
+  /*
+   * Guided 연결은 현재 단계와 바로 이전 단계 사이에서만 허용합니다.
+   */
+  const isGuidedConnectionAllowed:
+    IsValidConnection<Edge> =
+    (connection) => {
+      if (
+        !isResearchGuidedTutorial
+      ) {
+        return studio.isValidConnection(
+          connection,
+        )
+      }
+
+      const currentIndex =
+        guidedTutorial.currentStepIndex
+
+      if (
+        currentIndex <=
+        0
+      ) {
+        return false
+      }
+
+      const previousStage =
+        RESEARCH_GUIDED_STEPS[
+          currentIndex -
+            1
+        ]?.stage
+
+      const currentStage =
+        RESEARCH_GUIDED_STEPS[
+          currentIndex
+        ]?.stage
+
+      const sourceNode =
+        studio.nodes.find(
+          (node) =>
+            node.id ===
+            connection.source,
+        )
+
+      const targetNode =
+        studio.nodes.find(
+          (node) =>
+            node.id ===
+            connection.target,
+        )
+
+      if (
+        sourceNode?.data.node.stage !==
+          previousStage ||
+        targetNode?.data.node.stage !==
+          currentStage
+      ) {
+        return false
+      }
+
+      return studio.isValidConnection(
+        connection,
+      )
+    }
+
+  /*
+   * 현재 단계가 바뀌면 해당 Stage Node를 자동 선택합니다.
+   * 첫 진입 시에도 저장된 Guided 단계에 맞는 Node가 활성화됩니다.
+   */
+  useEffect(
+    () => {
+      if (
+        !isResearchGuidedTutorial
+      ) {
+        return
+      }
+
+      const node =
+        findGuidedStageNode(
+          guidedTutorial.currentStepIndex,
+        )
+
+      if (
+        !node ||
+        node.selected
+      ) {
+        return
+      }
+
+      studio.selectNode(
+        node.id,
+      )
+    },
+    [
+      guidedTutorial.currentStepIndex,
+      isResearchGuidedTutorial,
+    ],
+  )
 
   /*
    * Studio는 자체적으로 좌측 Palette / 중앙 Canvas / 우측 Inspector를
@@ -533,6 +981,7 @@ export function Stdio_create1() {
         Boolean(
           flowId,
         ) &&
+        !isResearchGuidedTutorial &&
         !hasNavigationNodes &&
         (
           Boolean(
@@ -648,25 +1097,86 @@ export function Stdio_create1() {
     },
     [
       flowId,
+      isResearchGuidedTutorial,
       locationState?.nodes,
       mode,
       routeFlowId,
     ],
   )
 
-  const filteredBlocks = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase()
+  const filteredBlocks =
+    useMemo(() => {
+      const keyword =
+        searchText
+          .trim()
+          .toLowerCase()
 
-    if (!keyword) {
-      return studioBlockCatalog
-    }
+      /*
+       * 제출 시점에는 실제 Inspector가
+       * 완성된 블록만 Palette에 노출합니다.
+       */
+      const usableBlocks =
+        studioBlockCatalog.filter(
+          (
+            block,
+          ) => {
+            const hasInspector =
+              block.availability ===
+                'available' &&
+              hasStudioBlockInspector(
+                block.id,
+              )
 
-    return studioBlockCatalog.filter(
-      (block) =>
-        block.title.toLowerCase().includes(keyword) ||
-        block.description.toLowerCase().includes(keyword),
-    )
-  }, [searchText])
+            if (
+              !hasInspector
+            ) {
+              return false
+            }
+
+            /*
+             * Guided mode에서는 현재 단계에서 사용자가 직접 추가해야 하는
+             * 목표 블록 하나만 Palette에 노출합니다.
+             */
+            if (
+              isResearchGuidedTutorial
+            ) {
+              return (
+                Boolean(
+                  currentGuidedTargetBlockId,
+                ) &&
+                block.id ===
+                  currentGuidedTargetBlockId
+              )
+            }
+
+            return true
+          },
+        )
+
+      if (!keyword) {
+        return usableBlocks
+      }
+
+      return usableBlocks.filter(
+        (
+          block,
+        ) =>
+          block.title
+            .toLowerCase()
+            .includes(
+              keyword,
+            ) ||
+          block.description
+            .toLowerCase()
+            .includes(
+              keyword,
+            ),
+      )
+    }, [
+      currentGuidedTargetBlockId,
+      isResearchGuidedTutorial,
+      searchText,
+    ])
 
   const workflowStructureSignature = useMemo(() => {
     return studio.nodes
@@ -955,15 +1465,249 @@ export function Stdio_create1() {
       studio.nodes,
     ])
 
-  const handleValidate = () => {
-    const result = validateStudioWorkflow({
-      nodes: studio.nodes,
-      includeRecommended: true,
-    })
+  /*
+   * Radio/checkbox 등 Inspector 컨트롤이 focus를 가져간 뒤
+   * React state 업데이트로 DOM이 다시 그려져도 사용자가 보고 있던
+   * Inspector 위치를 유지합니다.
+   *
+   * 마우스/터치 조작은 pointer down 시점의 위치를 복원하고,
+   * 키보드 조작처럼 pointer 정보가 없으면 현재 위치를 기준으로 합니다.
+   */
+  const restoreInspectorScrollAfterUpdate =
+    () => {
+      const container =
+        inspectorScrollRef.current
 
-    studio.validateWorkflow()
-    setValidationResult(result)
-  }
+      if (!container) {
+        return
+      }
+
+      const captured =
+        inspectorPointerScrollRef.current
+
+      const capturedIsFresh =
+        Boolean(captured) &&
+        performance.now() -
+          (
+            captured?.capturedAt ??
+            0
+          ) <
+          1000
+
+      const scrollTop =
+        capturedIsFresh &&
+        captured
+          ? captured.scrollTop
+          : container.scrollTop
+
+      inspectorPointerScrollRef.current =
+        null
+
+      if (
+        inspectorRestoreFrameRef.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          inspectorRestoreFrameRef.current,
+        )
+      }
+
+      inspectorRestoreFrameRef.current =
+        window.requestAnimationFrame(
+          () => {
+            container.scrollTop =
+              scrollTop
+
+            inspectorRestoreFrameRef.current =
+              window.requestAnimationFrame(
+                () => {
+                  container.scrollTop =
+                    scrollTop
+
+                  inspectorRestoreFrameRef.current =
+                    null
+                },
+              )
+          },
+        )
+    }
+
+  const handleDeleteSelectedNode =
+    () => {
+      if (
+        !selectedNode ||
+        isResearchGuidedTutorial
+      ) {
+        return
+      }
+
+      const shouldDelete =
+        window.confirm(
+          [
+            `'${selectedNode.data.node.title}' 노드를 삭제할까요?`,
+            '',
+            '노드에 연결된 선도 함께 삭제됩니다.',
+          ].join(
+            '\n',
+          ),
+        )
+
+      if (!shouldDelete) {
+        return
+      }
+
+      setOpenInspectorSlotId(
+        null,
+      )
+
+      studio.deleteSelectedElements()
+    }
+
+  const handleDeleteNodeBlock =
+    (slot: StudioNodeSlot) => {
+      if (
+        !selectedNode ||
+        isResearchGuidedTutorial
+      ) {
+        return
+      }
+
+      const isLastBlock =
+        selectedNode.data.node.slots.length ===
+        1
+
+      const shouldDelete =
+        window.confirm(
+          isLastBlock
+            ? [
+                `'${slot.label}' 블록을 삭제할까요?`,
+                '',
+                '이 노드의 마지막 블록이므로 노드와 연결선도 함께 삭제됩니다.',
+              ].join('\n')
+            : `'${slot.label}' 블록을 이 노드에서 삭제할까요?`,
+        )
+
+      if (!shouldDelete) {
+        return
+      }
+
+      if (isLastBlock) {
+        setOpenInspectorSlotId(
+          null,
+        )
+
+        studio.deleteSelectedElements()
+        return
+      }
+
+      studio.setNodes(
+        (currentNodes) =>
+          currentNodes.map(
+            (node) =>
+              node.id ===
+              selectedNode.id
+                ? {
+                    ...node,
+
+                    data: {
+                      ...node.data,
+
+                      node: {
+                        ...node.data.node,
+
+                        slots:
+                          node.data.node.slots.filter(
+                            (currentSlot) =>
+                              currentSlot.id !==
+                              slot.id,
+                          ),
+                      },
+                    },
+                  }
+                : node,
+          ),
+      )
+
+      if (
+        openInspectorSlotId ===
+        slot.id
+      ) {
+        setOpenInspectorSlotId(
+          null,
+        )
+      }
+
+      setValidationResult(
+        null,
+      )
+    }
+
+      /**
+       * 현재 선택된 노드의 전체 Inspector 설정을 확인합니다.
+       *
+       * 각 Inspector의 값은 입력 즉시 studio.nodes에 반영되므로
+       * 여기서는 별도의 저장 처리를 다시 하지 않습니다.
+       *
+       * 대신 현재 노드의 필수 슬롯이 모두 완료됐는지 확인한 뒤
+       * 문제가 없을 때만 Inspector를 닫아
+       * "설정 저장" 완료 상태로 진행합니다.
+       */
+      const handleSaveSelectedNodeSettings = () => {
+        if (!selectedNode) {
+          return
+        }
+
+        const incompleteRequiredSlots =
+          selectedNode.data.node.slots.filter(
+            (slot) =>
+              slot.required &&
+              !hasSlotValue(slot),
+          )
+
+        if (
+          incompleteRequiredSlots.length >
+          0
+        ) {
+          const incompleteLabels =
+            incompleteRequiredSlots.map(
+              (slot) =>
+                slot.label,
+            )
+
+          window.alert(
+            [
+              '필수 설정이 완료되지 않았습니다.',
+              '',
+              incompleteLabels.join(
+                ', ',
+              ),
+            ].join('\n'),
+          )
+
+          return
+        }
+
+        /*
+        * 각 Block Inspector의 onChange에서
+        * config/value/state는 이미 Studio state에 저장된 상태입니다.
+        *
+        * 필수 설정 확인이 끝났으므로
+        * 열려 있는 세부 Inspector를 닫습니다.
+        */
+        setOpenInspectorSlotId(
+          null,
+        )
+      }
+
+
+    const handleValidate = () => {
+      const result =
+        studio.validateWorkflow()
+
+      setValidationResult(
+        result,
+      )
+    }
 
   const buildNavigationState =
     (): StudioSaveNavigationState => ({
@@ -972,7 +1716,7 @@ export function Stdio_create1() {
       flowId,
 
       tutorialId:
-        locationState?.tutorialId,
+        tutorialId,
 
       originFlowId:
         locationState?.originFlowId,
@@ -993,51 +1737,153 @@ export function Stdio_create1() {
         locationState?.saveDraft,
     })
 
-  const handleOpenExample = () => {
-    if (!flowId) {
-      window.alert(
-        '예시 결과를 생성할 flowId가 없습니다.',
+      /**
+     * Studio 밖의 화면으로 이동하기 전에
+     * 현재 History Entry에 최신 편집 상태를 먼저 기록합니다.
+     *
+     * 예시 결과 / 미리보기에서 브라우저 뒤로가기를 사용해도
+     * 최신 nodes / edges / slot config가 복원되도록 합니다.
+     */
+    const preserveCurrentEditorHistory = async (
+      state: StudioSaveNavigationState,
+    ) => {
+      await navigate(
+        `${location.pathname}${location.search}`,
+        {
+          replace: true,
+          state,
+        },
       )
-      return
     }
 
-    navigate(
-      `/workflows/${flowId}/preview?view=example`,
-      {
-        state: buildNavigationState(),
-      },
-    )
-  }
+    const handleOpenExample = async () => {
+      if (!flowId) {
+        window.alert(
+          '예시 결과를 생성할 flowId가 없습니다.',
+        )
+        return
+      }
 
-  const handleOpenPreview = () => {
-    if (!flowId) {
-      window.alert(
-        '미리보기에 사용할 flowId가 없습니다.',
+      const state =
+        buildNavigationState()
+
+      await preserveCurrentEditorHistory(
+        state,
       )
-      return
+
+      navigate(
+        `/workflows/${flowId}/preview?view=example`,
+        {
+          state,
+        },
+      )
     }
 
-    navigate(
-      `/workflows/${flowId}/preview`,
-      {
-        state: buildNavigationState(),
-      },
-    )
-  }
+    const handleOpenPreview = async () => {
+      if (!flowId) {
+        window.alert(
+          '미리보기에 사용할 flowId가 없습니다.',
+        )
+        return
+      }
 
-  const handleStartSave = () => {
-    if (!validationResult?.valid) {
-      return
+      const state =
+        buildNavigationState()
+
+      await preserveCurrentEditorHistory(
+        state,
+      )
+
+      navigate(
+        `/workflows/${flowId}/preview`,
+        {
+          state,
+        },
+      )
     }
 
-    navigate('/studio/save/review', {
-      state: buildNavigationState(),
-    })
-  }
+      /**
+       * 저장 버튼을 누른 시점의 최신 Studio 상태로
+       * 전체 Workflow Validation을 다시 실행합니다.
+       *
+       * 사용자가 별도로 "검증" 버튼을 누르지 않았더라도
+       * 저장 직전에 반드시 전체 설정을 확인합니다.
+       */
+      const handleStartSave = async () => {
+        const result =
+          studio.validateWorkflow()
+
+        setValidationResult(
+          result,
+        )
+
+        /*
+        * 검증에 실패하면 Review 화면으로 이동하지 않습니다.
+        * 우측 검증 결과에 오류가 표시되므로
+        * 사용자는 필요한 설정을 수정한 뒤 다시 저장할 수 있습니다.
+        */
+        if (!result.valid) {
+          return
+        }
+
+        const state: StudioSaveNavigationState = {
+          ...buildNavigationState(),
+
+          /*
+          * setValidationResult는 비동기 State 갱신이므로
+          * 지금 막 생성한 최신 결과를 Navigation State에
+          * 명시적으로 넣습니다.
+          */
+          validationResult:
+            result,
+        }
+
+        await preserveCurrentEditorHistory(
+          state,
+        )
+
+        navigate(
+          '/studio/save/review',
+          {
+            state,
+          },
+        )
+      }
 
   return (
     <div className="fixed inset-0 flex h-[100dvh] w-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
       <div className="shrink-0">
+            {/* 모바일 / 태블릿 Studio 미지원 안내 */}
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F5F5F7] px-[24px] lg:hidden">
+                <div className="w-full max-w-[420px] rounded-[16px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[34px] text-center shadow-sm">
+                  <div className="mx-auto flex h-[52px] w-[52px] items-center justify-center rounded-[12px] bg-[#EAEBFF] text-[26px]">
+                    💻
+                  </div>
+
+                  <h1 className="mt-[20px] text-[22px] font-bold text-[#27272A]">
+                    Studio는 데스크톱 전용입니다.
+                  </h1>
+
+                  <p className="mt-[12px] text-[15px] leading-[23px] text-[#666666]">
+                    블록 배치와 연결 기능은
+                    PC 환경에서 이용할 수 있습니다.
+                    <br />
+                    데스크톱에서 다시 접속해주세요.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        '/',
+                      )
+                    }
+                    className="mt-[26px] flex h-[48px] w-full items-center justify-center rounded-[10px] bg-[#6366F1] text-[16px] font-bold text-white hover:bg-[#5558DB]"
+                  >
+                    홈으로 돌아가기
+                  </button>
+                </div>
+              </div>
         <Header />
       </div>
 
@@ -1145,29 +1991,67 @@ export function Stdio_create1() {
         {/* 메인 캔버스 */}
         <main className="relative z-10 min-h-0 min-w-0 flex-1 overflow-hidden bg-[#F7F7F9]">
           <ReactFlow<StudioFlowNodeInstance, Edge>
-            nodes={studio.nodes}
+            nodes={
+              guidedFlowNodes
+            }
             edges={studio.edges}
             nodeTypes={studioNodeTypes}
             onNodesChange={studio.onNodesChange}
             onEdgesChange={studio.onEdgesChange}
-            onConnect={studio.onConnect}
-            isValidConnection={studio.isValidConnection}
+            onConnect={(connection) => {
+              if (
+                !isGuidedConnectionAllowed(
+                  connection,
+                )
+              ) {
+                return
+              }
+
+              studio.onConnect(
+                connection,
+              )
+            }}
+            isValidConnection={
+              isGuidedConnectionAllowed
+            }
             onInit={studio.onInit}
             onDragOver={studio.onDragOver}
             onDrop={studio.onDrop}
-            onNodeClick={(_event, node) =>
-              studio.selectNode(node.id)
-            }
-            onPaneClick={studio.clearSelection}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
+            onNodeClick={(_event, node) => {
+              if (
+                isResearchGuidedTutorial &&
+                node.data.node.stage !==
+                  currentGuidedStage
+              ) {
+                return
+              }
+
+              studio.selectNode(
+                node.id,
+              )
+            }}
+            onPaneClick={() => {
+              if (
+                isResearchGuidedTutorial
+              ) {
+                return
+              }
+
+              studio.clearSelection()
+            }}
+            zoomOnScroll
+            zoomOnPinch
             zoomOnDoubleClick={false}
             panOnScroll={false}
             panOnDrag
             nodesDraggable
             nodesConnectable
             elementsSelectable
-            deleteKeyCode={['Backspace', 'Delete']}
+            deleteKeyCode={
+              isResearchGuidedTutorial
+                ? null
+                : ['Backspace', 'Delete']
+            }
             snapToGrid={studio.snapToGrid}
             snapGrid={studio.snapGrid}
             defaultViewport={{
@@ -1190,8 +2074,54 @@ export function Stdio_create1() {
               strokeWidth: 2,
             }}
             className="h-full w-full"
-          />
-
+          >
+            <Controls
+              position="bottom-right"
+              showInteractive={false}
+              style={{
+                bottom:
+                  isResearchGuidedTutorial
+                    ? 94
+                    : 16,
+                right: 16,
+              }}
+            />
+          </ReactFlow>
+          {isResearchGuidedTutorial &&
+            guidedTutorial.currentStatus && (
+              <ResearchGuidedTutorialPanel
+                currentStepIndex={
+                  guidedTutorial.currentStepIndex
+                }
+                currentStatus={
+                  guidedTutorial.currentStatus
+                }
+                stepStatuses={
+                  guidedTutorial.stepStatuses
+                }
+                canGoPrevious={
+                  guidedTutorial.canGoPrevious
+                }
+                canGoNext={
+                  guidedTutorial.canGoNext
+                }
+                isLastStep={
+                  guidedTutorial.isLastStep
+                }
+                isTutorialComplete={
+                  guidedTutorial.isTutorialComplete
+                }
+                onPrevious={
+                  handleGuidedPrevious
+                }
+                onNext={
+                  handleGuidedNext
+                }
+                onComplete={
+                  handleGuidedComplete
+                }
+              />
+            )}
           {isHydratingFlow && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
               <div className="rounded-[14px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[22px] text-center shadow-sm">
@@ -1225,6 +2155,15 @@ export function Stdio_create1() {
 
           <div
             ref={inspectorScrollRef}
+            onPointerDownCapture={(event) => {
+              inspectorPointerScrollRef.current = {
+                scrollTop:
+                  event.currentTarget.scrollTop,
+
+                capturedAt:
+                  performance.now(),
+              }
+            }}
             className="min-h-0 flex-1 overflow-y-scroll overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
           >
             {!selectedNode && (
@@ -1344,6 +2283,25 @@ export function Stdio_create1() {
                               {slot.required ? '필수' : '선택'}
                             </span>
 
+                            {!isResearchGuidedTutorial && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteNodeBlock(
+                                    slot,
+                                  )
+                                }
+                                aria-label={`${slot.label} 블록 삭제`}
+                                title="블록 삭제"
+                                className="ml-[12px] flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[8px] text-[#B4453A] transition hover:bg-[#FBF1F0]"
+                              >
+                                <Trash2
+                                  size={16}
+                                  strokeWidth={2}
+                                />
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() =>
@@ -1351,7 +2309,8 @@ export function Stdio_create1() {
                                   isOpen ? null : slot.id,
                                 )
                               }
-                              className="ml-[22px] mt-[-6px] text-[18px] text-[#9A9AA3]"
+                              aria-label={`${slot.label} 설정 ${isOpen ? '접기' : '펼치기'}`}
+                              className="ml-[8px] mt-[-2px] flex h-[30px] w-[30px] shrink-0 items-center justify-center text-[18px] text-[#9A9AA3]"
                             >
                               {isOpen ? '⌃' : '⌄'}
                             </button>
@@ -1378,6 +2337,8 @@ export function Stdio_create1() {
                                     state:
                                       options?.state,
                                   })
+
+                                  restoreInspectorScrollAfterUpdate()
                                 }}
                                 onValueChange={(value) => {
                                   studio.updateSlotValue({
@@ -1387,6 +2348,8 @@ export function Stdio_create1() {
                                       slot.id,
                                     value,
                                   })
+
+                                  restoreInspectorScrollAfterUpdate()
                                 }}
                               />
                             </div>
@@ -1399,11 +2362,30 @@ export function Stdio_create1() {
 
                 <div className="my-[14px] border-t-[1.5px] border-[#EEEEF1]" />
 
-                <div className="flex items-center justify-center pb-[14px]">
+                <div className="flex items-center justify-center gap-[10px] pb-[14px]">
+                  {!isResearchGuidedTutorial && (
+                    <button
+                      type="button"
+                      onClick={
+                        handleDeleteSelectedNode
+                      }
+                      className="flex h-[53px] w-[112px] items-center justify-center rounded-[12px] border-[1.5px] border-[#E9C9C9] bg-white text-[15px] font-bold text-[#B4453A] transition hover:bg-[#FBF1F0]"
+                    >
+                      노드 삭제
+                    </button>
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => setOpenInspectorSlotId(null)}
-                    className="flex h-[53px] w-[374px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+                    onClick={
+                      handleSaveSelectedNodeSettings
+                    }
+                    className={[
+                      'flex h-[53px] items-center justify-center rounded-[12px] border-[1.5px] border-[#EEEEF1] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white',
+                      isResearchGuidedTutorial
+                        ? 'w-[374px]'
+                        : 'w-[252px]',
+                    ].join(' ')}
                   >
                     설정 저장
                   </button>
@@ -1479,18 +2461,25 @@ export function Stdio_create1() {
       {/* 하단 작업 바 */}
       <footer className="flex h-[85px] shrink-0 items-center justify-between border-t-[1.5px] border-[#E4E4E7] bg-white px-[27px] text-[20px]">
         <p className="text-[14px] text-[#9A9AA3]">
-          자유 제작 · 노드 {studio.nodes.length} ·
+          {isResearchGuidedTutorial
+            ? '가이드 모드 · AI로 자료조사 흐름 만들기'
+            : '자유 제작'}{' '}
+          · 노드 {studio.nodes.length} ·
           입력→컨텍스트→프로세스→검토→결과
         </p>
 
         <div className="flex items-center gap-[19px]">
-          <button
-            type="button"
-            onClick={handleValidate}
-            className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
-          >
-            검증
-          </button>
+          {!isResearchGuidedTutorial && (
+            <button
+              type="button"
+              onClick={
+                handleValidate
+              }
+              className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#E4E4E7] text-[17px] font-bold hover:bg-[#6366F1] hover:text-white"
+            >
+              검증
+            </button>
+          )}
 
           <button
             type="button"
@@ -1507,20 +2496,17 @@ export function Stdio_create1() {
           >
             미리보기
           </button>
-
-          <button
-            type="button"
-            disabled={!validationResult?.valid}
-            onClick={handleStartSave}
-            className={[
-              'flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] text-[17px] font-bold',
-              validationResult?.valid
-                ? 'border-[#6366F1] bg-[#6366F1] text-white hover:bg-[#5558DB]'
-                : 'cursor-not-allowed border-[#E4E4E7] bg-[#F0F0F3] text-[#9A9AA3]',
-            ].join(' ')}
-          >
-            저장
-          </button>
+          {!isResearchGuidedTutorial && (
+            <button
+              type="button"
+              onClick={
+                handleStartSave
+              }
+              className="flex h-[50px] w-[80px] items-center justify-center rounded-[8px] border-[1.5px] border-[#6366F1] bg-[#6366F1] text-[17px] font-bold text-white hover:bg-[#5558DB]"
+            >
+              저장
+            </button>
+          )}
         </div>
       </footer>
     </div>

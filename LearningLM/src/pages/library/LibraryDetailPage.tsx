@@ -18,6 +18,7 @@ import { PageContainer } from '../../components/layout/PageContainer'
 
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
+import { BookmarkFeatureModal } from '../../features/library/component/BookmarkFeatureModal'
 
 import type {
   LibraryFlowColor,
@@ -28,6 +29,7 @@ import {
   createCopiedFlow,
   type LibraryFlowDetail,
 } from '../../api/library'
+import { getAccessToken } from '../../api/authStorage'
 import { studioStageMeta } from '../../features/studio/components/node/studioNodeStyles'
 import type { StudioStage } from '../../features/studio/types/studioNode'
 
@@ -93,6 +95,9 @@ export function LibraryDetailPage() {
   const [errorMessage, setErrorMessage] = useState('')
 
   const [isBookmarked, setIsBookmarked] =
+    useState(false)
+
+  const [isBookmarkFeatureModalOpen, setIsBookmarkFeatureModalOpen] =
     useState(false)
 
   const [isLiked, setIsLiked] =
@@ -190,9 +195,7 @@ export function LibraryDetailPage() {
       return
     }
 
-    const accessToken =
-      localStorage.getItem('accessToken') ??
-      localStorage.getItem('token')
+    const accessToken = getAccessToken()
 
     if (!accessToken) {
       navigate('/login', {
@@ -226,8 +229,9 @@ export function LibraryDetailPage() {
     }
 
     // 복사 API 응답으로 받은 새 flowId를 Studio에 전달합니다.
-    navigate(`/studio/create?flowId=${copiedFlowId}`, {
+    navigate(`/studio/create?mode=copied&flowId=${copiedFlowId}`, {
       state: {
+        mode: 'copied',
         flowId: copiedFlowId,
         originFlowId: libraryItem.id,
       },
@@ -387,7 +391,9 @@ export function LibraryDetailPage() {
               <Button
                 variant="secondary"
                 onClick={() =>
-                  setIsBookmarked((previous) => !previous)
+                  setIsBookmarkFeatureModalOpen(
+                    true,
+                  )
                 }
                 className="cursor-pointer"
               >
@@ -613,6 +619,17 @@ export function LibraryDetailPage() {
       </PageContainer>
 
       <Footer />
+
+      <BookmarkFeatureModal
+        open={
+          isBookmarkFeatureModalOpen
+        }
+        onClose={() =>
+          setIsBookmarkFeatureModalOpen(
+            false,
+          )
+        }
+      />
 
       {isCopyModalOpen && (
         <div

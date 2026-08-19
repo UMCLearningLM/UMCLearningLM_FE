@@ -81,9 +81,26 @@ export interface TutorialDetailResponse {
     input: string
     result: string
     source: string
-  }
+  } | null
   // 토큰이 있고 학습 이력이 있는 경우에만 서버가 진행 정보를 반환한다.
   progress: TutorialDetailProgress | null
+}
+
+function getStoredAccessToken() {
+  return (
+    localStorage.getItem(
+      'accessToken',
+    ) ??
+    sessionStorage.getItem(
+      'accessToken',
+    ) ??
+    localStorage.getItem(
+      'token',
+    ) ??
+    sessionStorage.getItem(
+      'token',
+    )
+  )
 }
 
 // 백엔드가 허용하는 난이도 코드
@@ -164,9 +181,7 @@ export async function getTutorialDetail(
   tutorialId: number,
 ): Promise<TutorialDetailResponse> {
   // 상세 조회는 선택 인증이므로 저장된 토큰이 있을 때만 사용한다.
-  const accessToken =
-    localStorage.getItem('accessToken') ??
-    localStorage.getItem('token')
+  const accessToken = getStoredAccessToken()
 
   try {
     // URL의 tutorialId로 해당 튜토리얼 상세 정보를 요청한다.
@@ -199,7 +214,7 @@ export async function getTutorialDetail(
 export async function saveTutorial(
   tutorialId: number,
 ): Promise<TutorialProgress> {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken =  getStoredAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 튜토리얼을 저장할 수 있습니다.')
@@ -230,7 +245,7 @@ export async function saveTutorial(
 
 // 가이드 학습에서 생성된 flow를 먼저 삭제한다.
 export async function deleteFlow(flowId: number): Promise<void> {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken =  getStoredAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 저장을 해제할 수 있습니다.')
@@ -256,7 +271,7 @@ export async function deleteFlow(flowId: number): Promise<void> {
 export async function deleteTutorialProgress(
   tutorialId: number,
 ): Promise<void> {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken =  getStoredAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 저장을 해제할 수 있습니다.')
@@ -282,7 +297,7 @@ export async function deleteTutorialProgress(
 export async function createGuidedFlow(
   tutorialId: number,
 ): Promise<FlowCreateResponse> {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken =  getStoredAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 튜토리얼을 시작할 수 있습니다.')
@@ -316,7 +331,7 @@ export async function startTutorial(
   tutorialId: number,
   flowId: number,
 ): Promise<TutorialProgress> {
-  const accessToken = localStorage.getItem('accessToken')
+  const accessToken =  getStoredAccessToken()
 
   if (!accessToken) {
     throw new Error('로그인 후 튜토리얼을 시작할 수 있습니다.')

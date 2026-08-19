@@ -1,20 +1,21 @@
-import {
-  Search,
-} from 'lucide-react'
-
+import { Search } from 'lucide-react'
 import {
   useEffect,
-  useState,
   useRef,
+  useState,
   type FormEvent,
 } from 'react'
-
 import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
 
 import api from '../../api/api'
+import {
+  clearAuthStorage,
+  getAccessToken,
+  getRefreshToken,
+} from '../../api/authStorage'
 
 const navItems = [
   {
@@ -43,7 +44,9 @@ interface CurrentUser {
   userId: number
   email: string
   nickname: string
-  loginType: 'LOCAL' | 'SOCIAL'
+  loginType:
+  | 'LOCAL'
+  | 'SOCIAL'
   provider: string | null
 }
 
@@ -59,10 +62,18 @@ export function Header() {
   const location =
     useLocation()
 
+  // =====================================================
+  // 검색
+  // =====================================================
+
   const [
     searchKeyword,
     setSearchKeyword,
   ] = useState('')
+
+  // =====================================================
+  // 로그인 상태
+  // =====================================================
 
   const [
     authStatus,
@@ -74,16 +85,28 @@ export function Header() {
   const [
     currentUser,
     setCurrentUser,
-  ] = useState<CurrentUser | null>(
-    null,
-  )
+  ] = useState<
+    CurrentUser | null
+  >(null)
+
+  // =====================================================
+  // 프로필 메뉴
+  // =====================================================
+
   const [
     isProfileMenuOpen,
     setIsProfileMenuOpen,
   ] = useState(false)
 
   const profileMenuRef =
-    useRef<HTMLDivElement>(null)
+    useRef<HTMLDivElement>(
+      null,
+    )
+
+  // =====================================================
+  // 프로필 메뉴 바깥 클릭
+  // =====================================================
+
   useEffect(() => {
     const handleClickOutside = (
       event: MouseEvent,
@@ -94,7 +117,9 @@ export function Header() {
           event.target as Node,
         )
       ) {
-        setIsProfileMenuOpen(false)
+        setIsProfileMenuOpen(
+          false,
+        )
       }
     }
 
@@ -110,35 +135,26 @@ export function Header() {
       )
     }
   }, [])
-  /**
-   * 현재 사용자 확인
-   *
-   * accessToken이 존재한다고 해서
-   * 무조건 로그인 상태로 판단하지 않습니다.
-   *
-   * GET /auth/me 요청이 정상적으로
-   * 성공한 경우에만 로그인 상태로 처리합니다.
-   */
+
+  // =====================================================
+  // 로그인 상태 확인
+  // =====================================================
+
   useEffect(() => {
     let cancelled = false
 
     const checkAuth =
       async () => {
         const accessToken =
-          localStorage.getItem(
-            'accessToken',
-          ) ??
-          sessionStorage.getItem(
-            'accessToken',
-          );
+          getAccessToken()
 
-        /**
-         * 토큰 자체가 없으면
-         * 서버 요청 없이 비로그인 처리
-         */
+        // 토큰이 없으면 비로그인 상태
         if (!accessToken) {
           if (!cancelled) {
-            setCurrentUser(null)
+            setCurrentUser(
+              null,
+            )
+
             setAuthStatus(
               'guest',
             )
@@ -163,11 +179,6 @@ export function Header() {
             | CurrentUser
             | undefined
 
-          /**
-           * 정상 응답인데도
-           * 사용자 정보가 없다면
-           * 로그인 상태로 인정하지 않음
-           */
           if (!user) {
             throw new Error(
               '현재 사용자 정보가 없습니다.',
@@ -181,7 +192,9 @@ export function Header() {
           setAuthStatus(
             'authenticated',
           )
-        } catch (error) {
+        } catch (
+        error
+        ) {
           if (cancelled) {
             return
           }
@@ -191,22 +204,12 @@ export function Header() {
             error,
           )
 
-          /**
-           * 유효하지 않은 인증 정보 정리
-           */
-          localStorage.removeItem(
-            'accessToken',
-          )
+          // 인증정보 정리
+          clearAuthStorage()
 
-          localStorage.removeItem(
-            'refreshToken',
+          setCurrentUser(
+            null,
           )
-
-          localStorage.removeItem(
-            'user',
-          )
-
-          setCurrentUser(null)
 
           setAuthStatus(
             'guest',
@@ -214,163 +217,171 @@ export function Header() {
         }
       }
 
-    checkAuth()
+    void checkAuth()
 
     return () => {
       cancelled = true
     }
   }, [])
 
-  /**
-   * 현재 메뉴 활성화 여부
-   */
-  const isActivePath = (
-    path: string,
-  ) => {
-    if (path === '/') {
-      return (
-        location.pathname ===
-        '/'
+  // =====================================================
+  // 현재 메뉴 활성화
+  // =====================================================
+
+  const isActivePath =
+    (path: string) => {
+      // 홈은 정확하게 /
+      if (path === '/') {
+        return (
+          location.pathname ===
+          '/'
+        )
+      }
+
+      return location.pathname.startsWith(
+        path,
       )
     }
 
-    return location.pathname.startsWith(
-      path,
-    )
-  }
+  // =====================================================
+  // 검색
+  // =====================================================
 
-  /**
-   * 헤더 검색
-   */
-  const handleSearch = () => {
-    const keyword =
-      searchKeyword.trim()
+  const handleSearch =
+    () => {
+      const keyword =
+        searchKeyword.trim()
 
-    if (!keyword) {
-      navigate(
-        '/official-tutorials',
-      )
-
-      return
-    }
-
-    navigate(
-      `/official-tutorials?q=${encodeURIComponent(
-        keyword,
-      )}`,
-    )
-  }
-
-  const handleSearchSubmit = (
-    event: FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault()
-
-    handleSearch()
-  }
-
-  const handleLogout = async () => {
-    // localStorage 또는 sessionStorage에서 토큰 가져오기
-    const accessToken =
-      localStorage.getItem('accessToken') ??
-      sessionStorage.getItem('accessToken')
-
-    const refreshToken =
-      localStorage.getItem('refreshToken') ??
-      sessionStorage.getItem('refreshToken')
-
-    try {
-      // refreshToken이 있는 경우에만
-      // 백엔드 로그아웃 API 호출
-      if (refreshToken) {
-        await api.post(
-          '/auth/logout',
-          {
-            refreshToken,
-          },
+      if (!keyword) {
+        navigate(
+          '/official-tutorials',
         )
 
-        console.log('로그아웃 API 성공')
+        return
       }
-    } catch (error) {
-      console.error(
-        '로그아웃 API 실패:',
-        error,
-      )
-    } finally {
-      /**
-       * 백엔드 요청 성공/실패와 관계없이
-       * 프론트의 로그인 정보는 모두 제거
-       */
 
-      // localStorage 삭제
-      localStorage.removeItem(
-        'accessToken',
-      )
-
-      localStorage.removeItem(
-        'refreshToken',
-      )
-
-      localStorage.removeItem(
-        'user',
-      )
-
-      // sessionStorage 삭제
-      sessionStorage.removeItem(
-        'accessToken',
-      )
-
-      sessionStorage.removeItem(
-        'refreshToken',
-      )
-
-      sessionStorage.removeItem(
-        'user',
-      )
-
-      // Google 로그인 관련 저장값도 정리
-      sessionStorage.removeItem(
-        'googleLoginRememberMe',
-      )
-
-      sessionStorage.removeItem(
-        'googleLoginRedirect',
-      )
-
-      // Header 상태 변경
-      setCurrentUser(null)
-      setAuthStatus('guest')
-      setIsProfileMenuOpen(false)
-
-      // 로그인 페이지로 이동
       navigate(
-        '/',
-        {
-          replace: true,
-        },
+        `/official-tutorials?q=${encodeURIComponent(
+          keyword,
+        )}`,
       )
     }
-  }
-  /**
-   * 사용자 프로필 버튼에
-   * 표시할 한 글자
-   *
-   * nickname이 있으면 첫 글자를 사용하고
-   * 혹시 비어 있다면 기본값으로 "내"를 사용합니다.
-   */
+
+  const handleSearchSubmit =
+    (
+      event: FormEvent<HTMLFormElement>,
+    ) => {
+      event.preventDefault()
+
+      handleSearch()
+    }
+
+  // =====================================================
+  // 로그아웃
+  // =====================================================
+
+  const handleLogout =
+    async () => {
+      const refreshToken =
+        getRefreshToken()
+
+      try {
+        // Refresh Token이 있으면
+        // 서버 로그아웃 API 호출
+        if (refreshToken) {
+          await api.post(
+            '/auth/logout',
+            {
+              refreshToken,
+            },
+          )
+
+          console.log(
+            '로그아웃 API 성공',
+          )
+        }
+      } catch (
+      error
+      ) {
+        /*
+         * 서버 로그아웃 API가 실패하더라도
+         * 프론트에서는 반드시 로그아웃 처리
+         */
+        console.error(
+          '로그아웃 API 호출 실패:',
+          error,
+        )
+      } finally {
+        // =================================================
+        // 브라우저 인증정보 삭제
+        // =================================================
+
+        clearAuthStorage()
+
+        // Google 로그인 관련 정보도 정리
+        sessionStorage.removeItem(
+          'googleLoginRememberMe',
+        )
+
+        sessionStorage.removeItem(
+          'googleLoginRedirect',
+        )
+
+        // =================================================
+        // Header 상태 초기화
+        // =================================================
+
+        setCurrentUser(
+          null,
+        )
+
+        setAuthStatus(
+          'guest',
+        )
+
+        setIsProfileMenuOpen(
+          false,
+        )
+
+        // =================================================
+        // 홈으로 이동
+        // =================================================
+
+        navigate(
+          '/',
+          {
+            replace: true,
+          },
+        )
+      }
+    }
+
+  // =====================================================
+  // 프로필 아이콘
+  // =====================================================
+
   const profileLabel =
     currentUser?.nickname
       ?.trim()
-      ?.charAt(0) ||
-    '내'
+      ?.charAt(0) || '내'
+
+  // =====================================================
+  // 화면
+  // =====================================================
 
   return (
     <header className="sticky top-0 z-[999] w-full border-b border-[#E4E4E7] bg-white">
+
       <div className="mx-auto flex h-[58px] w-full max-w-[1440px] items-center px-[28px]">
-        {/* 왼쪽 */}
+
+        {/* =================================================
+            Logo + Navigation
+        ================================================= */}
+
         <div className="flex min-w-0 items-center">
+
           {/* Logo */}
+
           <button
             type="button"
             aria-label="홈으로 이동"
@@ -379,6 +390,7 @@ export function Header() {
               navigate('/')
             }}
           >
+
             <div className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[7px] bg-[#6366F1] text-[14px] font-bold text-white">
               L
             </div>
@@ -386,12 +398,17 @@ export function Header() {
             <span className="whitespace-nowrap text-[18px] font-bold tracking-[-0.03em] text-[#27272A]">
               LearningLM
             </span>
+
           </button>
 
           {/* Navigation */}
+
           <nav className="ml-[34px] hidden items-center gap-[31px] lg:flex">
+
             {navItems.map(
-              (item) => {
+              (
+                item,
+              ) => {
                 const active =
                   isActivePath(
                     item.path,
@@ -425,18 +442,28 @@ export function Header() {
                 )
               },
             )}
+
           </nav>
+
         </div>
 
-        {/* 오른쪽 */}
+        {/* =================================================
+            오른쪽 영역
+        ================================================= */}
+
         <div className="ml-auto flex shrink-0 items-center gap-[17px]">
-          {/* Search */}
+
+          {/* =================================================
+              검색
+          ================================================= */}
+
           <form
             onSubmit={
               handleSearchSubmit
             }
             className="hidden h-[31px] w-[205px] items-center overflow-hidden rounded-[3px] bg-[#F1F1F3] md:flex"
           >
+
             <input
               type="search"
               value={
@@ -446,8 +473,7 @@ export function Header() {
                 event,
               ) => {
                 setSearchKeyword(
-                  event.target
-                    .value,
+                  event.target.value,
                 )
               }}
               placeholder="검색어를 입력하세요"
@@ -462,12 +488,18 @@ export function Header() {
             >
               <Search
                 size={14}
-                strokeWidth={2}
+                strokeWidth={
+                  2
+                }
               />
             </button>
+
           </form>
 
-          {/* 인증 확인 중 */}
+          {/* =================================================
+              로그인 상태 확인 중
+          ================================================= */}
+
           {authStatus ===
             'checking' && (
               <div
@@ -476,7 +508,10 @@ export function Header() {
               />
             )}
 
-          {/* 비로그인 */}
+          {/* =================================================
+              비로그인
+          ================================================= */}
+
           {authStatus ===
             'guest' && (
               <button
@@ -492,39 +527,60 @@ export function Header() {
               </button>
             )}
 
-          {/* 로그인 */}
+          {/* =================================================
+              로그인 상태
+          ================================================= */}
+
           {authStatus ===
             'authenticated' &&
             currentUser && (
               <div
-                ref={profileMenuRef}
+                ref={
+                  profileMenuRef
+                }
                 className="relative"
               >
+
                 {/* 프로필 버튼 */}
+
                 <button
                   type="button"
                   aria-label={`${currentUser.nickname}님의 프로필 메뉴`}
-                  title={currentUser.nickname}
+                  title={
+                    currentUser.nickname
+                  }
                   onClick={() => {
                     setIsProfileMenuOpen(
-                      (prev) => !prev,
+                      (
+                        previous,
+                      ) =>
+                        !previous,
                     )
                   }}
                   className="flex h-[31px] w-[31px] cursor-pointer items-center justify-center rounded-full border border-[#E4E4E7] bg-[#F5F5F7] text-[12px] font-bold text-[#52525B] transition-colors hover:border-[#6366F1] hover:text-[#6366F1]"
                 >
-                  {profileLabel}
+                  {
+                    profileLabel
+                  }
                 </button>
 
-                {/* 드롭다운 메뉴 */}
+                {/* 프로필 메뉴 */}
+
                 {isProfileMenuOpen && (
                   <div className="absolute right-0 top-[39px] z-[1000] w-[145px] overflow-hidden rounded-[2px] border border-[#E4E4E7] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
 
                     {/* 프로필 설정 */}
+
                     <button
                       type="button"
                       onClick={() => {
-                        setIsProfileMenuOpen(false)
-                        navigate('/myProfile')
+                        setIsProfileMenuOpen(
+                          false,
+                        )
+
+                        navigate(
+                          '/myProfile',
+                        )
                       }}
                       className="flex h-[55px] w-full cursor-pointer items-center justify-center border-b border-[#E4E4E7] bg-white text-[18px] font-semibold text-[#52525B] transition-colors hover:bg-[#F8F8FA]"
                     >
@@ -532,19 +588,27 @@ export function Header() {
                     </button>
 
                     {/* 로그아웃 */}
+
                     <button
                       type="button"
-                      onClick={handleLogout}
+                      onClick={() => {
+                        void handleLogout()
+                      }}
                       className="flex h-[55px] w-full cursor-pointer items-center justify-center bg-white text-[18px] font-semibold text-[#E58A8A] transition-colors hover:bg-[#F8F8FA]"
                     >
                       로그아웃
                     </button>
+
                   </div>
                 )}
+
               </div>
             )}
+
         </div>
+
       </div>
+
     </header>
   )
 }

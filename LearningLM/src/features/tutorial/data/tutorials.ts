@@ -65,72 +65,212 @@ export const tutorialCategories: TutorialCategory[] = [
 const baseTutorials: Tutorial[] = [
   {
     id: 1,
-    title: 'AI로 자료조사 흐름 만들기',
-    description: '검색·요약·정리 블록으로 리서치 흐름을 완성합니다.',
-    level: '입문',
-    categories: ['자료조사', '요약'],
-    blockCount: 4,
-    estimatedMinutes: 15,
+
+    title:
+      'AI로 자료조사 흐름 만들기',
+
+    description:
+      '조사 주제 설정부터 핵심 추출, 근거 확인, 결과 출력까지 5단계 흐름을 직접 만들어봅니다.',
+
+    level:
+      '입문',
+
+    categories: [
+      '자료조사',
+      '요약',
+    ],
+
+    blockCount:
+      5,
+
+    estimatedMinutes:
+      15,
+
     useCases: [
       {
-        label: '업무',
+        label:
+          '업무',
+
         description:
-          '신상품 출시 전, 경쟁 제품과 시장 반응을 조사해 한 장으로 정리하고 싶을 때.',
+          '시장·제품·정책 등 필요한 주제를 조사하고 핵심 정보를 정리하고 싶을 때.',
       },
       {
-        label: '학습',
+        label:
+          '학습',
+
         description:
-          '리포트 과제를 위해 여러 출처를 찾아 핵심만 요약해야 할 때.',
+          '과제나 발표를 위해 자료의 핵심과 근거를 단계적으로 정리하고 싶을 때.',
       },
     ],
-    requiredConcepts: ['검색 쿼리 구성', '요약 길이 설정', '항목별 정리 형식'],
-    flowSteps: [
-      { id: 'topic', label: '주제 입력', color: 'blue' },
-      { id: 'search', label: '자료 검색', color: 'teal' },
-      { id: 'organize', label: '핵심 정리', color: 'green' },
-      { id: 'summary', label: '요약 출력', color: 'teal' },
+
+    requiredConcepts: [
+      '블록 배치',
+      '노드 연결',
+      'Inspector 설정',
     ],
+
+    flowSteps: [
+      {
+        id:
+          'input',
+
+        label:
+          '주제 입력',
+
+        color:
+          'blue',
+      },
+      {
+        id:
+          'context',
+
+        label:
+          '참고 자료',
+
+        color:
+          'teal',
+      },
+      {
+        id:
+          'process',
+
+        label:
+          '핵심 추출',
+
+        color:
+          'green',
+      },
+      {
+        id:
+          'review',
+
+        label:
+          '근거 확인',
+
+        color:
+          'teal',
+      },
+      {
+        id:
+          'output',
+
+        label:
+          '결과 출력',
+
+        color:
+          'green',
+      },
+    ],
+
     blocks: [
       {
-        id: 'topic',
-        title: '주제 입력',
-        type: '입력',
-        description: '조사할 주제를 입력합니다',
-        why: '검색 범위를 정하기 위해 필요해요',
-        color: 'blue',
+        id:
+          'input-topic',
+
+        title:
+          '주제 입력하기',
+
+        type:
+          'INPUT',
+
+        description:
+          '조사할 주제와 핵심 키워드를 입력합니다.',
+
+        why:
+          '조사의 범위와 방향을 먼저 정하기 위해 필요합니다.',
+
+        color:
+          'blue',
       },
       {
-        id: 'search',
-        title: '자료 검색',
-        type: '검색',
-        description: '웹에서 관련 자료를 찾습니다',
-        why: '신뢰할 자료를 모으기 위해 필요해요',
-        color: 'teal',
+        id:
+          'context-direct-input',
+
+        title:
+          '직접 입력 내용 사용하기',
+
+        type:
+          'CONTEXT',
+
+        description:
+          '조사에 참고할 배경 정보나 알고 있는 사실을 추가합니다.',
+
+        why:
+          'AI가 조사 내용을 해석할 때 사용할 기준 정보를 제공합니다.',
+
+        color:
+          'teal',
       },
       {
-        id: 'organize',
-        title: '핵심 정리',
-        type: '정리',
-        description: '찾은 내용을 핵심만 정리합니다',
-        why: '분량을 줄여 비교하기 위해 필요해요',
-        color: 'green',
+        id:
+          'process-extract-core',
+
+        title:
+          '핵심 내용 추출하기',
+
+        type:
+          'PROCESS',
+
+        description:
+          '자료에서 사실과 키워드 등 필요한 핵심 정보를 추출합니다.',
+
+        why:
+          '많은 정보 가운데 실제로 필요한 내용만 남기기 위해 사용합니다.',
+
+        color:
+          'green',
       },
       {
-        id: 'summary',
-        title: '요약 출력',
-        type: '출력',
-        description: '정리 결과를 보여줍니다',
-        why: '최종 결과를 확인하기 위해 필요해요',
-        color: 'teal',
+        id:
+          'review-evidence',
+
+        title:
+          '근거 확인하기',
+
+        type:
+          'REVIEW',
+
+        description:
+          '정리된 사실과 수치에 확인 가능한 근거가 있는지 점검합니다.',
+
+        why:
+          '자료조사 결과의 신뢰도를 높이기 위해 필요합니다.',
+
+        color:
+          'teal',
+      },
+      {
+        id:
+          'output-text',
+
+        title:
+          '텍스트로 출력하기',
+
+        type:
+          'OUTPUT',
+
+        description:
+          '검토를 마친 조사 결과를 읽기 쉬운 텍스트로 출력합니다.',
+
+        why:
+          '완성된 조사 내용을 실제로 활용할 수 있는 결과물로 만듭니다.',
+
+        color:
+          'green',
       },
     ],
-    exampleInput: '2025년 국내 전기차 시장 동향을 조사하고 핵심만 정리해줘',
+
+    exampleInput:
+      '국내 생성형 AI 서비스 시장 동향을 조사하고 핵심 내용을 정리해줘',
+
     exampleResult: [
-      '국내 전기차 시장은 충전 인프라 확대와 보조금 정책 변화의 영향을 크게 받고 있습니다.',
-      '주요 제조사는 가격 경쟁력과 주행거리 개선을 중심으로 신차 전략을 강화하고 있습니다.',
-      '소비자는 유지비, 충전 편의성, 배터리 안정성을 핵심 구매 기준으로 보고 있습니다.',
+      '생성형 AI 서비스는 문서 작성, 검색, 개발 지원, 고객 응대 등 다양한 업무 영역으로 확장되고 있습니다.',
+      '서비스를 비교할 때는 모델 성능뿐 아니라 출처 확인, 데이터 보안, 업무 도구 연동 여부가 중요한 기준이 됩니다.',
+      '조사 결과를 활용할 때는 사실과 추정 내용을 구분하고 핵심 주장에 대한 근거를 함께 확인하는 과정이 필요합니다.',
     ],
-    resultSource: 'Template',
+
+    resultSource:
+      'Template',
   },
   {
     id: 2,

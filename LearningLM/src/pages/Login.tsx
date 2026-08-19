@@ -40,6 +40,18 @@ function isSafeInternalPath(
   )
 }
 
+// =====================================================
+// 이메일 형식 검사
+// =====================================================
+
+function validateEmail(
+  value: string,
+): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    value,
+  )
+}
+
 export function Login() {
   const navigate =
     useNavigate()
@@ -54,6 +66,15 @@ export function Login() {
   const [
     rememberMe,
     setRememberMe,
+  ] = useState(false)
+
+  // =====================================================
+  // 로그인 중 상태
+  // =====================================================
+
+  const [
+    isLoggingIn,
+    setIsLoggingIn,
   ] = useState(false)
 
   // =====================================================
@@ -114,21 +135,6 @@ export function Login() {
     'incorrect' |
     'success'
   >('basic')
-
-  // =====================================================
-  // 이메일 정규식
-  // =====================================================
-
-  const validateEmail = (
-    value: string,
-  ) => {
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    return emailRegex.test(
-      value,
-    )
-  }
 
   // =====================================================
   // 비밀번호 길이 실시간 검사
@@ -238,7 +244,7 @@ export function Login() {
     )
 
     // -----------------------------------------------------
-    // 이전 로그인 오류 상태 초기화
+    // 이전 오류 초기화
     // -----------------------------------------------------
 
     setEmailState(
@@ -251,6 +257,14 @@ export function Login() {
 
     setLoginError(
       false,
+    )
+
+    // -----------------------------------------------------
+    // 로그인 시작
+    // -----------------------------------------------------
+
+    setIsLoggingIn(
+      true,
     )
 
     // -----------------------------------------------------
@@ -384,8 +398,6 @@ export function Login() {
 
       // ===================================================
       // 이메일 또는 비밀번호가 잘못된 경우
-      //
-      // HTTP 401이면 로그인 정보 오류로 처리
       // ===================================================
 
       if (
@@ -408,6 +420,12 @@ export function Login() {
 
       console.error(
         '로그인 요청 중 알 수 없는 오류가 발생했습니다.',
+      )
+
+    } finally {
+
+      setIsLoggingIn(
+        false,
       )
     }
   }
@@ -490,9 +508,9 @@ export function Login() {
               L
             </div>
 
-            <p className="mt-[-1.5px] text-[#27272A] text-[26px] font-bold">
+            <span className="text-[26px] font-bold text-[#27272A]">
               LearningLM
-            </p>
+            </span>
 
           </div>
 
@@ -516,8 +534,9 @@ export function Login() {
               로그인
             </p>
 
-            <p className="text-[15px] text-[#52525B] tracking-tighter">
-              학습을 이어서 진행하려면 로그인하세요.
+            <p className="text-[15px] tracking-tighter text-[#52525B]">
+              학습을 이어서 진행하려면
+              로그인하세요.
             </p>
 
           </div>
@@ -564,7 +583,9 @@ export function Login() {
                   className="hover:border-[#666666] w-full h-[51px] flex items-center pl-[20px] rounded-[8px] border-2 border-[#E4E4E7]"
                 />
 
-                {/* 이메일 형식 오류 */}
+                {/* =================================================
+                    이메일 형식 오류
+                ================================================= */}
 
                 {emailFormError && (
                   <p className="mt-[6.5px] text-[16px] font-bold text-[#EF8888] tracking-tighter">
@@ -607,7 +628,14 @@ export function Login() {
                   )
                 }}
                 placeholder="********"
-                className="hover:border-[#666666] h-[51px] flex items-center rounded-[8px] mt-[8px] pl-[20px] border-2 border-[#E4E4E7]"
+                className={[
+                  'mt-[8px] h-[51px] rounded-[8px] border-2 pl-[20px] outline-none hover:border-[#666666]',
+                  loginError
+                    ? 'border-[#F8A3A3]'
+                    : 'border-[#E4E4E7]',
+                ].join(
+                  ' ',
+                )}
               />
 
               {/* =================================================
@@ -655,7 +683,6 @@ export function Login() {
                 checked={
                   rememberMe
                 }
-                className="hidden"
                 onChange={(
                   event,
                 ) => {
@@ -663,15 +690,15 @@ export function Login() {
                     event.target.checked,
                   )
                 }}
+                className="sr-only"
               />
 
-              <div
+              <span
                 className={[
-                  'w-[17px] h-[17px] flex items-center justify-center text-center border-2 rounded-[2px] border-[#6366F1]',
-
+                  'flex h-[17px] w-[17px] items-center justify-center rounded-[2px] border-2 border-[#6366F1]',
                   rememberMe
                     ? 'bg-[#6366F1]'
-                    : 'border-[#6366F1]',
+                    : 'bg-white',
                 ].join(
                   ' ',
                 )}
@@ -679,14 +706,16 @@ export function Login() {
 
                 {rememberMe && (
                   <Check
-                    size={18}
-                    className="text-white stroke-[3]"
+                    size={
+                      15
+                    }
+                    className="stroke-[3] text-white"
                   />
                 )}
 
-              </div>
+              </span>
 
-              <span className="text-[15.5px] text-[#52525B] tracking-tighter">
+              <span className="text-[15.5px] tracking-tighter text-[#52525B]">
                 로그인 상태 유지
               </span>
 
@@ -698,10 +727,13 @@ export function Login() {
 
             <button
               type="button"
-              className="hover:bg-[#6366F1] hover:text-white text-[#9D9ED0] cursor-pointer w-[519px] h-[51px] mt-[-4px] items-center justify-center rounded-[8px] border-1 border-[#6366F1]"
+              disabled={
+                isLoggingIn
+              }
               onClick={() => {
                 void login()
               }}
+              className="h-[51px] w-full cursor-pointer rounded-[8px] border border-[#6366F1] text-[22px] font-bold tracking-tighter text-[#6366F1] transition-colors hover:bg-[#6366F1] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
 
               <span className="text-[24px] font-bold tracking-tighter">
@@ -720,7 +752,7 @@ export function Login() {
 
             <div className="flex-1 h-px bg-[#E4E4E7]" />
 
-            <span className="mx-[16px] text-[#9A9AA3] text-[15px] tracking-tighter">
+            <span className="mx-[16px] text-[15px] tracking-tighter text-[#9A9AA3]">
               또는
             </span>
 
@@ -734,17 +766,17 @@ export function Login() {
 
           <button
             type="button"
-            className="cursor-pointer w-[522px] h-[56px] mt-[28px] flex items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7]"
             onClick={
               googleLogin
             }
+            className="mt-[28px] flex h-[56px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-[8px] border-2 border-[#E4E4E7] transition-colors hover:border-[#BDBDC5] hover:bg-[#FAFAFB]"
           >
 
             <FcGoogle
               size={32}
             />
 
-            <span className="cursor-pointer text-[18px] font-bold text-[#27272A] tracking-tighter">
+            <span className="text-[18px] font-bold tracking-tighter text-[#27272A]">
               Google 계정으로 계속하기
             </span>
 
@@ -767,12 +799,9 @@ export function Login() {
                     '/register',
                   )
                 }}
+                className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
               >
-
-                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
-                  회원가입
-                </span>
-
+                회원가입
               </button>
 
             </p>
@@ -788,12 +817,9 @@ export function Login() {
                     '/pw-find',
                   )
                 }}
+                className="font-bold text-[#6366F1] hover:text-[#3A3DC2]"
               >
-
-                <span className="cursor-pointer text-[#6366F1] font-bold mt-[20px]">
-                  비밀번호 찾기
-                </span>
-
+                비밀번호 찾기
               </button>
 
             </p>
@@ -809,16 +835,32 @@ export function Login() {
         <div className="flex flex-row mt-[32px] mb-[86px] text-[16px] text-[#9A9AA3] gap-[38px]">
 
           <p>
-            ©2026LearningLM
+            ©2026 LearningLM
           </p>
 
-          <p className="cursor-pointer hover:text-[#666] hover:font-bold">
+          <button
+            type="button"
+            onClick={() => {
+              navigate(
+                '/terms',
+              )
+            }}
+            className="transition-colors hover:text-[#6366F1]"
+          >
             이용약관
-          </p>
+          </button>
 
-          <p className="cursor-pointer hover:text-[#666] hover:font-bold">
+          <button
+            type="button"
+            onClick={() => {
+              navigate(
+                '/privacy',
+              )
+            }}
+            className="transition-colors hover:text-[#6366F1]"
+          >
             개인정보처리방침
-          </p>
+          </button>
 
         </div>
 
