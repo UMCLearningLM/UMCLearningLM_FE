@@ -6,53 +6,111 @@ import { Header } from '../components/layout/Header'
 import { Footer } from '../components/layout/Footer'
 import { StudioSimulation } from '../features/studio/simulation/components/StudioSimulation'
 import { createFlow, getFlow } from '../pages/api/StudioApi'
+import {
+  getSavedTutorials,
+  getStorageFlows,
+} from '../api/storage'
 
 type StudioEntryState = {
   flowId?: number
   tutorialId?: number
   originFlowId?: number
 }
+type ContinueItem = {
+  type: 'copied' | 'tutorial'
+  flowId: number
+  title: string
+  authorNickname?: string | null
+  updatedAt: string
+}
 
 export function Studio1() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [flowTitle, setFlowTitle] = useState('')
+  const [continueItem, setContinueItem] =
+  useState<ContinueItem | null>(null)
+  const [
+  isSimulationOpen,
+  setIsSimulationOpen,
+] = useState(false)
 
   const locationState =
     (location.state as StudioEntryState | null) ?? null
 
-  const flowId = locationState?.flowId
-
-  const [isSimulationOpen, setIsSimulationOpen] =
-    useState(false)
-
-  console.log('location.state:', location.state)
-  console.log('최종 판단된 flowId:', flowId)
-
-  /**
-   * 공식 튜토리얼을 선택하는 화면으로 이동합니다.
-   */
   useEffect(() => {
-  if (!flowId) {
-    setFlowTitle('')
-    return
-  }
-
-  const loadFlowTitle = async () => {
+  const loadContinueItem = async () => {
     try {
-      const response = await getFlow(flowId)
+      const [
+        savedTutorials,
+        copiedFlows,
+      ] = await Promise.all([
+        getSavedTutorials(),
+        getStorageFlows('copied'),
+      ])
 
-      console.log('조회한 Flow:', response)
-      console.log('조회한 Flow 제목:', response.result.title)
+      console.log(
+        '저장한 튜토리얼:',
+        savedTutorials,
+      )
 
-      setFlowTitle(response.result.title)
-    } catch (error) {
-      console.error('Flow 제목 조회 실패:', error)
+      console.log(
+        '복사한 흐름:',
+        copiedFlows,
+      )
+
+      const tutorialItems: ContinueItem[] =
+        savedTutorials.tutorials
+          .filter(
+            (tutorial) =>
+              tutorial.flowId !== null &&
+              tutorial.flowId !== undefined,
+          )
+          .map((tutorial) => ({
+            type: 'tutorial',
+            flowId: tutorial.flowId as number,
+            title: tutorial.title,
+            updatedAt: tutorial.updatedAt,
+          }))
+
+        const copiedItems: ContinueItem[] =
+          copiedFlows.flows.map((flow) => ({
+            type: 'copied',
+            flowId: flow.flowId,
+            title: flow.title,
+            authorNickname:
+              flow.originalAuthorNickname,
+            updatedAt: flow.updatedAt,
+          }))
+
+        const allItems: ContinueItem[] = [
+          ...tutorialItems,
+          ...copiedItems,
+        ]
+
+        if (allItems.length === 0) {
+          setContinueItem(null)
+          return
+        }
+
+        allItems.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() -
+            new Date(a.updatedAt).getTime(),
+        )
+
+        setContinueItem(allItems[0])
+      } catch (error) {
+        console.error(
+          '저장소 조회 실패:',
+          error,
+        )
+
+        setContinueItem(null)
+      }
     }
-  }
 
-  void loadFlowTitle()
-}, [flowId])
+    void loadContinueItem()
+  }, [])
   const handleGuidedMode = () => {
     navigate('/official-tutorials')
   }
@@ -99,39 +157,56 @@ export function Studio1() {
    * flowId를 전달했다고 가정합니다.
    */
   const handleContinueCopiedWorkflow = async () => {
-    const accessToken =
-      localStorage.getItem('accessToken') ?? undefined
-
-    console.log('Studio1이 받은 flowId:', flowId)
-
-    if (!flowId) {
-      console.error('편집할 flowId를 전달받지 못했습니다.')
-      return
-    }
-
-    try {
-      const response = await getFlow(flowId, accessToken)
-
-      console.log('가져온 Flow:', response)
-      console.log('flowId:', response.result.flowId)
-      console.log('status:', response.result.status)
-      console.log('blockFlow:', response.result.blockFlow)
-
-      navigate(
-        `/studio/create?mode=edit&flowId=${response.result.flowId}`,
-        {
-          state: {
-            mode: 'edit',
-            flowId: response.result.flowId,
-            flowData: response.result,
-          },
-        },
-      )
-    } catch (error) {
-      console.error('Flow 가져오기 실패:', error)
-    }
+  if (!continueItem) {
+    console.error(
+      '이어서 편집할 항목이 없습니다.',
+    )
+    return
   }
 
+  try {
+    const response = await getFlow(
+      continueItem.flowId,
+    )
+
+    console.log(
+      '가져온 Flow:',
+      response,
+    )
+
+    console.log(
+      '가져온 flowId:',
+      response.result.flowId,
+    )
+
+    console.log(
+      '가져온 title:',
+      response.result.title,
+    )
+
+    console.log(
+      '가져온 blockFlow:',
+      response.result.blockFlow,
+    )
+
+    navigate(
+      `/studio/create?mode=edit&flowId=${response.result.flowId}`,
+      {
+        state: {
+          mode: 'edit',
+          flowId:
+            response.result.flowId,
+          flowData: response.result,
+        },
+      },
+    )
+  } catch (error) {
+    console.error(
+      'Flow 가져오기 실패:',
+      error,
+    )
+  }
+}
   /**
    * 시뮬레이션 완료 후 Studio 시작
    *
@@ -301,7 +376,7 @@ export function Studio1() {
             {/* =========================
                 복사 워크플로우 (flowId 존재 시에만 렌더링)
             ========================= */}
-            {flowId !==undefined  && (
+            {continueItem && (
               <section className="mt-[12px]">
                 <div className="flex min-h-[102px] items-center rounded-[9px] border border-[#DEDEE3] bg-white px-[36px] py-[20px]">
                   <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center text-[#666666]">
@@ -314,8 +389,22 @@ export function Studio1() {
                     </h2>
 
                     <p className="mt-[5px] truncate text-[12px] font-medium text-[#A1A1AA]">
-                      &quot;{flowTitle}&quot; · 김리서치
-                      님의 공개 흐름 복사본
+                      &quot;{continueItem.title}&quot;
+                      {continueItem.type === 'copied' &&
+                        continueItem.authorNickname && (
+                          <>
+                            {' · '}
+                            {continueItem.authorNickname}
+                            님의 공개 흐름 복사본
+                          </>
+                        )}
+
+                      {continueItem.type === 'tutorial' && (
+                        <>
+                          {' · '}
+                          저장한 튜토리얼
+                        </>
+                      )}
                     </p>
                   </div>
 
