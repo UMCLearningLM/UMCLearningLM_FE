@@ -78,6 +78,16 @@ import {
   SummaryInspector,
 } from './process/ProcessCoreInspectors'
 
+import {
+  DecomposeFunctionsInspector,
+  FindExceptionsInspector,
+  LinkPolicyInspector,
+} from './process/Process06To08Inspectors'
+
+import {
+  DraftInspector,
+  TableTransformInspector,
+} from './process/Process09To11Inspectors'
 
 export interface StudioInspectorConfigUpdateOptions {
   summaryValue?: string
@@ -230,8 +240,8 @@ const studioBlockInspectorRegistry:
     ExclusionContextInspector,
 
   /*
-* PROCESS
-*/
+   * PROCESS
+   */
 
   'process-extract-core':
     ExtractCoreInspector,
@@ -240,8 +250,43 @@ const studioBlockInspectorRegistry:
     SummaryInspector,
 
   /*
- * REVIEW
- */
+   * PR-006
+   * 기능으로 분해하기
+   */
+  'process-decompose-functions':
+    DecomposeFunctionsInspector,
+
+  /*
+   * PR-007
+   * 정책과 연결하기
+   */
+  'process-link-policy':
+    LinkPolicyInspector,
+
+  /*
+   * PR-008
+   * 예외 케이스 찾기
+   */
+  'process-find-exceptions':
+    FindExceptionsInspector,
+
+  /*
+   * PR-009
+   * 초안 작성하기
+   */
+  'process-draft':
+    DraftInspector,
+
+  /*
+   * PR-010
+   * 표로 재구성하기
+   */
+  'process-table':
+    TableTransformInspector,
+
+  /*
+   * REVIEW
+   */
 
   'review-missing':
     MissingCheckInspector,
