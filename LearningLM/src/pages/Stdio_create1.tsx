@@ -148,6 +148,80 @@ function getAccessToken() {
   )
 }
 
+function getGuidedSavedSettingsStorageKey(
+  tutorialId:
+    number | undefined,
+  flowId:
+    number | undefined,
+): string {
+  return [
+    'learninglm',
+    'guided-research-saved-settings',
+    tutorialId ??
+      'tutorial',
+    flowId ??
+      'flow',
+  ].join(':')
+}
+
+function getInitialGuidedSavedStepIndices(
+  tutorialId:
+    number | undefined,
+  flowId:
+    number | undefined,
+): Set<number> {
+  if (
+    typeof window ===
+    'undefined'
+  ) {
+    return new Set()
+  }
+
+  try {
+    const stored =
+      sessionStorage.getItem(
+        getGuidedSavedSettingsStorageKey(
+          tutorialId,
+          flowId,
+        ),
+      )
+
+    if (!stored) {
+      return new Set()
+    }
+
+    const parsed =
+      JSON.parse(
+        stored,
+      )
+
+    if (
+      !Array.isArray(
+        parsed,
+      )
+    ) {
+      return new Set()
+    }
+
+    return new Set(
+      parsed.filter(
+        (
+          value,
+        ): value is number =>
+          Number.isInteger(
+            value,
+          ) &&
+          value >=
+            0 &&
+          value <
+            RESEARCH_GUIDED_STEPS.length,
+      ),
+    )
+  } catch {
+    return new Set()
+  }
+}
+
 const stageStyleMap: Record<
   StudioStage,
   {
@@ -279,7 +353,11 @@ function PaletteBlockCard({
 }) {
   const stageStyle = stageStyleMap[block.stage]
   const requirement = requirementStyleMap[block.requirement]
-  const available = block.availability === 'available'
+  const available =
+    block.availability === 'available' &&
+    hasStudioBlockInspector(
+      block.id,
+    )
 
   return (
     <div
@@ -407,8 +485,8 @@ export function Stdio_create1() {
   const locationState =
     (
       location.state as
-      | StudioSaveNavigationState
-      | null
+        | StudioSaveNavigationState
+        | null
     ) ?? null
 
   const flowId =
@@ -585,6 +663,78 @@ export function Stdio_create1() {
       edges:
         studio.edges,
     })
+
+  const [
+    savedGuidedStepIndices,
+    setSavedGuidedStepIndices,
+  ] =
+    useState<Set<number>>(
+      () =>
+        getInitialGuidedSavedStepIndices(
+          tutorialId,
+          flowId,
+        ),
+    )
+
+  const setGuidedStepSettingsSaved =
+    (
+      stepIndex: number,
+      saved: boolean,
+    ) => {
+      setSavedGuidedStepIndices(
+        (
+          previous,
+        ) => {
+          const next =
+            new Set(
+              previous,
+            )
+
+          if (saved) {
+            next.add(
+              stepIndex,
+            )
+          } else {
+            next.delete(
+              stepIndex,
+            )
+          }
+
+          if (
+            typeof window !==
+            'undefined'
+          ) {
+            sessionStorage.setItem(
+              getGuidedSavedSettingsStorageKey(
+                tutorialId,
+                flowId,
+              ),
+              JSON.stringify(
+                [
+                  ...next,
+                ],
+              ),
+            )
+          }
+
+          return next
+        },
+      )
+    }
+
+  const currentGuidedSettingsSaved =
+    isResearchGuidedTutorial &&
+    savedGuidedStepIndices.has(
+      guidedTutorial.currentStepIndex,
+    )
+
+  const canGoNextAfterSettingsSave =
+    guidedTutorial.canGoNext &&
+    currentGuidedSettingsSaved
+
+  const canCompleteAfterSettingsSave =
+    guidedTutorial.isTutorialComplete &&
+    currentGuidedSettingsSaved
 
   const currentGuidedStep =
     isResearchGuidedTutorial
@@ -780,7 +930,7 @@ export function Stdio_create1() {
   const handleGuidedNext =
     () => {
       if (
-        !guidedTutorial.canGoNext
+        !canGoNextAfterSettingsSave
       ) {
         return
       }
@@ -802,7 +952,7 @@ export function Stdio_create1() {
   const handleGuidedComplete =
     () => {
       if (
-        !guidedTutorial.isTutorialComplete
+        !canCompleteAfterSettingsSave
       ) {
         return
       }
@@ -926,23 +1076,31 @@ export function Stdio_create1() {
   useEffect(() => {
     const html =
       document.documentElement
+
     const body =
       document.body
+
     const previousHtmlOverflow =
       html.style.overflow
+
     const previousHtmlOverscrollBehavior =
       html.style.overscrollBehavior
+
     const previousBodyOverflow =
       body.style.overflow
+
     const previousBodyOverscrollBehavior =
       body.style.overscrollBehavior
 
     html.style.overflow =
       'hidden'
+
     html.style.overscrollBehavior =
       'none'
+
     body.style.overflow =
       'hidden'
+
     body.style.overscrollBehavior =
       'none'
 
@@ -988,7 +1146,7 @@ export function Stdio_create1() {
             routeFlowId,
           ) ||
           mode !==
-          'create'
+            'create'
         )
 
       if (
@@ -1024,7 +1182,7 @@ export function Stdio_create1() {
             ) {
               throw new Error(
                 response.message ||
-                '저장된 흐름을 불러오지 못했습니다.',
+                  '저장된 흐름을 불러오지 못했습니다.',
               )
             }
 
@@ -1334,10 +1492,11 @@ export function Stdio_create1() {
           '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
         result: validationResult.valid
           ? '저장 조건을 충족했습니다.'
-          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${slotErrorIssues.length > 0
-            ? ' 필수 슬롯 설정을 확인하세요.'
-            : ''
-          }`,
+          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
+              slotErrorIssues.length > 0
+                ? ' 필수 슬롯 설정을 확인하세요.'
+                : ''
+            }`,
       },
     ]
   }, [validationResult])
@@ -1687,11 +1846,43 @@ export function Stdio_create1() {
           return
         }
 
+        if (
+          isResearchGuidedTutorial
+        ) {
+          const currentGuidedNode =
+            findGuidedStageNode(
+              guidedTutorial.currentStepIndex,
+            )
+
+          if (
+            currentGuidedNode?.id ===
+              selectedNode.id &&
+            !guidedTutorial.currentStatus
+              ?.configured
+          ) {
+            window.alert(
+              '현재 단계의 대상 블록 설정을 완료한 뒤 설정 저장을 눌러주세요.',
+            )
+
+            return
+          }
+
+          if (
+            currentGuidedNode?.id ===
+            selectedNode.id
+          ) {
+            setGuidedStepSettingsSaved(
+              guidedTutorial.currentStepIndex,
+              true,
+            )
+          }
+        }
+
         /*
         * 각 Block Inspector의 onChange에서
         * config/value/state는 이미 Studio state에 저장된 상태입니다.
         *
-        * 필수 설정 확인이 끝났으므로
+        * 필수 설정 확인과 Guided 설정 저장 처리가 끝났으므로
         * 열려 있는 세부 Inspector를 닫습니다.
         */
         setOpenInspectorSlotId(
@@ -1871,17 +2062,47 @@ export function Stdio_create1() {
                     데스크톱에서 다시 접속해주세요.
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        '/',
-                      )
-                    }
-                    className="mt-[26px] flex h-[48px] w-full items-center justify-center rounded-[10px] bg-[#6366F1] text-[16px] font-bold text-white hover:bg-[#5558DB]"
-                  >
-                    홈으로 돌아가기
-                  </button>
+                  <p className="mt-[22px] text-[13px] font-bold text-[#777780]">
+                    계속 둘러볼 화면을 선택해 주세요.
+                  </p>
+
+                  <div className="mt-[12px] grid grid-cols-1 gap-[9px]">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          '/',
+                        )
+                      }
+                      className="flex h-[46px] w-full items-center justify-center rounded-[10px] bg-[#6366F1] text-[15px] font-bold text-white hover:bg-[#5558DB]"
+                    >
+                      홈
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          '/official-tutorials',
+                        )
+                      }
+                      className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-[#D8D9F7] bg-white text-[15px] font-bold text-[#6366F1] hover:bg-[#F7F7FF]"
+                    >
+                      공식 튜토리얼
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          '/public-library',
+                        )
+                      }
+                      className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white text-[15px] font-bold text-[#52525B] hover:bg-[#F7F7F9]"
+                    >
+                      공개 라이브러리
+                    </button>
+                  </div>
                 </div>
               </div>
         <Header />
@@ -2102,14 +2323,17 @@ export function Stdio_create1() {
                 canGoPrevious={
                   guidedTutorial.canGoPrevious
                 }
+                settingsSaved={
+                  currentGuidedSettingsSaved
+                }
                 canGoNext={
-                  guidedTutorial.canGoNext
+                  canGoNextAfterSettingsSave
                 }
                 isLastStep={
                   guidedTutorial.isLastStep
                 }
                 isTutorialComplete={
-                  guidedTutorial.isTutorialComplete
+                  canCompleteAfterSettingsSave
                 }
                 onPrevious={
                   handleGuidedPrevious
@@ -2338,6 +2562,17 @@ export function Stdio_create1() {
                                       options?.state,
                                   })
 
+                                  if (
+                                    isResearchGuidedTutorial &&
+                                    selectedNode.data.node.stage ===
+                                      currentGuidedStage
+                                  ) {
+                                    setGuidedStepSettingsSaved(
+                                      guidedTutorial.currentStepIndex,
+                                      false,
+                                    )
+                                  }
+
                                   restoreInspectorScrollAfterUpdate()
                                 }}
                                 onValueChange={(value) => {
@@ -2348,6 +2583,17 @@ export function Stdio_create1() {
                                       slot.id,
                                     value,
                                   })
+
+                                  if (
+                                    isResearchGuidedTutorial &&
+                                    selectedNode.data.node.stage ===
+                                      currentGuidedStage
+                                  ) {
+                                    setGuidedStepSettingsSaved(
+                                      guidedTutorial.currentStepIndex,
+                                      false,
+                                    )
+                                  }
 
                                   restoreInspectorScrollAfterUpdate()
                                 }}

@@ -34,6 +34,7 @@ interface ResearchGuidedTutorialPanelProps {
   stepStatuses:
     readonly ResearchGuidedStepStatus[]
 
+  settingsSaved: boolean
   canGoPrevious: boolean
   canGoNext: boolean
   isLastStep: boolean
@@ -92,6 +93,7 @@ export function ResearchGuidedTutorialPanel({
   currentStepIndex,
   currentStatus,
   stepStatuses,
+  settingsSaved,
   canGoPrevious,
   canGoNext,
   isLastStep,
@@ -111,6 +113,10 @@ export function ResearchGuidedTutorialPanel({
   ) {
     return null
   }
+
+  const currentStepReady =
+    currentStatus.complete &&
+    settingsSaved
 
   return (
     <>
@@ -257,6 +263,13 @@ export function ResearchGuidedTutorialPanel({
               label="Inspector 설정 완료"
             />
 
+            <StatusRow
+              complete={
+                settingsSaved
+              }
+              label="전체 설정 저장"
+            />
+
             {currentStepIndex >
               0 && (
               <StatusRow
@@ -300,9 +313,12 @@ export function ResearchGuidedTutorialPanel({
             }
             {' · '}
             {
-              currentStatus.complete
+              currentStepReady
                 ? '현재 단계가 완료되었습니다.'
-                : '필수 작업을 완료하면 다음 노드로 진행할 수 있습니다.'
+                : currentStatus.complete &&
+                    !settingsSaved
+                  ? '오른쪽 Inspector의 설정 저장을 눌러주세요.'
+                  : '필수 작업을 완료하면 다음 노드로 진행할 수 있습니다.'
             }
           </p>
 
