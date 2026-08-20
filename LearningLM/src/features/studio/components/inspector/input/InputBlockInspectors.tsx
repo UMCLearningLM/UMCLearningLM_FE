@@ -1,6 +1,18 @@
+import axios from 'axios'
+
 import {
   useState,
 } from 'react'
+
+import {
+  useLocation,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
+
+import {
+  uploadFlowFile,
+} from '../../../../../pages/api/StudioApi'
 
 import {
   BarChart3,
@@ -871,39 +883,24 @@ export function TopicInputInspector({
  */
 
 type StudioUploadedFile = {
-  id: string
-  name: string
-  size: number
-  role: string
-  validationError:
-  | string
-  | null
+  fileId: number
+  fileName: string
+  fileType: string
+  fileSize: number
+  status:
+    | 'READY'
+    | 'PARSE_FAILED'
 }
-
-const fileRoleOptions = [
-  {
-    label: '분석 대상',
-    value: 'analysis',
-  },
-  {
-    label: '참고',
-    value: 'reference',
-  },
-  {
-    label: '제외',
-    value: 'exclude',
-  },
-]
 
 const fileMissingOptions = [
   {
-    value: 'stop',
+    value: 'STOP',
     label: '실행 중지',
     description:
       '파일이 없으면 실행하지 않음',
   },
   {
-    value: 'warn',
+    value: 'WARN',
     label: '경고 후 진행',
     description:
       '경고만 표시하고 계속',
@@ -913,10 +910,11 @@ const fileMissingOptions = [
 const allowedExtensions =
   new Set([
     'pdf',
-    'doc',
     'docx',
-    'xls',
     'xlsx',
+    'jpg',
+    'jpeg',
+    'png',
   ])
 
 const maxFileSize =
@@ -924,9 +922,43 @@ const maxFileSize =
   1024 *
   1024
 
+function parseStudioFlowId(
+  value:
+    | string
+    | number
+    | null
+    | undefined,
+): number | undefined {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return undefined
+  }
+
+  const parsed =
+    Number(value)
+
+  return (
+    Number.isInteger(
+      parsed,
+    ) &&
+    parsed > 0
+  )
+    ? parsed
+    : undefined
+}
+
 function getFileValidationError(
   file: File,
-) {
+): string | null {
+  if (
+    file.size <= 0
+  ) {
+    return '빈 파일은 업로드할 수 없습니다.'
+  }
+
   const extension =
     file.name
       .split('.')
@@ -934,15 +966,11 @@ function getFileValidationError(
       ?.toLowerCase() ??
     ''
 
-  const supported =
-    file.type.startsWith(
-      'image/',
-    ) ||
-    allowedExtensions.has(
+  if (
+    !allowedExtensions.has(
       extension,
     )
-
-  if (!supported) {
+  ) {
     return '지원하지 않는 형식입니다.'
   }
 
@@ -981,7 +1009,7 @@ function formatFileSize(
 
 function getFileTypeStyle(
   fileName: string,
-  hasError: boolean,
+  hasError = false,
 ) {
   if (hasError) {
     return 'border-slate-500 bg-slate-100 text-slate-600'
@@ -1002,8 +1030,6 @@ function getFileTypeStyle(
 
   if (
     extension ===
-    'xls' ||
-    extension ===
     'xlsx'
   ) {
     return 'border-emerald-500 bg-emerald-50 text-emerald-600'
@@ -1011,217 +1037,473 @@ function getFileTypeStyle(
 
   if (
     extension ===
-    'doc' ||
-    extension ===
     'docx'
   ) {
     return 'border-blue-500 bg-blue-50 text-blue-600'
   }
 
+  if (
+    extension ===
+      'jpg' ||
+    extension ===
+      'jpeg' ||
+    extension ===
+      'png'
+  ) {
+    return 'border-violet-400 bg-violet-50 text-violet-600'
+  }
+
   return 'border-slate-200 bg-slate-100 text-slate-500'
 }
 
-function readFiles(
-  config: StudioBlockConfig | undefined,
+function readUploadedFiles(
+  config:
+    StudioBlockConfig | undefined,
 ): StudioUploadedFile[] {
   return getObjectArray(
     config,
-    'files',
+    'uploadedFiles',
   )
     .map(
       (
         value,
-      ) => ({
-        id:
-          typeof value.id ===
-            'string'
-            ? value.id
-            : '',
-
-        name:
-          typeof value.name ===
-            'string'
-            ? value.name
-            : '',
-
-        size:
-          typeof value.size ===
+      ) => {
+        const fileId =
+          typeof value.fileId ===
             'number'
-            ? value.size
-            : 0,
+            ? value.fileId
+            : 0
 
-        role:
-          typeof value.role ===
+        const fileName =
+          typeof value.fileName ===
             'string'
-            ? value.role
-            : 'analysis',
+            ? value.fileName
+            : ''
 
-        validationError:
-          typeof value.validationError ===
+        const fileType =
+          typeof value.fileType ===
             'string'
-            ? value.validationError
-            : null,
-      }),
+            ? value.fileType
+            : ''
+
+        const fileSize =
+          typeof value.fileSize ===
+            'number'
+            ? value.fileSize
+            : 0
+
+        const status =
+          value.status ===
+            'PARSE_FAILED'
+            ? 'PARSE_FAILED'
+            : 'READY'
+
+        return {
+          fileId,
+          fileName,
+          fileType,
+          fileSize,
+          status,
+        } satisfies StudioUploadedFile
+      },
     )
     .filter(
       (
         file,
       ) =>
-        file.id &&
-        file.name,
+        file.fileId >
+          0 &&
+        Boolean(
+          file.fileName,
+        ) &&
+        Boolean(
+          file.fileType,
+        ),
     )
+}
+
+function getFileUploadErrorMessage(
+  error: unknown,
+): string {
+  if (
+    axios.isAxiosError(
+      error,
+    )
+  ) {
+    if (
+      error.code ===
+      'ECONNABORTED'
+    ) {
+      return '업로드 시간이 초과되었습니다.'
+    }
+
+    const responseData =
+      error.response
+        ?.data as
+        | {
+            message?: unknown
+          }
+        | undefined
+
+    if (
+      typeof responseData
+        ?.message ===
+        'string' &&
+      responseData.message.trim()
+    ) {
+      return responseData.message
+    }
+  }
+
+  if (
+    error instanceof Error &&
+    error.message.trim()
+  ) {
+    return error.message
+  }
+
+  return '파일 업로드에 실패했습니다.'
 }
 
 export function FileUploadInspector({
   slot,
   onConfigChange,
 }: StudioBlockInspectorComponentProps) {
+  const location =
+    useLocation()
+
+  const {
+    flowId:
+      routeFlowId,
+  } =
+    useParams<{
+      flowId?: string
+    }>()
+
+  const [
+    searchParams,
+  ] =
+    useSearchParams()
+
+  const locationState =
+    location.state as
+      | {
+          flowId?:
+            | number
+            | string
+            | null
+        }
+      | null
+
+  const flowId =
+    parseStudioFlowId(
+      searchParams.get(
+        'flowId',
+      ),
+    ) ??
+    parseStudioFlowId(
+      routeFlowId,
+    ) ??
+    parseStudioFlowId(
+      locationState?.flowId,
+    )
+
+  const [
+    isUploading,
+    setIsUploading,
+  ] =
+    useState(false)
+
+  const [
+    uploadErrors,
+    setUploadErrors,
+  ] =
+    useState<string[]>(
+      [],
+    )
+
   const files =
-    readFiles(
+    readUploadedFiles(
       slot.config,
     )
 
-  const missingAction =
+  const legacyFilesExist =
+    files.length ===
+      0 &&
+    getObjectArray(
+      slot.config,
+      'files',
+    ).length >
+      0
+
+  const legacyMissingAction =
     getString(
       slot.config,
       'missingAction',
-      'stop',
+      '',
     )
 
-  const validFileCount =
+  const missingFileHandling =
+    getString(
+      slot.config,
+      'missingFileHandling',
+      legacyMissingAction ===
+        'warn'
+        ? 'WARN'
+        : 'STOP',
+    )
+
+  const readyFileCount =
     files.filter(
       (
         file,
       ) =>
-        !file.validationError,
+        file.status ===
+        'READY',
     ).length
 
-  const errorCount =
-    files.length -
-    validFileCount
+  const parseFailedCount =
+    files.filter(
+      (
+        file,
+      ) =>
+        file.status ===
+        'PARSE_FAILED',
+    ).length
 
   const complete =
-    validFileCount >
-    0 &&
+    readyFileCount >
+      0 &&
     Boolean(
-      missingAction,
+      missingFileHandling,
     ) &&
-    errorCount === 0
+    parseFailedCount ===
+      0
 
   const save = (
     nextFiles:
       StudioUploadedFile[],
-    nextMissingAction =
-      missingAction,
+    nextMissingFileHandling =
+      missingFileHandling,
   ) => {
-    const nextValidCount =
+    const nextReadyCount =
       nextFiles.filter(
         (
           file,
         ) =>
-          !file.validationError,
+          file.status ===
+          'READY',
       ).length
 
-    const nextErrorCount =
-      nextFiles.length -
-      nextValidCount
+    const nextParseFailedCount =
+      nextFiles.filter(
+        (
+          file,
+        ) =>
+          file.status ===
+          'PARSE_FAILED',
+      ).length
 
     onConfigChange(
       {
-        files:
-          nextFiles,
+        /*
+         * BE V9 input_schema와 동일한 key를 사용합니다.
+         * Studio 저장 시에는 options JSON 안에 들어가고,
+         * Preview 요청 생성 시 uploadedFiles만 input으로 다시 분리합니다.
+         */
+        uploadedFiles:
+          nextFiles.map(
+            (
+              file,
+            ) => ({
+              fileId:
+                file.fileId,
+              fileName:
+                file.fileName,
+              fileType:
+                file.fileType,
+              fileSize:
+                file.fileSize,
+              status:
+                file.status,
+            }),
+          ),
 
-        missingAction:
-          nextMissingAction,
+        missingFileHandling:
+          nextMissingFileHandling,
       },
       {
         summaryValue:
-          nextValidCount >
+          nextReadyCount >
             0
-            ? `${nextValidCount}개 파일`
+            ? `${nextReadyCount}개 파일`
             : '',
 
         state:
-          nextErrorCount >
+          nextParseFailedCount >
             0
             ? 'error'
             : resolveState(
-              nextValidCount >
-              0 &&
-              Boolean(
-                nextMissingAction,
+                nextReadyCount >
+                  0 &&
+                Boolean(
+                  nextMissingFileHandling,
+                ),
               ),
-            ),
       },
     )
   }
 
-  const addFiles = (
-    incoming:
-      | FileList
-      | File[],
-  ) => {
-    const next =
-      Array.from(
-        incoming,
-      ).map(
-        (
-          file,
-        ): StudioUploadedFile => ({
-          id:
-            globalThis.crypto
-              ?.randomUUID?.() ??
-            `${Date.now()}-${Math.random()}`,
-
-          name:
-            file.name,
-
-          size:
-            file.size,
-
-          role:
-            'analysis',
-
-          validationError:
-            getFileValidationError(
-              file,
-            ),
-        }),
+  const addFiles =
+    async (
+      incoming:
+        | FileList
+        | File[],
+    ) => {
+      setUploadErrors(
+        [],
       )
 
-    save([
-      ...files,
-      ...next,
-    ])
-  }
+      if (!flowId) {
+        setUploadErrors([
+          'Flow ID가 없어 파일을 업로드할 수 없습니다. 스튜디오를 다시 진입해 주세요.',
+        ])
+
+        return
+      }
+
+      const incomingFiles =
+        Array.from(
+          incoming,
+        )
+
+      const validationErrors:
+        string[] =
+        []
+
+      const validFiles =
+        incomingFiles.filter(
+          (
+            file,
+          ) => {
+            const validationError =
+              getFileValidationError(
+                file,
+              )
+
+            if (
+              validationError
+            ) {
+              validationErrors.push(
+                `${file.name}: ${validationError}`,
+              )
+
+              return false
+            }
+
+            return true
+          },
+        )
+
+      if (
+        validFiles.length ===
+        0
+      ) {
+        setUploadErrors(
+          validationErrors,
+        )
+
+        return
+      }
+
+      setIsUploading(
+        true,
+      )
+
+      const uploadedFiles:
+        StudioUploadedFile[] =
+        []
+
+      const requestErrors =
+        [...validationErrors]
+
+      try {
+        /*
+         * endpoint가 요청 1회당 file 하나를 받으므로
+         * 여러 파일 선택 시 순차적으로 업로드합니다.
+         * 일부 파일만 실패해도 성공한 파일은 유지합니다.
+         */
+        for (
+          const file of
+            validFiles
+        ) {
+          try {
+            const response =
+              await uploadFlowFile(
+                flowId,
+                file,
+              )
+
+            if (
+              !response.success
+            ) {
+              throw new Error(
+                response.message ||
+                  '파일 업로드에 실패했습니다.',
+              )
+            }
+
+            const result =
+              response.result
+
+            uploadedFiles.push(
+              {
+                fileId:
+                  result.fileId,
+                fileName:
+                  result.fileName,
+                fileType:
+                  result.fileType,
+                fileSize:
+                  result.fileSize,
+                status:
+                  result.status,
+              },
+            )
+          } catch (
+            error
+          ) {
+            requestErrors.push(
+              `${file.name}: ${getFileUploadErrorMessage(
+                error,
+              )}`,
+            )
+          }
+        }
+
+        if (
+          uploadedFiles.length >
+          0
+        ) {
+          save([
+            ...files,
+            ...uploadedFiles,
+          ])
+        }
+
+        setUploadErrors(
+          requestErrors,
+        )
+      } finally {
+        setIsUploading(
+          false,
+        )
+      }
+    }
 
   return (
     <ExpandableSettingBlock
       title="파일 업로드 받기"
-      // code="IN-004"
-      // stage="INPUT"
-      // description="문서·이미지를 드래그해 업로드합니다. 카드별 역할과 우선순위를 정할 수 있습니다."
-      // icon={
-      //   <Paperclip
-      //     size={18}
-      //   />
-      // }
-      // category="RECOMMENDED"
-      // tagCounts={{
-      //   required: 2,
-      //   optional: 1,
-      //   sortable: 1,
-      //   missing:
-      //     Number(
-      //       validFileCount ===
-      //       0,
-      //     ) +
-      //     Number(
-      //       !missingAction,
-      //     ),
-      //   error:
-      //     errorCount,
-      // }}
       required={
         slot.required
       }
@@ -1232,16 +1514,21 @@ export function FileUploadInspector({
       footer={
         <div className="flex items-center justify-between gap-4">
           <span className="text-xs text-slate-400">
-            {errorCount >
-              0
-              ? `오류 파일 ${errorCount}개`
-              : complete
-                ? '파일 설정 완료'
-                : '파일 설정 대기'}
+            {isUploading
+              ? '서버에 업로드 중'
+              : parseFailedCount >
+                  0
+                ? `처리 실패 파일 ${parseFailedCount}개`
+                : complete
+                  ? '파일 설정 완료'
+                  : '파일 설정 대기'}
           </span>
 
           <Button
             size="sm"
+            disabled={
+              isUploading
+            }
             onClick={() =>
               save(files)
             }
@@ -1261,14 +1548,54 @@ export function FileUploadInspector({
           </p>
 
           <FileDropzone
-            accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png"
             multiple
-            title="파일을 여기에 놓기 또는 찾아보기"
-            description="PDF · DOCX · XLSX · 이미지 · 최대 20MB"
+            disabled={
+              isUploading ||
+              !flowId
+            }
+            title={
+              isUploading
+                ? '파일을 서버에 업로드하고 있습니다.'
+                : '파일을 여기에 놓기 또는 찾아보기'
+            }
+            description="PDF · DOCX · XLSX · JPG · PNG · 파일당 최대 20MB"
             onFiles={
               addFiles
             }
           />
+
+          {!flowId && (
+            <p className="mt-2 text-xs font-semibold text-rose-500">
+              Flow ID를 확인할 수 없어 업로드가 비활성화되었습니다.
+            </p>
+          )}
+
+          {legacyFilesExist && (
+            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-700">
+              기존에 화면에만 저장했던 파일 정보가 있습니다. 실제 서버 파일이 아니므로 다시 업로드해 주세요.
+            </p>
+          )}
+
+          {uploadErrors.length >
+            0 && (
+            <div className="mt-2 rounded-lg bg-rose-50 px-3 py-2">
+              {uploadErrors.map(
+                (
+                  message,
+                ) => (
+                  <p
+                    key={
+                      message
+                    }
+                    className="text-xs font-semibold leading-5 text-rose-600"
+                  >
+                    {message}
+                  </p>
+                ),
+              )}
+            </div>
+          )}
         </div>
 
         {files.length >
@@ -1278,39 +1605,45 @@ export function FileUploadInspector({
                 업로드 된 파일
                 <span className="font-medium text-slate-300">
                   {' '}
-                  · 드래그로 우선순위 변경
+                  · 서버 저장 완료
                 </span>
               </p>
 
-              <DraggableBlock
-                items={files.map(
+              <div className="space-y-2">
+                {files.map(
                   (
                     file,
-                  ) => ({
-                    id:
-                      file.id,
+                  ) => {
+                    const hasError =
+                      file.status ===
+                      'PARSE_FAILED'
 
-                    error:
-                      Boolean(
-                        file.validationError,
-                      ),
-
-                    content: (
-                      <div className="flex min-w-0 items-center gap-3">
+                    return (
+                      <div
+                        key={
+                          file.fileId
+                        }
+                        className={[
+                          'flex min-h-[76px] items-center gap-3 rounded-2xl border-2 bg-white px-4 py-3',
+                          hasError
+                            ? 'border-rose-400 bg-rose-50'
+                            : 'border-slate-200',
+                        ].join(
+                          ' ',
+                        )}
+                      >
                         <span
                           className={[
                             'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 text-base font-black',
                             getFileTypeStyle(
-                              file.name,
-                              Boolean(
-                                file.validationError,
-                              ),
+                              file.fileName,
+                              hasError,
                             ),
                           ].join(
                             ' ',
                           )}
                         >
-                          {file.name
+                          {file.fileName
                             .split(
                               '.',
                             )
@@ -1322,83 +1655,47 @@ export function FileUploadInspector({
                             )}
                         </span>
 
-                        <span className="min-w-[80px] basis-0 flex-1">
+                        <span className="min-w-0 flex-1">
                           <span className="block truncate text-[15px] font-bold text-slate-700">
                             {
-                              file.name
+                              file.fileName
                             }
                           </span>
 
                           <span className="mt-0.5 block text-xs text-slate-400">
-                            {file.validationError ??
-                              formatFileSize(
-                                file.size,
-                              )}
+                            {formatFileSize(
+                              file.fileSize,
+                            )}
+                            {' · '}
+                            {hasError
+                              ? '문서 처리 실패'
+                              : '업로드 완료'}
                           </span>
                         </span>
 
-                        {!file.validationError && (
-                          <Select
-                            size="sm"
-                            value={
-                              file.role
-                            }
-                            options={
-                              fileRoleOptions
-                            }
-                            onChange={(
-                              role,
-                            ) =>
-                              save(
-                                files.map(
-                                  (
-                                    item,
-                                  ) =>
-                                    item.id ===
-                                      file.id
-                                      ? {
-                                        ...item,
-                                        role,
-                                      }
-                                      : item,
-                                ),
-                              )
-                            }
-                            className="!w-[105px] shrink-0"
-                          />
-                        )}
+                        <span
+                          className={[
+                            'shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold',
+                            hasError
+                              ? 'bg-rose-100 text-rose-600'
+                              : 'bg-emerald-50 text-emerald-600',
+                          ].join(
+                            ' ',
+                          )}
+                        >
+                          {
+                            file.status
+                          }
+                        </span>
                       </div>
-                    ),
-                  }),
+                    )
+                  },
                 )}
-                onChange={(
-                  orderedItems,
-                ) =>
-                  save(
-                    orderedItems
-                      .map(
-                        (
-                          item,
-                        ) =>
-                          files.find(
-                            (
-                              file,
-                            ) =>
-                              file.id ===
-                              item.id,
-                          ),
-                      )
-                      .filter(
-                        (
-                          file,
-                        ): file is StudioUploadedFile =>
-                          Boolean(
-                            file,
-                          ),
-                      ),
-                  )
-                }
-              />
+              </div>
+
+              <p className="mt-2 text-[11px] leading-[18px] text-slate-400">
+                현재 BE에는 개별 업로드 파일 삭제 API가 없어 서버에 올라간 파일은 이 화면에서 제거하지 않습니다.
+              </p>
             </div>
           )}
 
@@ -1416,7 +1713,7 @@ export function FileUploadInspector({
               fileMissingOptions
             }
             value={
-              missingAction
+              missingFileHandling
             }
             onChange={(
               value,

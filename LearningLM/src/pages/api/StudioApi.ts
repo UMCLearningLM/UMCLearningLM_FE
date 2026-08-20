@@ -490,3 +490,62 @@ export async function previewFlow(
 
   return responseData
 }
+
+/* =========================================================
+ * 8. Flow 파일 업로드
+ * POST /flows/{flowId}/files
+ * ========================================================= */
+
+export type UploadedFlowFileStatus =
+  | 'READY'
+  | 'PARSE_FAILED'
+
+export interface UploadedFlowFileResult {
+  fileId: number
+  fileName: string
+  fileType: string
+  fileSize: number
+  status: UploadedFlowFileStatus
+}
+
+export type UploadFlowFileResponse =
+  StudioApiBaseResponse<
+    UploadedFlowFileResult
+  >
+
+export async function uploadFlowFile(
+  flowId: number,
+  file: File,
+  _accessToken?: string,
+): Promise<UploadFlowFileResponse> {
+  const formData =
+    new FormData()
+
+  formData.append(
+    'file',
+    file,
+    file.name,
+  )
+
+  const {
+    data:
+      responseData,
+  } =
+    await api.post<UploadFlowFileResponse>(
+      `/flows/${flowId}/files`,
+      formData,
+      {
+        /*
+         * 파일 업로드는 기존 JSON 요청보다 오래 걸릴 수 있어
+         * 공용 10초 timeout 대신 60초를 사용합니다.
+         *
+         * Content-Type은 직접 지정하지 않습니다.
+         * Axios가 FormData boundary를 자동으로 붙입니다.
+         */
+        timeout:
+          60_000,
+      },
+    )
+
+  return responseData
+}

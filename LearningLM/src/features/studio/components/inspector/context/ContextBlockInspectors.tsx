@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useState,
 } from 'react'
 
@@ -510,48 +511,299 @@ export function ProjectDocumentInspector({
   )
 }
 
-/*
- * ============================================================
+/* ============================================================
  * CTX-002 업로드 문서 읽기
  * ============================================================
  */
 
-const readRangeOptions = [
+type StudioUploadedFileReference = {
+  fileId: number
+  fileName: string
+  fileType: string
+  fileSize: number
+  status:
+    | 'READY'
+    | 'PARSE_FAILED'
+}
+
+const readScopeOptions = [
   {
     label: '전체',
-    value: 'all',
+    value: 'ALL',
     description:
       '전체 읽기',
   },
   {
     label: '페이지 지정',
-    value: 'pages',
+    value: 'PAGE_RANGE',
     description:
       '사용자가 원하는 범위 지정',
   },
   {
     label: '키워드 주변',
-    value: 'keyword',
+    value: 'KEYWORD_AROUND',
     description:
       '키워드 앞뒤 문맥만',
   },
 ]
 
-export function UploadedDocumentInspector({
-  slot,
-  onConfigChange,
-}: StudioBlockInspectorComponentProps) {
-  const readRange =
+function readUploadedFileReferences(
+  config:
+    StudioBlockConfig | undefined,
+): StudioUploadedFileReference[] {
+  const value =
+    config?.uploadedFiles
+
+  if (
+    !Array.isArray(
+      value,
+    )
+  ) {
+    return []
+  }
+
+  return value
+    .map(
+      (
+        item,
+      ):
+        StudioUploadedFileReference | null => {
+        if (
+          typeof item !==
+            'object' ||
+          item ===
+            null ||
+          Array.isArray(
+            item,
+          )
+        ) {
+          return null
+        }
+
+        const fileId =
+          typeof item.fileId ===
+            'number'
+            ? item.fileId
+            : 0
+
+        const fileName =
+          typeof item.fileName ===
+            'string'
+            ? item.fileName
+            : ''
+
+        const fileType =
+          typeof item.fileType ===
+            'string'
+            ? item.fileType
+            : ''
+
+        const fileSize =
+          typeof item.fileSize ===
+            'number'
+            ? item.fileSize
+            : 0
+
+        const status =
+          item.status ===
+            'PARSE_FAILED'
+            ? 'PARSE_FAILED'
+            : 'READY'
+
+        if (
+          fileId <=
+            0 ||
+          !fileName ||
+          !fileType
+        ) {
+          return null
+        }
+
+        return {
+          fileId,
+          fileName,
+          fileType,
+          fileSize,
+          status,
+        }
+      },
+    )
+    .filter(
+      (
+        file,
+      ): file is StudioUploadedFileReference =>
+        file !==
+        null,
+    )
+}
+
+function deduplicateUploadedFiles(
+  files:
+    readonly StudioUploadedFileReference[],
+): StudioUploadedFileReference[] {
+  const fileMap =
+    new Map<
+      number,
+      StudioUploadedFileReference
+    >()
+
+  for (
+    const file of files
+  ) {
+    fileMap.set(
+      file.fileId,
+      file,
+    )
+  }
+
+  return [
+    ...fileMap.values(),
+  ]
+}
+
+function parsePageOrKeyword(
+  value: string,
+): string[] {
+  return value
+    .split(
+      /[\n,]+/,
+    )
+    .map(
+      (
+        item,
+      ) =>
+        item.trim(),
+    )
+    .filter(
+      Boolean,
+    )
+}
+
+function normalizeReadScope(
+  config:
+    StudioBlockConfig | undefined,
+): string {
+  const current =
     getString(
-      slot.config,
+      config,
+      'readScope',
+      '',
+    )
+
+  if (
+    current ===
+      'ALL' ||
+    current ===
+      'PAGE_RANGE' ||
+    current ===
+      'KEYWORD_AROUND'
+  ) {
+    return current
+  }
+
+  /*
+   * 기존 FE 세션 호환:
+   * all / pages / keyword → BE enum
+   */
+  const legacy =
+    getString(
+      config,
       'readRange',
       'all',
     )
 
-  const locator =
+  if (
+    legacy ===
+    'pages'
+  ) {
+    return 'PAGE_RANGE'
+  }
+
+  if (
+    legacy ===
+    'keyword'
+  ) {
+    return 'KEYWORD_AROUND'
+  }
+
+  return 'ALL'
+}
+
+export function UploadedDocumentInspector({
+  slot,
+  connectionInfo,
+  onConfigChange,
+}: StudioBlockInspectorComponentProps) {
+  const storedUploadedFiles =
+    readUploadedFileReferences(
+      slot.config,
+    )
+
+  /*
+   * 현재 CTX Node로 실제 연결된 이전 Node 중
+   * IN-004 파일 업로드 블록을 찾아 서버 업로드 결과를 가져옵니다.
+   */
+  const connectedUploadedFiles =
+    deduplicateUploadedFiles(
+      (
+        connectionInfo
+          ?.incomingNodes ??
+        []
+      ).flatMap(
+        (
+          node,
+        ) =>
+          node.slots.flatMap(
+            (
+              sourceSlot,
+            ) =>
+              sourceSlot.id ===
+              'input-file-upload'
+                ? readUploadedFileReferences(
+                    sourceSlot.config,
+                  )
+                : [],
+          ),
+      ),
+    )
+
+  /*
+   * 연결된 IN-004가 있으면 그것을 최신 원본으로 사용합니다.
+   * 저장된 Flow 복원 시에도 hydration이 Stage 간 Edge를 다시 만들기 때문에
+   * 정상적으로 connectedUploadedFiles가 복원됩니다.
+   */
+  const uploadedFiles =
+    connectedUploadedFiles.length >
+      0
+      ? connectedUploadedFiles
+      : storedUploadedFiles
+
+  const readScope =
+    normalizeReadScope(
+      slot.config,
+    )
+
+  const legacyLocator =
     getString(
       slot.config,
       'locator',
+      '',
+    )
+
+  const pageOrKeyword =
+    getStringArray(
+      slot.config,
+      'pageOrKeyword',
+      legacyLocator.trim()
+        ? [
+            legacyLocator.trim(),
+          ]
+        : [],
+    )
+
+  const locator =
+    pageOrKeyword.join(
+      ', ',
     )
 
   const includeTable =
@@ -561,11 +813,15 @@ export function UploadedDocumentInspector({
       true,
     )
 
-  const includeImages =
+  const includeImage =
     getBoolean(
       slot.config,
-      'includeImages',
-      true,
+      'includeImage',
+      getBoolean(
+        slot.config,
+        'includeImages',
+        true,
+      ),
     )
 
   const includeAppendix =
@@ -575,100 +831,254 @@ export function UploadedDocumentInspector({
       false,
     )
 
-  const complete =
-    Boolean(
-      readRange,
-    ) &&
-    (
-      readRange ===
-      'all' ||
-      Boolean(
-        locator.trim(),
-      )
+  const hasReadyFiles =
+    uploadedFiles.some(
+      (
+        file,
+      ) =>
+        file.status ===
+        'READY',
     )
 
-  const save = (
-    patch: StudioBlockConfig,
-  ) => {
-    const nextReadRange =
-      typeof patch.readRange ===
-        'string'
-        ? patch.readRange
-        : readRange
+  const hasParseFailedFile =
+    uploadedFiles.some(
+      (
+        file,
+      ) =>
+        file.status ===
+        'PARSE_FAILED',
+    )
 
-    const nextLocator =
-      typeof patch.locator ===
+  const rangeConfigured =
+    readScope ===
+      'ALL' ||
+    pageOrKeyword.length >
+      0
+
+  const complete =
+    hasReadyFiles &&
+    !hasParseFailedFile &&
+    rangeConfigured
+
+  const save = (
+    patch:
+      StudioBlockConfig,
+    sourceFiles:
+      StudioUploadedFileReference[] =
+      uploadedFiles,
+  ) => {
+    const nextReadScope =
+      typeof patch.readScope ===
         'string'
-        ? patch.locator
-        : locator
+        ? patch.readScope
+        : readScope
+
+    const nextPageOrKeyword =
+      Array.isArray(
+        patch.pageOrKeyword,
+      )
+        ? patch.pageOrKeyword.filter(
+            (
+              item,
+            ): item is string =>
+              typeof item ===
+              'string',
+          )
+        : pageOrKeyword
+
+    const nextIncludeTable =
+      typeof patch.includeTable ===
+        'boolean'
+        ? patch.includeTable
+        : includeTable
+
+    const nextIncludeImage =
+      typeof patch.includeImage ===
+        'boolean'
+        ? patch.includeImage
+        : includeImage
+
+    const nextIncludeAppendix =
+      typeof patch.includeAppendix ===
+        'boolean'
+        ? patch.includeAppendix
+        : includeAppendix
+
+    const nextReadyFiles =
+      sourceFiles.filter(
+        (
+          file,
+        ) =>
+          file.status ===
+          'READY',
+      )
+
+    const nextHasParseFailedFile =
+      sourceFiles.some(
+        (
+          file,
+        ) =>
+          file.status ===
+          'PARSE_FAILED',
+      )
+
+    const nextRangeConfigured =
+      nextReadScope ===
+        'ALL' ||
+      nextPageOrKeyword.length >
+        0
 
     const nextComplete =
-      Boolean(
-        nextReadRange,
-      ) &&
-      (
-        nextReadRange ===
-        'all' ||
-        Boolean(
-          nextLocator.trim(),
-        )
-      )
+      nextReadyFiles.length >
+        0 &&
+      !nextHasParseFailedFile &&
+      nextRangeConfigured
+
+    const scopeLabel =
+      nextReadScope ===
+        'ALL'
+        ? '전체 읽기'
+        : nextReadScope ===
+            'PAGE_RANGE'
+          ? '페이지 지정'
+          : '키워드 주변'
 
     onConfigChange(
       {
-        sourceBlockId:
-          'input-file-upload',
+        /*
+         * BE V9 CTX-002 input_schema
+         */
+        uploadedFiles:
+          sourceFiles.map(
+            (
+              file,
+            ) => ({
+              fileId:
+                file.fileId,
+              fileName:
+                file.fileName,
+              fileType:
+                file.fileType,
+              fileSize:
+                file.fileSize,
+              status:
+                file.status,
+            }),
+          ),
 
-        readRange,
-        locator,
-        includeTable,
-        includeImages,
-        includeAppendix,
+        /*
+         * BE V9 CTX-002 option_schema
+         */
+        readScope:
+          nextReadScope,
 
-        ...patch,
+        pageOrKeyword:
+          nextPageOrKeyword,
+
+        includeTable:
+          nextIncludeTable,
+
+        includeImage:
+          nextIncludeImage,
+
+        includeAppendix:
+          nextIncludeAppendix,
       },
       {
         summaryValue:
-          nextReadRange ===
-            'all'
-            ? '전체 읽기'
-            : nextLocator.trim()
-              ? `${nextReadRange} · ${nextLocator.trim()}`
-              : nextReadRange,
+          nextReadyFiles.length >
+            0
+            ? `${nextReadyFiles.length}개 파일 · ${scopeLabel}`
+            : '',
 
         state:
-          resolveState(
-            nextComplete,
-          ),
+          nextHasParseFailedFile
+            ? 'error'
+            : resolveState(
+                nextComplete,
+              ),
       },
     )
   }
 
+  const connectedFileSignature =
+    connectedUploadedFiles
+      .map(
+        (
+          file,
+        ) =>
+          [
+            file.fileId,
+            file.status,
+          ].join(
+            ':',
+          ),
+      )
+      .join(
+        '|',
+      )
+
+  const storedFileSignature =
+    storedUploadedFiles
+      .map(
+        (
+          file,
+        ) =>
+          [
+            file.fileId,
+            file.status,
+          ].join(
+            ':',
+          ),
+      )
+      .join(
+        '|',
+      )
+
+  /*
+   * IN-004와 CTX-002가 연결되는 즉시,
+   * IN-004에 저장된 서버 파일 메타데이터를 CTX-002 config에도 동기화합니다.
+   *
+   * 따라서 사용자가 CTX-002의 기본값을 별도로 클릭하지 않아도
+   * 연결된 업로드 파일이 실제 설정 데이터에 저장됩니다.
+   */
+  useEffect(
+    () => {
+      if (
+        connectedUploadedFiles.length ===
+          0 ||
+        connectedFileSignature ===
+          storedFileSignature
+      ) {
+        return
+      }
+
+      save(
+        {},
+        connectedUploadedFiles,
+      )
+    },
+    [
+      connectedFileSignature,
+      storedFileSignature,
+    ],
+  )
+
+  const handleLocatorChange =
+    (
+      value: string,
+    ) => {
+      save({
+        pageOrKeyword:
+          parsePageOrKeyword(
+            value,
+          ),
+      })
+    }
+
   return (
     <ExpandableSettingBlock
       title="업로드 문서 읽기"
-      // code="CTX-002"
-      // stage="CONTEXT"
-      // description="업로드한 파일의 읽기 범위를 지정합니다."
-      // icon={
-      //   <FileText
-      //     size={18}
-      //   />
-      // }
-      // category="RECOMMENDED"
-      // tagCounts={{
-      //   required: 2,
-      //   conditional:
-      //     Number(
-      //       readRange !==
-      //       'all',
-      //     ),
-      //   optional: 1,
-      //   missing:
-      //     Number(
-      //       !complete,
-      //     ),
-      // }}
       required={
         slot.required
       }
@@ -679,19 +1089,28 @@ export function UploadedDocumentInspector({
       footer={
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
-            {complete
-              ? '읽기 범위 설정 완료'
-              : '페이지·키워드 범위를 입력하세요'}
+            {uploadedFiles.length ===
+              0
+              ? 'IN-004 파일 업로드 블록을 연결해 주세요.'
+              : hasParseFailedFile
+                ? '처리 실패 파일이 있습니다.'
+                : complete
+                  ? '업로드 문서 설정 완료'
+                  : '페이지·키워드 범위를 입력하세요.'}
           </span>
 
           <Button
             size="sm"
             variant="secondary"
+            disabled={
+              uploadedFiles.length ===
+              0
+            }
             onClick={() =>
               save({})
             }
           >
-            검증
+            저장
           </Button>
         </div>
       }
@@ -705,28 +1124,89 @@ export function UploadedDocumentInspector({
             </span>
           </p>
 
-          <div className="flex min-h-[60px] items-center rounded-xl border-2 border-slate-200 px-4">
-            <span className="h-5 w-5 shrink-0 rounded-full bg-indigo-500" />
+          {uploadedFiles.length >
+            0 ? (
+            <div className="space-y-2">
+              {uploadedFiles.map(
+                (
+                  file,
+                ) => (
+                  <div
+                    key={
+                      file.fileId
+                    }
+                    className={[
+                      'flex min-h-[60px] items-center rounded-xl border-2 px-4',
+                      file.status ===
+                        'PARSE_FAILED'
+                        ? 'border-rose-300 bg-rose-50'
+                        : 'border-slate-200 bg-white',
+                    ].join(
+                      ' ',
+                    )}
+                  >
+                    <span
+                      className={[
+                        'h-5 w-5 shrink-0 rounded-full',
+                        file.status ===
+                          'PARSE_FAILED'
+                          ? 'bg-rose-400'
+                          : 'bg-indigo-500',
+                      ].join(
+                        ' ',
+                      )}
+                    />
 
-            <div className="ml-3 min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-700">
-                업로드 파일
+                    <div className="ml-3 min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-slate-700">
+                        {
+                          file.fileName
+                        }
+                      </p>
+
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        INPUT · IN-004 ·{' '}
+                        {file.status ===
+                          'PARSE_FAILED'
+                          ? '문서 처리 실패'
+                          : '서버 업로드 완료'}
+                      </p>
+                    </div>
+
+                    <span
+                      className={[
+                        'rounded-lg px-3 py-2 text-xs font-bold',
+                        file.status ===
+                          'PARSE_FAILED'
+                          ? 'bg-rose-100 text-rose-600'
+                          : 'bg-indigo-500 text-white',
+                      ].join(
+                        ' ',
+                      )}
+                    >
+                      {file.status ===
+                        'PARSE_FAILED'
+                        ? '확인 필요'
+                        : '연결됨'}
+                    </span>
+                  </div>
+                ),
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border-2 border-dashed border-slate-200 px-4 py-5 text-center">
+              <p className="text-sm font-bold text-slate-500">
+                연결된 업로드 파일이 없습니다.
               </p>
 
-              <p className="mt-1 text-[11px] text-slate-400">
-                INPUT · IN-004 파일 업로드 받기
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                INPUT 노드의
+                ‘파일 업로드 받기’ 블록에서
+                파일을 업로드한 뒤
+                현재 CONTEXT 노드와 연결해 주세요.
               </p>
             </div>
-
-            <span className="rounded-lg bg-indigo-500 px-3 py-2 text-xs font-bold text-white">
-              연결 대상
-            </span>
-          </div>
-
-          <p className="mt-2 text-[11px] leading-5 text-slate-400">
-            실제 파일 존재 여부는 이후
-            블록 간 연결 검증에서 확인합니다.
-          </p>
+          )}
         </div>
 
         <div>
@@ -738,30 +1218,45 @@ export function UploadedDocumentInspector({
           </p>
 
           <Radio
-            name={`context-read-range-${slot.id}`}
+            name={`context-read-scope-${slot.id}`}
             options={
-              readRangeOptions
+              readScopeOptions
             }
             value={
-              readRange
+              readScope
             }
             onChange={(
               value,
             ) =>
               save({
-                readRange:
+                readScope:
                   value,
+
+                /*
+                 * 전체 읽기로 되돌아오면
+                 * 조건부 범위값은 비웁니다.
+                 */
+                ...(value ===
+                'ALL'
+                  ? {
+                      pageOrKeyword:
+                        [],
+                    }
+                  : {}),
               })
             }
           />
         </div>
 
-        {readRange !==
-          'all' && (
+        {readScope !==
+          'ALL' && (
             <label className="block">
               <span className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700">
-                  페이지·키워드
+                  {readScope ===
+                  'PAGE_RANGE'
+                    ? '페이지 범위'
+                    : '키워드'}
                 </span>
 
                 <span className="text-[11px] font-bold text-amber-600">
@@ -773,22 +1268,21 @@ export function UploadedDocumentInspector({
                 value={
                   locator
                 }
-                onChange={(
-                  value,
-                ) =>
-                  save({
-                    locator:
-                      value,
-                  })
+                onChange={
+                  handleLocatorChange
                 }
                 placeholder={
-                  readRange ===
-                    'pages'
-                    ? '예: 3-12'
-                    : '키워드를 입력하세요'
+                  readScope ===
+                    'PAGE_RANGE'
+                    ? '예: 3-12, 18-20'
+                    : '예: 요구사항, API, 예외 처리'
                 }
                 rows={2}
               />
+
+              <p className="mt-1 text-[11px] leading-5 text-slate-400">
+                쉼표 또는 줄바꿈으로 여러 범위를 입력할 수 있습니다.
+              </p>
             </label>
           )}
 
@@ -824,13 +1318,13 @@ export function UploadedDocumentInspector({
 
             <ToggleSwitch
               checked={
-                includeImages
+                includeImage
               }
               onChange={(
                 value,
               ) =>
                 save({
-                  includeImages:
+                  includeImage:
                     value,
                 })
               }
