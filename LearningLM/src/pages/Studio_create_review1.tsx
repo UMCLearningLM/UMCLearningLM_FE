@@ -133,6 +133,38 @@ function getInputFromOptions(
   string,
   unknown
 > {
+  const studioBlockId =
+    options.studioBlockId
+
+  /*
+   * IN-004 파일 업로드 받기 / CTX-002 업로드 문서 읽기는
+   * BE input_schema에서 uploadedFiles를 input으로 요구합니다.
+   *
+   * Studio 저장 구조에서는 slot.config가 flow block의 options에
+   * 직렬화되므로 Preview 요청을 만들 때 input으로 다시 분리합니다.
+   */
+  if (
+    studioBlockId ===
+      'input-file-upload' ||
+    studioBlockId ===
+      'context-uploaded-document'
+  ) {
+    const uploadedFiles =
+      options.uploadedFiles
+
+    if (
+      Array.isArray(
+        uploadedFiles,
+      ) &&
+      uploadedFiles.length >
+        0
+    ) {
+      return {
+        uploadedFiles,
+      }
+    }
+  }
+
   const value =
     options.value
 
