@@ -433,12 +433,24 @@ export function Studio_create_review1() {
     )
 
   const nodes =
-    navigationState.nodes ??
-    []
+    useMemo(
+      () =>
+        navigationState.nodes ??
+        [],
+      [
+        navigationState.nodes,
+      ],
+    )
 
   const edges =
-    navigationState.edges ??
-    []
+    useMemo(
+      () =>
+        navigationState.edges ??
+        [],
+      [
+        navigationState.edges,
+      ],
+    )
 
   const validationResult =
     navigationState.validationResult ??
