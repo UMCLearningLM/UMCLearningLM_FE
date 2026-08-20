@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { PageHeader } from "./component/PageHeader"
 import { Box, Check, ChevronDown } from "lucide-react";
 import Arrow from "../../assets/Arrow.svg";
 import flag from "../../assets/flag-checkered.svg"
@@ -13,23 +12,6 @@ export function CTX_001() {
     const [mode, setMode] = useState("전체");
     return (
         <div className="w-[498px] h-[824px] flex flex-col items-center px-[22px] pt-[26px] tracking-tighter">
-            <PageHeader
-                title="프로젝트 문서 불러오기"
-                subTitle="CTX-001 · CONTEXT"
-                content="프로젝트를 선택하고 참고할 문서를 지정합니다."
-                text1="필수2"
-                text2="선택2"
-                text3="누락1"
-                bor1="6366F1"
-                bor2="5FAA81"
-                bor3="EF8888"
-                bg1="DFE0FF"
-                bg2="DFF2DF"
-                bg3="FFE1E1"
-                pageState="CORE"
-                imgState={flag} />
-            <div className="w-[498px] h-[1.5px] mt-[8px] ml-[-25px] bg-[#E4E4E7]" />
-
 
             {/**----------------------------------- */}
             <div className="w-[408px] h-[661px] py-[16px]">

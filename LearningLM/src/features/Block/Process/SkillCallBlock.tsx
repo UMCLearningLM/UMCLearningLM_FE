@@ -33,12 +33,12 @@ export function SkillCallBlock() {
   return (
     <ExpandableSettingBlock
       title="특정 스킬 호출하기"
-      code="PRO-013"
-      stage="PROCESS"
-      description="프리셋 스킬을 불러와 이전 결과에 적용합니다."
-      icon={<Puzzle size={18} />}
-      category="CORE"
-      tagCounts={{ required: 3, optional: 2, recommended: 1, missing: validationAttempted ? missingCount : 0 }}
+      // code="PRO-013"
+      // stage="PROCESS"
+      // description="프리셋 스킬을 불러와 이전 결과에 적용합니다."
+      // icon={<Puzzle size={18} />}
+      // category="CORE"
+      // tagCounts={{ required: 3, optional: 2, recommended: 1, missing: validationAttempted ? missingCount : 0 }}
       required
       validationMessage={validationAttempted && missingCount > 0 ? '필수 작성 항목입니다' : undefined}
       defaultOpen

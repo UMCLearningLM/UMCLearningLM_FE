@@ -19,17 +19,17 @@ export function ConstraintInputBlock() {
   return (
     <ExpandableSettingBlock
       title="제약조건 입력하기"
-      code="IN-009"
-      stage="INPUT"
-      description="분량·문체·포함·제외 규칙 등 결과물의 제약을 정합니다."
-      icon={<Braces size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{
-        optional: 4,
-        conditional: Number(length === 'custom'),
-        sortable: 1,
-        missing: Number(length === 'custom' && customLength.trim().length === 0)
-      }}
+      // code="IN-009"
+      // stage="INPUT"
+      // description="분량·문체·포함·제외 규칙 등 결과물의 제약을 정합니다."
+      // icon={<Braces size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   optional: 4,
+      //   conditional: Number(length === 'custom'),
+      //   sortable: 1,
+      //   missing: Number(length === 'custom' && customLength.trim().length === 0)
+      // }}
       footer={
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-400">

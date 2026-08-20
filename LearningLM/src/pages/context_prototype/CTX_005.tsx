@@ -11,7 +11,6 @@ import {
     RefreshCw,
     Plus,
 } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import flag from "../../assets/flag-checkered.svg";
 import { BottomBar } from "./component/BottomBar";
 
@@ -48,25 +47,6 @@ export function CTX_005() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[27px] pb-6">
-                    <PageHeader
-                        title="역할 부여하기"
-                        subTitle="CTX-005 · CONTEXT"
-                        content="AI가 수행할 역할과 관점을 지정합니다."
-                        text1="필수1"
-                        text2="선택3"
-                        text3="추천1"
-                        bor1="6366F1"
-                        bor2="5FAA81"
-                        bor3="A9BDD4"
-                        bg1="DFE0FF"
-                        bg2="DFF2DF"
-                        bg3="ECEEFF"
-                        pageState="CORE"
-                        imgState={flag}
-                    />
-                </div>
-                <div className="w-[498px] h-[1.5px] mt-[-16px] ml-[-24px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-8px] pb-6">
                     {/* Checkbox row */}
                     <div className="pt-6 flex items-center justify-between">

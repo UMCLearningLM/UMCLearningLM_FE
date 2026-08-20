@@ -407,8 +407,8 @@ export function Stdio_create1() {
   const locationState =
     (
       location.state as
-        | StudioSaveNavigationState
-        | null
+      | StudioSaveNavigationState
+      | null
     ) ?? null
 
   const flowId =
@@ -926,31 +926,23 @@ export function Stdio_create1() {
   useEffect(() => {
     const html =
       document.documentElement
-
     const body =
       document.body
-
     const previousHtmlOverflow =
       html.style.overflow
-
     const previousHtmlOverscrollBehavior =
       html.style.overscrollBehavior
-
     const previousBodyOverflow =
       body.style.overflow
-
     const previousBodyOverscrollBehavior =
       body.style.overscrollBehavior
 
     html.style.overflow =
       'hidden'
-
     html.style.overscrollBehavior =
       'none'
-
     body.style.overflow =
       'hidden'
-
     body.style.overscrollBehavior =
       'none'
 
@@ -996,7 +988,7 @@ export function Stdio_create1() {
             routeFlowId,
           ) ||
           mode !==
-            'create'
+          'create'
         )
 
       if (
@@ -1032,7 +1024,7 @@ export function Stdio_create1() {
             ) {
               throw new Error(
                 response.message ||
-                  '저장된 흐름을 불러오지 못했습니다.',
+                '저장된 흐름을 불러오지 못했습니다.',
               )
             }
 
@@ -1342,11 +1334,10 @@ export function Stdio_create1() {
           '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
         result: validationResult.valid
           ? '저장 조건을 충족했습니다.'
-          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
-              slotErrorIssues.length > 0
-                ? ' 필수 슬롯 설정을 확인하세요.'
-                : ''
-            }`,
+          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${slotErrorIssues.length > 0
+            ? ' 필수 슬롯 설정을 확인하세요.'
+            : ''
+          }`,
       },
     ]
   }, [validationResult])

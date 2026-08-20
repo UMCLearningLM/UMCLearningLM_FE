@@ -14,6 +14,7 @@ import api from '../../api/api'
 import {
   clearAuthStorage,
 } from '../../api/authStorage'
+import googleImg from '../../assets/google.svg';
 
 interface GoogleAuthorizationResponse {
   code: string
@@ -174,7 +175,7 @@ export default function GoogleLogin() {
               throw new Error(
                 response.data
                   ?.message ||
-                  'Google 인증 URL을 받지 못했습니다.',
+                'Google 인증 URL을 받지 못했습니다.',
               )
             }
 
@@ -189,7 +190,7 @@ export default function GoogleLogin() {
               ),
             )
           } catch (
-            error
+          error
           ) {
             if (
               cancelled
@@ -272,9 +273,7 @@ export default function GoogleLogin() {
 
         <div className="flex min-h-[310px] w-full flex-col items-center justify-center rounded-[12px] border-2 border-[#E4E4E7] bg-white px-[30px] py-[50px]">
           <div className="flex w-full flex-col items-center gap-[21px]">
-            <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white text-[34px] font-bold shadow-[0_0_0_1px_#E4E4E7]">
-              G
-            </div>
+            <img src={googleImg} className='w-[60px] h-[60px]' />
 
             <div className="h-[40px] w-[40px] animate-spin rounded-full border-[4px] border-[#E4E4E7] border-t-[#6366F1]" />
 

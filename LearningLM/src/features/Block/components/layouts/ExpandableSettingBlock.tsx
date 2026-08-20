@@ -33,13 +33,13 @@ export interface SettingBlockTag {
 
 interface ExpandableSettingBlockProps {
   title: string
-  code: string
-  stage: string
-  description: string
-  icon: ReactNode
-  tags?: SettingBlockTag[]
-  tagCounts?: SettingBlockTagCounts
-  category?: string
+  // code: string
+  // stage: string
+  // description: string
+  // icon: ReactNode
+  // tags?: SettingBlockTag[]
+  // tagCounts?: SettingBlockTagCounts
+  // category?: string
   required?: boolean
   validationMessage?: string
   defaultOpen?: boolean
@@ -75,7 +75,7 @@ interface ExpandableSettingBlockEnvironmentProviderProps {
  */
 export function ExpandableSettingBlockEnvironmentProvider({
   embeddedInStudioInspector =
-    false,
+  false,
 
   children,
 }: ExpandableSettingBlockEnvironmentProviderProps) {
@@ -92,13 +92,13 @@ export function ExpandableSettingBlockEnvironmentProvider({
 
 export function ExpandableSettingBlock({
   title,
-  code,
-  stage,
-  description,
-  icon,
-  tags = [],
-  tagCounts,
-  category = 'CORE',
+  // code,
+  // stage,
+  // description,
+  // icon,
+  // tags = [],
+  // tagCounts,
+  // category = 'CORE',
   required = false,
   validationMessage,
   defaultOpen = false,
@@ -135,7 +135,7 @@ export function ExpandableSettingBlock({
   const headerContent = (
     <span className="flex flex-col gap-[17px]">
       <span className="flex items-start justify-between gap-4">
-        <span className="flex min-w-0 items-center gap-2">
+        {/* <span className="flex min-w-0 items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-600 text-white">
             {icon}
           </span>
@@ -157,14 +157,14 @@ export function ExpandableSettingBlock({
               {code} · {stage}
             </Typography>
           </span>
-        </span>
-
+        </span> */}
+        {/* 
         <span
           className={[
             'shrink-0 rounded-lg border-2 px-[10px] py-[5px] text-xs font-black leading-[15px]',
 
             category ===
-            'RECOMMENDED'
+              'RECOMMENDED'
               ? 'border-emerald-400 bg-emerald-50 text-emerald-500'
               : 'border-[#6366F1] bg-[#6366F1] text-white',
           ].join(
@@ -172,54 +172,54 @@ export function ExpandableSettingBlock({
           )}
         >
           {category}
-        </span>
+        </span> */}
       </span>
 
-      <Typography
+      {/* <Typography
         as="span"
         variant="body2"
         className="block text-slate-600"
       >
         {description}
-      </Typography>
+      </Typography> */}
 
-      {tags.length >
+      {/* {tags.length >
         0 && (
-        <span className="flex flex-wrap gap-1.5">
-          {tags.map(
-            (
-              tag,
-            ) => (
-              <StatusBadge
-                key={
-                  tag.label
-                }
-                variant={
-                  tag.variant
-                }
-              >
-                {tag.label}{' '}
-                {tag.count}
-              </StatusBadge>
-            ),
-          )}
-        </span>
-      )}
+          <span className="flex flex-wrap gap-1.5">
+            {tags.map(
+              (
+                tag,
+              ) => (
+                <StatusBadge
+                  key={
+                    tag.label
+                  }
+                  variant={
+                    tag.variant
+                  }
+                >
+                  {tag.label}{' '}
+                  {tag.count}
+                </StatusBadge>
+              ),
+            )}
+          </span>
+        )} */}
 
-      {tagCounts && (
+      {/* {tagCounts && (
         <BlockTag
           counts={
             tagCounts
           }
         />
-      )}
+      )} */}
     </span>
   )
 
   return (
     <section
       className={[
-        'w-[550px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm',
+        'w-[550px] overflow-hidden rounded-2xl bg-white shadow-sm',
 
         embeddedInStudioInspector
           ? '[overflow-anchor:none]'
@@ -235,7 +235,7 @@ export function ExpandableSettingBlock({
          * Studio 안에서는 이 헤더 자체를 버튼으로 만들지 않습니다.
          * 바깥 slot 카드의 화살표가 유일한 펼침/접힘 컨트롤입니다.
          */
-        <div className="block w-full px-6 py-6 text-left">
+        <div className="block w-full px-6 pb-6 text-left">
           {headerContent}
         </div>
       ) : (
@@ -266,9 +266,9 @@ export function ExpandableSettingBlock({
           id={
             contentId
           }
-          className="border-t border-slate-200 [overflow-anchor:none]"
+          className="[overflow-anchor:none]"
         >
-          <div className="px-6 py-5">
+          <div className="px-1 pb-5">
             <div className="setting-block-fields mx-auto w-[450px] [&>div>:not(:last-child)]:!mb-[35px]">
               {!embeddedInStudioInspector && (
                 <button
@@ -327,7 +327,7 @@ export function ExpandableSettingBlock({
                 </button>
               )}
 
-              {embeddedInStudioInspector && (
+              {/* {embeddedInStudioInspector && (
                 <div className={[
                   'mb-4 flex items-center justify-between gap-3',
 
@@ -366,7 +366,7 @@ export function ExpandableSettingBlock({
                       : '선택'}
                   </span>
                 </div>
-              )}
+              )} */}
 
               {validationMessage && (
                 <Typography

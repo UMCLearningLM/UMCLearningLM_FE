@@ -263,27 +263,27 @@ export function ClassifyItemsInspector({
   ) => {
     const nextCriterion =
       typeof patch.classificationCriterion ===
-      'string'
+        'string'
         ? patch.classificationCriterion
         : classificationCriterion
 
     const nextCategories =
       'categories' in patch
         ? readStringArray(
-            patch.categories,
-            categories,
-          )
+          patch.categories,
+          categories,
+        )
         : categories
 
     const nextMultiCategory =
       typeof patch.multiCategory ===
-      'boolean'
+        'boolean'
         ? patch.multiCategory
         : multiCategory
 
     const nextUnclassified =
       typeof patch.unclassifiedHandling ===
-      'string'
+        'string'
         ? patch.unclassifiedHandling
         : unclassifiedHandling
 
@@ -305,7 +305,7 @@ export function ClassifyItemsInspector({
       (
         !requiresCategories ||
         validCategories.length >=
-          2
+        2
       ) &&
       Boolean(
         nextUnclassified,
@@ -406,27 +406,27 @@ export function ClassifyItemsInspector({
   return (
     <ExpandableSettingBlock
       title="항목별로 분류하기"
-      code="PR-003"
-      stage="PROCESS"
-      description="분류 기준을 정하고 카테고리를 구성합니다."
-      icon={
-        <Layers3
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        conditional: 1,
-        optional: 1,
-        missing:
-          Number(
-            classificationCriterion ===
-              '직접 입력' &&
-              validCategoryCount <
-                2,
-          ),
-      }}
+      // code="PR-003"
+      // stage="PROCESS"
+      // description="분류 기준을 정하고 카테고리를 구성합니다."
+      // icon={
+      //   <Layers3
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   conditional: 1,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       classificationCriterion ===
+      //         '직접 입력' &&
+      //         validCategoryCount <
+      //           2,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -439,7 +439,7 @@ export function ClassifyItemsInspector({
           <span className="text-xs text-slate-400">
             {classificationCriterion ===
               '직접 입력' &&
-            validCategoryCount <
+              validCategoryCount <
               2
               ? '카테고리 2개 이상 필요'
               : '분류 설정 완료'}
@@ -506,101 +506,101 @@ export function ClassifyItemsInspector({
 
         {classificationCriterion ===
           '직접 입력' && (
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <p className="text-xs font-bold text-slate-700">
-                분류 카테고리
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <p className="text-xs font-bold text-slate-700">
+                  분류 카테고리
+                </p>
+
+                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
+                  조건부
+                </span>
+              </div>
+
+              <p className="mb-3 text-[11px] font-semibold text-indigo-500">
+                ↳ 직접 입력 선택됨
               </p>
 
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
-                조건부
-              </span>
-            </div>
-
-            <p className="mb-3 text-[11px] font-semibold text-indigo-500">
-              ↳ 직접 입력 선택됨
-            </p>
-
-            <div className="space-y-3">
-              {categories.map(
-                (
-                  category,
-                  index,
-                ) => (
-                  <div
-                    key={
-                      index
-                    }
-                    draggable
-                    onDragStart={() =>
-                      setDragIndex(
-                        index,
-                      )
-                    }
-                    onDragOver={(
-                      event,
-                    ) =>
-                      event.preventDefault()
-                    }
-                    onDrop={() => {
-                      if (
-                        dragIndex !==
-                        null
-                      ) {
-                        reorderCategory(
-                          dragIndex,
+              <div className="space-y-3">
+                {categories.map(
+                  (
+                    category,
+                    index,
+                  ) => (
+                    <div
+                      key={
+                        index
+                      }
+                      draggable
+                      onDragStart={() =>
+                        setDragIndex(
                           index,
                         )
                       }
-
-                      setDragIndex(
-                        null,
-                      )
-                    }}
-                    className="flex min-h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
-                      {index +
-                        1}
-                    </span>
-
-                    <input
-                      type="text"
-                      value={
-                        category
-                      }
-                      onChange={(
+                      onDragOver={(
                         event,
                       ) =>
-                        updateCategory(
-                          index,
-                          event.target
-                            .value,
-                        )
+                        event.preventDefault()
                       }
-                      placeholder="카테고리 이름 입력"
-                      className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                ),
-              )}
+                      onDrop={() => {
+                        if (
+                          dragIndex !==
+                          null
+                        ) {
+                          reorderCategory(
+                            dragIndex,
+                            index,
+                          )
+                        }
 
-              <button
-                type="button"
-                onClick={
-                  addCategory
-                }
-                className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
-              >
-                <Plus
-                  size={14}
-                  className="mr-1"
-                />
-                카테고리 추가
-              </button>
+                        setDragIndex(
+                          null,
+                        )
+                      }}
+                      className="flex min-h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
+                        {index +
+                          1}
+                      </span>
+
+                      <input
+                        type="text"
+                        value={
+                          category
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateCategory(
+                            index,
+                            event.target
+                              .value,
+                          )
+                        }
+                        placeholder="카테고리 이름 입력"
+                        className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  onClick={
+                    addCategory
+                  }
+                  className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
+                >
+                  <Plus
+                    size={14}
+                    className="mr-1"
+                  />
+                  카테고리 추가
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -786,40 +786,40 @@ export function CompareInspector({
   ) => {
     const nextTargets =
       'comparisonTargets' in
-      patch
+        patch
         ? readStringArray(
-            patch.comparisonTargets,
-            comparisonTargets,
-          )
+          patch.comparisonTargets,
+          comparisonTargets,
+        )
         : comparisonTargets
 
     const nextCriterionNames =
       'criterionNames' in
-      patch
+        patch
         ? readStringArray(
-            patch.criterionNames,
-            criterionNames,
-          )
+          patch.criterionNames,
+          criterionNames,
+        )
         : criterionNames
 
     const nextCriterionWeights =
       'criterionWeights' in
-      patch
+        patch
         ? readNumberArray(
-            patch.criterionWeights,
-            criterionWeights,
-          )
+          patch.criterionWeights,
+          criterionWeights,
+        )
         : criterionWeights
 
     const nextMethod =
       typeof patch.comparisonMethod ===
-      'string'
+        'string'
         ? patch.comparisonMethod
         : comparisonMethod
 
     const nextRecommendation =
       typeof patch.includeRecommendation ===
-      'boolean'
+        'boolean'
         ? patch.includeRecommendation
         : includeRecommendation
 
@@ -837,9 +837,9 @@ export function CompareInspector({
 
     const complete =
       validTargets.length >=
-        2 &&
+      2 &&
       validCriteria.length >=
-        1 &&
+      1 &&
       Boolean(
         nextMethod,
       )
@@ -918,19 +918,19 @@ export function CompareInspector({
   return (
     <ExpandableSettingBlock
       title="비교하기"
-      code="PR-004"
-      stage="PROCESS"
-      description="비교 대상과 기준을 각각 카드로 만들고 정렬합니다."
-      icon={
-        <GitCompareArrows
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 1,
-      }}
+      // code="PR-004"
+      // stage="PROCESS"
+      // description="비교 대상과 기준을 각각 카드로 만들고 정렬합니다."
+      // icon={
+      //   <GitCompareArrows
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 1,
+      // }}
       required={
         slot.required
       }
@@ -981,7 +981,7 @@ export function CompareInspector({
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-[#4A5E8A] px-1.5 text-[10px] font-black text-white">
                       {String.fromCharCode(
                         65 +
-                          index,
+                        index,
                       )}
                     </span>
 
@@ -989,7 +989,7 @@ export function CompareInspector({
                       제품{' '}
                       {String.fromCharCode(
                         65 +
-                          index,
+                        index,
                       )}
                     </span>
                   </div>
@@ -1047,7 +1047,7 @@ export function CompareInspector({
               ) => {
                 const weight =
                   criterionWeights[
-                    index
+                  index
                   ] ??
                   0.5
 
@@ -1307,32 +1307,32 @@ export function OrderInspector({
   ) => {
     const nextCriterion =
       typeof patch.orderCriterion ===
-      'string'
+        'string'
         ? patch.orderCriterion
         : orderCriterion
 
     const nextShape =
       typeof patch.orderShape ===
-      'string'
+        'string'
         ? patch.orderShape
         : orderShape
 
     const nextTitles =
       'stepTitles' in
-      patch
+        patch
         ? readStringArray(
-            patch.stepTitles,
-            stepTitles,
-          )
+          patch.stepTitles,
+          stepTitles,
+        )
         : stepTitles
 
     const nextDescriptions =
       'stepDescriptions' in
-      patch
+        patch
         ? readStringArray(
-            patch.stepDescriptions,
-            stepDescriptions,
-          )
+          patch.stepDescriptions,
+          stepDescriptions,
+        )
         : stepDescriptions
 
     const complete =
@@ -1472,19 +1472,19 @@ export function OrderInspector({
   return (
     <ExpandableSettingBlock
       title="순서대로 정리하기"
-      code="PR-005"
-      stage="PROCESS"
-      description="단계 카드를 끌어 순서를 지정합니다."
-      icon={
-        <ArrowDownUp
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-      }}
+      // code="PR-005"
+      // stage="PROCESS"
+      // description="단계 카드를 끌어 순서를 지정합니다."
+      // icon={
+      //   <ArrowDownUp
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      // }}
       required={
         slot.required
       }
@@ -1538,7 +1538,7 @@ export function OrderInspector({
                   className={[
                     'h-[60px] rounded-xl border-2 text-xs font-bold',
                     orderCriterion ===
-                    option
+                      option
                       ? 'border-indigo-500 text-indigo-600'
                       : 'border-slate-200 text-slate-500',
                   ].join(
@@ -1579,7 +1579,7 @@ export function OrderInspector({
                   className={[
                     'flex h-[48px] w-full items-center gap-3 rounded-xl border-2 px-4 text-left text-sm font-bold',
                     orderShape ===
-                    option
+                      option
                       ? 'border-indigo-500 text-slate-700'
                       : 'border-slate-200 text-slate-500',
                   ].join(
@@ -1590,7 +1590,7 @@ export function OrderInspector({
                     className={[
                       'h-4 w-4 rounded-full',
                       orderShape ===
-                      option
+                        option
                         ? 'bg-indigo-500'
                         : 'border border-slate-200',
                     ].join(
@@ -1674,9 +1674,9 @@ export function OrderInspector({
                             event.target
                               .value,
                             stepDescriptions[
-                              index
+                            index
                             ] ??
-                              '',
+                            '',
                           )
                         }
                         placeholder="단계 제목"
@@ -1687,7 +1687,7 @@ export function OrderInspector({
                         type="text"
                         value={
                           stepDescriptions[
-                            index
+                          index
                           ] ??
                           ''
                         }
@@ -1897,22 +1897,22 @@ export function DecomposeFunctionsInspector({
   ) => {
     const nextTarget =
       typeof patch.decompositionTarget ===
-      'string'
+        'string'
         ? patch.decompositionTarget
         : decompositionTarget
 
     const nextLevel =
       typeof patch.decompositionLevel ===
-      'string'
+        'string'
         ? patch.decompositionLevel
         : decompositionLevel
 
     const nextIncludedInfo =
       'includedInfo' in patch
         ? readStringArray(
-            patch.includedInfo,
-            includedInfo,
-          )
+          patch.includedInfo,
+          includedInfo,
+        )
         : includedInfo
 
     const complete =
@@ -1923,7 +1923,7 @@ export function DecomposeFunctionsInspector({
         nextLevel,
       ) &&
       nextIncludedInfo.length >
-        0
+      0
 
     onConfigChange(
       {
@@ -1957,14 +1957,14 @@ export function DecomposeFunctionsInspector({
         item,
       )
         ? includedInfo.filter(
-            (value) =>
-              value !==
-              item,
-          )
-        : [
-            ...includedInfo,
+          (value) =>
+            value !==
             item,
-          ]
+        )
+        : [
+          ...includedInfo,
+          item,
+        ]
 
     save({
       includedInfo:
@@ -1975,30 +1975,30 @@ export function DecomposeFunctionsInspector({
   return (
     <ExpandableSettingBlock
       title="기능으로 분해하기"
-      code="PR-006"
-      stage="PROCESS"
-      description="대상을 기능 단위로 분해합니다."
-      icon={
-        <Layers3
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        missing:
-          Number(
-            !decompositionTarget,
-          ) +
-          Number(
-            !decompositionLevel,
-          ) +
-          Number(
-            includedInfo.length ===
-              0,
-          ),
-      }}
+      // code="PR-006"
+      // stage="PROCESS"
+      // description="대상을 기능 단위로 분해합니다."
+      // icon={
+      //   <Layers3
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !decompositionTarget,
+      //     ) +
+      //     Number(
+      //       !decompositionLevel,
+      //     ) +
+      //     Number(
+      //       includedInfo.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2318,33 +2318,33 @@ export function LinkPolicyInspector({
   ) => {
     const nextTarget =
       typeof patch.connectionTarget ===
-      'string'
+        'string'
         ? patch.connectionTarget
         : connectionTarget
 
     const nextDocument =
       typeof patch.policyDocument ===
-      'string'
+        'string'
         ? patch.policyDocument
         : policyDocument
 
     const nextTypes =
       'policyTypes' in patch
         ? readStringArray(
-            patch.policyTypes,
-            policyTypes,
-          )
+          patch.policyTypes,
+          policyTypes,
+        )
         : policyTypes
 
     const nextMatchingMode =
       typeof patch.matchingMode ===
-      'string'
+        'string'
         ? patch.matchingMode
         : matchingMode
 
     const nextNoPolicyHandling =
       typeof patch.noPolicyHandling ===
-      'string'
+        'string'
         ? patch.noPolicyHandling
         : noPolicyHandling
 
@@ -2356,7 +2356,7 @@ export function LinkPolicyInspector({
         nextDocument,
       ) &&
       nextTypes.length >
-        0 &&
+      0 &&
       Boolean(
         nextMatchingMode,
       ) &&
@@ -2395,14 +2395,14 @@ export function LinkPolicyInspector({
         type,
       )
         ? policyTypes.filter(
-            (item) =>
-              item !==
-              type,
-          )
-        : [
-            ...policyTypes,
+          (item) =>
+            item !==
             type,
-          ]
+        )
+        : [
+          ...policyTypes,
+          type,
+        ]
 
     save({
       policyTypes:
@@ -2413,26 +2413,26 @@ export function LinkPolicyInspector({
   return (
     <ExpandableSettingBlock
       title="정책과 연결하기"
-      code="PR-007"
-      stage="PROCESS"
-      description="기능·화면을 정책 문서와 연결합니다."
-      icon={
-        <Link2
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 5,
-        missing:
-          Number(
-            !policyDocument,
-          ) +
-          Number(
-            policyTypes.length ===
-              0,
-          ),
-      }}
+      // code="PR-007"
+      // stage="PROCESS"
+      // description="기능·화면을 정책 문서와 연결합니다."
+      // icon={
+      //   <Link2
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 5,
+      //   missing:
+      //     Number(
+      //       !policyDocument,
+      //     ) +
+      //     Number(
+      //       policyTypes.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2488,7 +2488,7 @@ export function LinkPolicyInspector({
                   className={[
                     'h-[44px] rounded-xl border-2 text-xs font-bold',
                     connectionTarget ===
-                    option
+                      option
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-600',
                   ].join(
@@ -2619,7 +2619,7 @@ export function LinkPolicyInspector({
                   className={[
                     'h-[44px] flex-1 text-xs font-bold',
                     matchingMode ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -2762,22 +2762,22 @@ export function FindExceptionsInspector({
   ) => {
     const nextTypes =
       'exceptionTypes' in
-      patch
+        patch
         ? readStringArray(
-            patch.exceptionTypes,
-            exceptionTypes,
-          )
+          patch.exceptionTypes,
+          exceptionTypes,
+        )
         : exceptionTypes
 
     const nextScope =
       typeof patch.analysisScope ===
-      'string'
+        'string'
         ? patch.analysisScope
         : analysisScope
 
     const complete =
       nextTypes.length >
-        0 &&
+      0 &&
       Boolean(
         nextScope,
       )
@@ -2812,14 +2812,14 @@ export function FindExceptionsInspector({
         item,
       )
         ? exceptionTypes.filter(
-            (value) =>
-              value !==
-              item,
-          )
-        : [
-            ...exceptionTypes,
+          (value) =>
+            value !==
             item,
-          ]
+        )
+        : [
+          ...exceptionTypes,
+          item,
+        ]
 
     save({
       exceptionTypes:
@@ -2835,14 +2835,14 @@ export function FindExceptionsInspector({
         item,
       )
         ? responseScopes.filter(
-            (value) =>
-              value !==
-              item,
-          )
-        : [
-            ...responseScopes,
+          (value) =>
+            value !==
             item,
-          ]
+        )
+        : [
+          ...responseScopes,
+          item,
+        ]
 
     save({
       responseScopes:
@@ -2853,27 +2853,27 @@ export function FindExceptionsInspector({
   return (
     <ExpandableSettingBlock
       title="예외 케이스 찾기"
-      code="PR-008"
-      stage="PROCESS"
-      description="점검할 예외 유형과 범위를 정합니다."
-      icon={
-        <TriangleAlert
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          Number(
-            exceptionTypes.length ===
-              0,
-          ) +
-          Number(
-            !analysisScope,
-          ),
-      }}
+      // code="PR-008"
+      // stage="PROCESS"
+      // description="점검할 예외 유형과 범위를 정합니다."
+      // icon={
+      //   <TriangleAlert
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       exceptionTypes.length ===
+      //       0,
+      //     ) +
+      //     Number(
+      //       !analysisScope,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -2984,7 +2984,7 @@ export function FindExceptionsInspector({
                   className={[
                     'h-[38px] rounded-lg px-4 text-xs font-bold',
                     analysisScope ===
-                    option
+                      option
                       ? 'text-indigo-500'
                       : 'border border-slate-200 text-slate-600',
                   ].join(
@@ -3175,39 +3175,39 @@ export function DraftInspector({
   ) => {
     const nextDocumentType =
       typeof patch.documentType ===
-      'string'
+        'string'
         ? patch.documentType
         : documentType
 
     const nextPurpose =
       typeof patch.purpose ===
-      'string'
+        'string'
         ? patch.purpose
         : purpose
 
     const nextCompositionMode =
       typeof patch.compositionMode ===
-      'string'
+        'string'
         ? patch.compositionMode
         : compositionMode
 
     const nextSections =
       'sections' in patch
         ? readStringArray(
-            patch.sections,
-            sections,
-          )
+          patch.sections,
+          sections,
+        )
         : sections
 
     const nextCompletionLevel =
       typeof patch.completionLevel ===
-      'string'
+        'string'
         ? patch.completionLevel
         : completionLevel
 
     const nextMissingInfoHandling =
       typeof patch.missingInfoHandling ===
-      'string'
+        'string'
         ? patch.missingInfoHandling
         : missingInfoHandling
 
@@ -3323,24 +3323,24 @@ export function DraftInspector({
   return (
     <ExpandableSettingBlock
       title="초안 작성하기"
-      code="PR-009"
-      stage="PROCESS"
-      description="문서 유형과 목적, 구성 방식을 정해 초안을 만듭니다."
-      icon={
-        <FilePenLine
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        conditional: 1,
-        optional: 2,
-        missing:
-          Number(
-            !purpose.trim(),
-          ),
-      }}
+      // code="PR-009"
+      // stage="PROCESS"
+      // description="문서 유형과 목적, 구성 방식을 정해 초안을 만듭니다."
+      // icon={
+      //   <FilePenLine
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   conditional: 1,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !purpose.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -3482,7 +3482,7 @@ export function DraftInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     compositionMode ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -3498,101 +3498,101 @@ export function DraftInspector({
 
         {compositionMode ===
           '직접 목차' && (
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <p className="text-xs font-bold text-slate-700">
-                목차 블록
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-xs font-bold text-slate-700">
+                  목차 블록
+                </p>
+
+                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
+                  조건부
+                </span>
+              </div>
+
+              <p className="mb-3 text-[11px] font-semibold text-indigo-500">
+                ↳ 직접 목차 선택됨
               </p>
 
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
-                조건부
-              </span>
-            </div>
-
-            <p className="mb-3 text-[11px] font-semibold text-indigo-500">
-              ↳ 직접 목차 선택됨
-            </p>
-
-            <div className="space-y-3">
-              {sections.map(
-                (
-                  section,
-                  index,
-                ) => (
-                  <div
-                    key={
-                      index
-                    }
-                    draggable
-                    onDragStart={() =>
-                      setDragIndex(
-                        index,
-                      )
-                    }
-                    onDragOver={(
-                      event,
-                    ) =>
-                      event.preventDefault()
-                    }
-                    onDrop={() => {
-                      if (
-                        dragIndex !==
-                        null
-                      ) {
-                        reorderSection(
-                          dragIndex,
+              <div className="space-y-3">
+                {sections.map(
+                  (
+                    section,
+                    index,
+                  ) => (
+                    <div
+                      key={
+                        index
+                      }
+                      draggable
+                      onDragStart={() =>
+                        setDragIndex(
                           index,
                         )
                       }
-
-                      setDragIndex(
-                        null,
-                      )
-                    }}
-                    className="flex h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
-                      {index +
-                        1}
-                    </span>
-
-                    <input
-                      type="text"
-                      value={
-                        section
-                      }
-                      onChange={(
+                      onDragOver={(
                         event,
                       ) =>
-                        updateSection(
-                          index,
-                          event.target
-                            .value,
-                        )
+                        event.preventDefault()
                       }
-                      placeholder="섹션 제목 입력"
-                      className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                ),
-              )}
+                      onDrop={() => {
+                        if (
+                          dragIndex !==
+                          null
+                        ) {
+                          reorderSection(
+                            dragIndex,
+                            index,
+                          )
+                        }
 
-              <button
-                type="button"
-                onClick={
-                  addSection
-                }
-                className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
-              >
-                <Plus
-                  size={14}
-                  className="mr-1"
-                />
-                섹션 추가
-              </button>
+                        setDragIndex(
+                          null,
+                        )
+                      }}
+                      className="flex h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
+                        {index +
+                          1}
+                      </span>
+
+                      <input
+                        type="text"
+                        value={
+                          section
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateSection(
+                            index,
+                            event.target
+                              .value,
+                          )
+                        }
+                        placeholder="섹션 제목 입력"
+                        className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  onClick={
+                    addSection
+                  }
+                  className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
+                >
+                  <Plus
+                    size={14}
+                    className="mr-1"
+                  />
+                  섹션 추가
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -3624,7 +3624,7 @@ export function DraftInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     completionLevel ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -3773,21 +3773,21 @@ export function TableTransformInspector({
   ) => {
     const nextPurpose =
       typeof patch.tablePurpose ===
-      'string'
+        'string'
         ? patch.tablePurpose
         : tablePurpose
 
     const nextColumns =
       'columns' in patch
         ? readStringArray(
-            patch.columns,
-            columns,
-          )
+          patch.columns,
+          columns,
+        )
         : columns
 
     const nextRowKey =
       typeof patch.rowKey ===
-      'string'
+        'string'
         ? patch.rowKey
         : rowKey
 
@@ -3802,7 +3802,7 @@ export function TableTransformInspector({
         nextPurpose,
       ) &&
       validColumns.length >=
-        2 &&
+      2 &&
       Boolean(
         nextRowKey,
       )
@@ -3894,27 +3894,27 @@ export function TableTransformInspector({
   return (
     <ExpandableSettingBlock
       title="표로 재구성하기"
-      code="PR-010"
-      stage="PROCESS"
-      description="열 블록을 가로로 끌어 순서를 바꾸고, 행 기준을 정합니다."
-      icon={
-        <Table2
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        optional: 1,
-        missing:
-          Number(
-            columns.filter(
-              (item) =>
-                item.trim(),
-            ).length <
-              2,
-          ),
-      }}
+      // code="PR-010"
+      // stage="PROCESS"
+      // description="열 블록을 가로로 끌어 순서를 바꾸고, 행 기준을 정합니다."
+      // icon={
+      //   <Table2
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       columns.filter(
+      //         (item) =>
+      //           item.trim(),
+      //       ).length <
+      //       2,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -3968,7 +3968,7 @@ export function TableTransformInspector({
                   className={[
                     'h-[38px] rounded-lg px-4 text-xs font-bold',
                     tablePurpose ===
-                    option
+                      option
                       ? 'text-indigo-500'
                       : 'border border-slate-200 text-slate-600',
                   ].join(
@@ -4146,7 +4146,7 @@ export function TableTransformInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     cellLength ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -4304,22 +4304,22 @@ export function ChecklistTransformInspector({
   ) => {
     const nextPurpose =
       typeof patch.checklistPurpose ===
-      'string'
+        'string'
         ? patch.checklistPurpose
         : checklistPurpose
 
     const nextDetailLevel =
       typeof patch.detailLevel ===
-      'string'
+        'string'
         ? patch.detailLevel
         : detailLevel
 
     const nextStatusValues =
       'statusValues' in patch
         ? readStringArray(
-            patch.statusValues,
-            statusValues,
-          )
+          patch.statusValues,
+          statusValues,
+        )
         : statusValues
 
     const complete =
@@ -4364,14 +4364,14 @@ export function ChecklistTransformInspector({
         option,
       )
         ? statusValues.filter(
-            (item) =>
-              item !==
-              option,
-          )
-        : [
-            ...statusValues,
+          (item) =>
+            item !==
             option,
-          ]
+        )
+        : [
+          ...statusValues,
+          option,
+        ]
 
     save({
       statusValues:
@@ -4382,19 +4382,19 @@ export function ChecklistTransformInspector({
   return (
     <ExpandableSettingBlock
       title="체크리스트로 바꾸기"
-      code="PR-011"
-      stage="PROCESS"
-      description="내용을 점검 가능한 체크리스트로 변환합니다."
-      icon={
-        <ListChecks
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 3,
-      }}
+      // code="PR-011"
+      // stage="PROCESS"
+      // description="내용을 점검 가능한 체크리스트로 변환합니다."
+      // icon={
+      //   <ListChecks
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 3,
+      // }}
       required={
         slot.required
       }
@@ -4448,7 +4448,7 @@ export function ChecklistTransformInspector({
                   className={[
                     'min-h-[64px] rounded-xl border-2 text-xs font-bold',
                     checklistPurpose ===
-                    option
+                      option
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-600',
                   ].join(
@@ -4489,7 +4489,7 @@ export function ChecklistTransformInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     detailLevel ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -4704,7 +4704,7 @@ export function QuestionListInspector({
 
   const questionCount =
     typeof questionCountValue ===
-    'number'
+      'number'
       ? questionCountValue
       : 5
 
@@ -4740,25 +4740,25 @@ export function QuestionListInspector({
   ) => {
     const nextPurpose =
       typeof patch.questionPurpose ===
-      'string'
+        'string'
         ? patch.questionPurpose
         : questionPurpose
 
     const nextTarget =
       typeof patch.questionTarget ===
-      'string'
+        'string'
         ? patch.questionTarget
         : questionTarget
 
     const nextCount =
       typeof patch.questionCount ===
-      'number'
+        'number'
         ? patch.questionCount
         : questionCount
 
     const nextCountMode =
       typeof patch.questionCountMode ===
-      'string'
+        'string'
         ? patch.questionCountMode
         : questionCountMode
 
@@ -4771,7 +4771,7 @@ export function QuestionListInspector({
       ) &&
       (
         nextCountMode ===
-          'auto' ||
+        'auto' ||
         nextCount > 0
       )
 
@@ -4789,12 +4789,11 @@ export function QuestionListInspector({
       {
         summaryValue:
           complete
-            ? `${nextPurpose} · ${
-                nextCountMode ===
-                'auto'
-                  ? '자동'
-                  : `${nextCount}개`
-              }`
+            ? `${nextPurpose} · ${nextCountMode ===
+              'auto'
+              ? '자동'
+              : `${nextCount}개`
+            }`
             : '',
 
         state:
@@ -4813,14 +4812,14 @@ export function QuestionListInspector({
         type,
       )
         ? questionTypes.filter(
-            (item) =>
-              item !==
-              type,
-          )
-        : [
-            ...questionTypes,
+          (item) =>
+            item !==
             type,
-          ]
+        )
+        : [
+          ...questionTypes,
+          type,
+        ]
 
     save({
       questionTypes:
@@ -4837,7 +4836,7 @@ export function QuestionListInspector({
         Math.min(
           99,
           questionCount +
-            difference,
+          difference,
         ),
       )
 
@@ -4853,23 +4852,23 @@ export function QuestionListInspector({
   return (
     <ExpandableSettingBlock
       title="질문 리스트 만들기"
-      code="PR-012"
-      stage="PROCESS"
-      description="확인이 필요한 질문 목록을 생성합니다."
-      icon={
-        <CircleHelp
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        missing:
-          Number(
-            !questionTarget,
-          ),
-      }}
+      // code="PR-012"
+      // stage="PROCESS"
+      // description="확인이 필요한 질문 목록을 생성합니다."
+      // icon={
+      //   <CircleHelp
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !questionTarget,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -5041,7 +5040,7 @@ export function QuestionListInspector({
 
               <div className="flex w-12 items-center justify-center text-sm font-bold text-slate-700">
                 {questionCountMode ===
-                'auto'
+                  'auto'
                   ? '자동'
                   : questionCount}
               </div>
@@ -5085,7 +5084,7 @@ export function QuestionListInspector({
                     'h-[36px] rounded-lg border px-3 text-xs font-bold',
                     questionCountMode ===
                       'fixed' &&
-                    questionCount ===
+                      questionCount ===
                       count
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-500',
@@ -5109,7 +5108,7 @@ export function QuestionListInspector({
               className={[
                 'h-[36px] rounded-lg border px-3 text-xs font-bold',
                 questionCountMode ===
-                'auto'
+                  'auto'
                   ? 'border-indigo-500 text-indigo-500'
                   : 'border-slate-200 text-slate-500',
               ].join(
@@ -5289,19 +5288,19 @@ export function CallSkillInspector({
   ) => {
     const nextPreset =
       typeof patch.skillPreset ===
-      'string'
+        'string'
         ? patch.skillPreset
         : skillPreset
 
     const nextPurpose =
       typeof patch.executionPurpose ===
-      'string'
+        'string'
         ? patch.executionPurpose
         : executionPurpose
 
     const nextTarget =
       typeof patch.applicationTarget ===
-      'string'
+        'string'
         ? patch.applicationTarget
         : applicationTarget
 
@@ -5342,24 +5341,24 @@ export function CallSkillInspector({
   return (
     <ExpandableSettingBlock
       title="특정 스킬 호출하기"
-      code="PR-013"
-      stage="PROCESS"
-      description="프리셋 스킬을 불러와 이전 결과에 적용합니다."
-      icon={
-        <Sparkles
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        recommended: 1,
-        missing:
-          Number(
-            !executionPurpose.trim(),
-          ),
-      }}
+      // code="PR-013"
+      // stage="PROCESS"
+      // description="프리셋 스킬을 불러와 이전 결과에 적용합니다."
+      // icon={
+      //   <Sparkles
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   recommended: 1,
+      //   missing:
+      //     Number(
+      //       !executionPurpose.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -5539,7 +5538,7 @@ export function CallSkillInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     intensity ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -5681,34 +5680,34 @@ export function PromptComposeInspector({
   ) => {
     const nextOrder =
       'pieceOrder' in
-      patch
+        patch
         ? readStringArray(
-            patch.pieceOrder,
-            pieceOrder,
-          )
+          patch.pieceOrder,
+          pieceOrder,
+        )
         : pieceOrder
 
     const nextRole =
       typeof patch.roleText ===
-      'string'
+        'string'
         ? patch.roleText
         : roleText
 
     const nextTask =
       typeof patch.taskText ===
-      'string'
+        'string'
         ? patch.taskText
         : taskText
 
     const nextOutputInstruction =
       typeof patch.outputInstruction ===
-      'string'
+        'string'
         ? patch.outputInstruction
         : outputInstruction
 
     const nextOutputFormat =
       typeof patch.outputFormat ===
-      'string'
+        'string'
         ? patch.outputFormat
         : outputFormat
 
@@ -5891,29 +5890,29 @@ export function PromptComposeInspector({
   return (
     <ExpandableSettingBlock
       title="프롬프트 조립하기"
-      code="PR-014"
-      stage="PROCESS"
-      description="역할·작업·참고·조건·출력 조각을 끌어 순서대로 조립합니다."
-      icon={
-        <Puzzle
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        conditional: 5,
-        missing:
-          Number(
-            !roleText.trim(),
-          ) +
-          Number(
-            !taskText.trim(),
-          ) +
-          Number(
-            !outputInstruction.trim(),
-          ),
-      }}
+      // code="PR-014"
+      // stage="PROCESS"
+      // description="역할·작업·참고·조건·출력 조각을 끌어 순서대로 조립합니다."
+      // icon={
+      //   <Puzzle
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   conditional: 5,
+      //   missing:
+      //     Number(
+      //       !roleText.trim(),
+      //     ) +
+      //     Number(
+      //       !taskText.trim(),
+      //     ) +
+      //     Number(
+      //       !outputInstruction.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -5925,8 +5924,8 @@ export function PromptComposeInspector({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
             {roleText.trim() &&
-            taskText.trim() &&
-            outputInstruction.trim()
+              taskText.trim() &&
+              outputInstruction.trim()
               ? '필수 조각(역할·작업·출력) 충족'
               : '필수 프롬프트 조각 미입력'}
           </span>
@@ -6005,7 +6004,7 @@ export function PromptComposeInspector({
                             'reference'
                             ? 'bg-amber-600'
                             : type ===
-                                'output'
+                              'output'
                               ? 'bg-emerald-600'
                               : 'bg-[#4A5E8A]',
                         ].join(
@@ -6121,10 +6120,10 @@ export function PromptComposeInspector({
 
                     {option ===
                       '표' && (
-                      <span className="ml-2 text-[10px] font-normal text-slate-400">
-                        행/열 구조로 출력
-                      </span>
-                    )}
+                        <span className="ml-2 text-[10px] font-normal text-slate-400">
+                          행/열 구조로 출력
+                        </span>
+                      )}
                   </button>
                 )
               },
@@ -6294,31 +6293,31 @@ export function PromptFillBlanksInspector({
   ) => {
     const nextTemplate =
       typeof patch.template ===
-      'string'
+        'string'
         ? patch.template
         : template
 
     const nextRole =
       typeof patch.roleValue ===
-      'string'
+        'string'
         ? patch.roleValue
         : roleValue
 
     const nextTask =
       typeof patch.taskValue ===
-      'string'
+        'string'
         ? patch.taskValue
         : taskValue
 
     const nextTarget =
       typeof patch.targetValue ===
-      'string'
+        'string'
         ? patch.targetValue
         : targetValue
 
     const nextOutput =
       typeof patch.outputValue ===
-      'string'
+        'string'
         ? patch.outputValue
         : outputValue
 
@@ -6341,7 +6340,7 @@ export function PromptFillBlanksInspector({
         nextTemplate,
       ) &&
       filledCount ===
-        4
+      4
 
     onConfigChange(
       {
@@ -6424,7 +6423,7 @@ export function PromptFillBlanksInspector({
     if (
       !draggedWord ||
       draggedWord.type !==
-        targetType
+      targetType
     ) {
       return
     }
@@ -6499,7 +6498,7 @@ export function PromptFillBlanksInspector({
         }
         title={
           promptSlotLabelMap[
-            type
+          type
           ]
         }
         className={[
@@ -6509,10 +6508,10 @@ export function PromptFillBlanksInspector({
               'role'
               ? 'border-[#4A5E8A] bg-[#EDF1F8] text-[#4A5E8A]'
               : type ===
-                  'target'
+                'target'
                 ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
                 : type ===
-                    'task'
+                  'task'
                   ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
                   : 'border-violet-500 bg-violet-50 text-violet-600'
             : canDrop
@@ -6531,22 +6530,22 @@ export function PromptFillBlanksInspector({
   return (
     <ExpandableSettingBlock
       title="빈칸 프롬프트 채우기"
-      code="PR-015"
-      stage="PROCESS"
-      description="단어 카드를 문장의 빈칸으로 끌어다 놓습니다."
-      icon={
-        <Puzzle
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        conditional: 4,
-        missing:
-          4 -
-          filledCount,
-      }}
+      // code="PR-015"
+      // stage="PROCESS"
+      // description="단어 카드를 문장의 빈칸으로 끌어다 놓습니다."
+      // icon={
+      //   <Puzzle
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   conditional: 4,
+      //   missing:
+      //     4 -
+      //     filledCount,
+      // }}
       required={
         slot.required
       }
@@ -6562,24 +6561,23 @@ export function PromptFillBlanksInspector({
             {' '}채움
             {filledCount <
               4
-              ? ` · ${
-                  [
-                    !taskValue &&
-                      '작업',
-                    !outputValue &&
-                      '출력',
-                    !roleValue &&
-                      '역할',
-                    !targetValue &&
-                      '대상',
-                  ]
-                    .filter(
-                      Boolean,
-                    )
-                    .join(
-                      '·',
-                    )
-                } 남음`
+              ? ` · ${[
+                !taskValue &&
+                '작업',
+                !outputValue &&
+                '출력',
+                !roleValue &&
+                '역할',
+                !targetValue &&
+                '대상',
+              ]
+                .filter(
+                  Boolean,
+                )
+                .join(
+                  '·',
+                )
+              } 남음`
               : ' · 완료'}
           </span>
 
@@ -6699,7 +6697,7 @@ export function PromptFillBlanksInspector({
                       'task'
                       ? 'border-indigo-500 bg-indigo-500 text-white'
                       : card.type ===
-                          'output'
+                        'output'
                         ? 'border-violet-500 bg-violet-500 text-white'
                         : 'border-dashed border-indigo-400 text-indigo-500',
                   ].join(
@@ -6872,11 +6870,11 @@ export function SummaryPromptLayoutInspector({
   ) => {
     const nextOrder =
       'cardOrder' in
-      patch
+        patch
         ? readStringArray(
-            patch.cardOrder,
-            cardOrder,
-          )
+          patch.cardOrder,
+          cardOrder,
+        )
         : cardOrder
 
     const complete =
@@ -6954,24 +6952,24 @@ export function SummaryPromptLayoutInspector({
   return (
     <ExpandableSettingBlock
       title="요약 프롬프트 배치하기"
-      code="PR-016"
-      stage="PROCESS"
-      description="역할·작업·참고·출력 카드를 색과 아이콘으로 구분해 배치합니다."
-      icon={
-        <Layers3
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 1,
-        optional: 1,
-        missing:
-          Number(
-            cardOrder.length ===
-              0,
-          ),
-      }}
+      // code="PR-016"
+      // stage="PROCESS"
+      // description="역할·작업·참고·출력 카드를 색과 아이콘으로 구분해 배치합니다."
+      // icon={
+      //   <Layers3
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       cardOrder.length ===
+      //       0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -7022,7 +7020,7 @@ export function SummaryPromptLayoutInspector({
               ) => {
                 const card =
                   summaryPromptCardMeta[
-                    cardId
+                  cardId
                   ]
 
                 if (
@@ -7072,10 +7070,10 @@ export function SummaryPromptLayoutInspector({
                             'role'
                             ? 'bg-[#4A5E8A]'
                             : cardId ===
-                                'task'
+                              'task'
                               ? 'bg-indigo-500'
                               : cardId ===
-                                  'reference'
+                                'reference'
                                 ? 'bg-amber-700'
                                 : 'bg-emerald-700',
                         ].join(

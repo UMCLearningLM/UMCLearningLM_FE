@@ -44,12 +44,12 @@ export function QuestionListBlock() {
   return (
     <ExpandableSettingBlock
       title="질문 리스트 만들기"
-      code="PRO-012"
-      stage="PROCESS"
-      description="확인이 필요한 질문 목록을 생성합니다."
-      icon={<Lightbulb size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 3, optional: 2, missing: validationAttempted ? missingCount : 0 }}
+      // code="PRO-012"
+      // stage="PROCESS"
+      // description="확인이 필요한 질문 목록을 생성합니다."
+      // icon={<Lightbulb size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 3, optional: 2, missing: validationAttempted ? missingCount : 0 }}
       required
       validationMessage={validationAttempted && missingCount > 0 ? '필수 작성 항목입니다' : undefined}
       defaultOpen

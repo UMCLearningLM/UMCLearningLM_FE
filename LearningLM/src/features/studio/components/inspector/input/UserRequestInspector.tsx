@@ -182,7 +182,7 @@ export function UserRequestInspector({
   const showError =
     hasEditedRequest &&
     request.trim().length ===
-      0
+    0
 
   /**
    * IN-001의 현재 필수 설정 여부입니다.
@@ -195,18 +195,18 @@ export function UserRequestInspector({
    */
   const isComplete =
     request.trim().length >
-      0 &&
+    0 &&
     mode.trim().length >
-      0
+    0
 
   const missingCount =
     Number(
       request.trim().length ===
-        0,
+      0,
     ) +
     Number(
       mode.trim().length ===
-        0,
+      0,
     )
 
   /**
@@ -249,7 +249,7 @@ export function UserRequestInspector({
     nextMode: string,
   ): StudioSlotState =>
     nextRequest.trim() &&
-    nextMode.trim()
+      nextMode.trim()
       ? 'filled'
       : 'empty'
 
@@ -405,20 +405,6 @@ export function UserRequestInspector({
   return (
     <ExpandableSettingBlock
       title="사용자 요청 받기"
-      code="IN-001"
-      stage="INPUT"
-      description="사용자의 요청 문장을 받아 흐름의 출발점으로 사용합니다."
-      icon={
-        <MessageCircleMore
-          size={18}
-        />
-      }
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          missingCount,
-      }}
       required
       defaultOpen
       className="!w-full !rounded-[12px] !border-[#E4E4E7] !shadow-none [&_.setting-block-fields]:!w-full [&_.setting-block-fields]:max-w-full"
@@ -426,7 +412,7 @@ export function UserRequestInspector({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
             {missingCount >
-            0
+              0
               ? `필수 옵션 ${missingCount}개 미입력`
               : '필수 옵션 입력 완료'}
           </span>

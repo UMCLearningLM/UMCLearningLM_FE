@@ -67,12 +67,12 @@ export function ReconstructTableBlock() {
   return (
     <ExpandableSettingBlock
       title="표로 재구성하기"
-      code="PRO-010"
-      stage="PROCESS"
-      description="열 블록을 가로로 끌어 순서를 바꾸고, 행 기준을 정하면 아래 미리보기가 실시간으로 갱신됩니다."
-      icon={<ShieldAlert size={18} />}
-      category="CORE"
-      tagCounts={{ required: 3, optional: 1 }}
+      // code="PRO-010"
+      // stage="PROCESS"
+      // description="열 블록을 가로로 끌어 순서를 바꾸고, 행 기준을 정하면 아래 미리보기가 실시간으로 갱신됩니다."
+      // icon={<ShieldAlert size={18} />}
+      // category="CORE"
+      // tagCounts={{ required: 3, optional: 1 }}
       required
       defaultOpen
       validationMessage="* 필수 작성 항목입니다"

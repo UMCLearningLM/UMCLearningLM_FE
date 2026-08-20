@@ -222,7 +222,7 @@ export function ProjectDocumentInspector({
       projectId,
     ) &&
     selectedDocuments.length >
-      0 &&
+    0 &&
     Boolean(
       useRange,
     )
@@ -232,13 +232,13 @@ export function ProjectDocumentInspector({
   ) => {
     const nextProjectId =
       typeof patch.projectId ===
-      'string'
+        'string'
         ? patch.projectId
         : projectId
 
     const nextProjectLabel =
       typeof patch.projectLabel ===
-      'string'
+        'string'
         ? patch.projectLabel
         : projectLabel
 
@@ -247,17 +247,17 @@ export function ProjectDocumentInspector({
         patch.selectedDocuments,
       )
         ? patch.selectedDocuments.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item ===
-              'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item ===
+            'string',
+        )
         : selectedDocuments
 
     const nextUseRange =
       typeof patch.useRange ===
-      'string'
+        'string'
         ? patch.useRange
         : useRange
 
@@ -266,7 +266,7 @@ export function ProjectDocumentInspector({
         nextProjectId,
       ) &&
       nextDocuments.length >
-        0 &&
+      0 &&
       Boolean(
         nextUseRange,
       )
@@ -291,7 +291,7 @@ export function ProjectDocumentInspector({
           nextProjectId ||
           (
             nextDocuments.length >
-            0
+              0
               ? `${nextDocuments.length}개 문서`
               : ''
           ),
@@ -351,16 +351,16 @@ export function ProjectDocumentInspector({
     const nextDocuments =
       exists
         ? selectedDocuments.filter(
-            (
-              item,
-            ) =>
-              item !==
-              documentLabel,
-          )
-        : [
-            ...selectedDocuments,
+          (
+            item,
+          ) =>
+            item !==
             documentLabel,
-          ]
+        )
+        : [
+          ...selectedDocuments,
+          documentLabel,
+        ]
 
     save({
       selectedDocuments:
@@ -378,9 +378,9 @@ export function ProjectDocumentInspector({
 
     if (
       nextIndex <
-        0 ||
+      0 ||
       nextIndex >=
-        selectedDocuments.length
+      selectedDocuments.length
     ) {
       return
     }
@@ -408,27 +408,27 @@ export function ProjectDocumentInspector({
   return (
     <ExpandableSettingBlock
       title="프로젝트 문서 불러오기"
-      code="CTX-001"
-      stage="CONTEXT"
-      description="프로젝트를 선택하고 참고할 문서를 지정합니다."
-      icon={
-        <FileText
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          Number(
-            !projectId,
-          ) +
-          Number(
-            selectedDocuments.length ===
-              0,
-          ),
-      }}
+      // code="CTX-001"
+      // stage="CONTEXT"
+      // description="프로젝트를 선택하고 참고할 문서를 지정합니다."
+      // icon={
+      //   <FileText
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !projectId,
+      //     ) +
+      //     Number(
+      //       selectedDocuments.length ===
+      //         0,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -639,7 +639,7 @@ export function ProjectDocumentInspector({
           </div>
 
           {selectedDocuments.length ===
-          0 ? (
+            0 ? (
             <p className="rounded-lg bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-400">
               참고 문서를 선택하면 우선순위를 조정할 수 있습니다.
             </p>
@@ -687,7 +687,7 @@ export function ProjectDocumentInspector({
                       disabled={
                         index ===
                         selectedDocuments.length -
-                          1
+                        1
                       }
                       onClick={() =>
                         moveDocument(

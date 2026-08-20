@@ -12,6 +12,7 @@ import {
 } from 'react-router-dom'
 
 import api from '../../api/api'
+import googleImg from '../../assets/google.svg';
 
 import {
   clearAuthStorage,
@@ -246,7 +247,7 @@ export default function GoogleLoginSuccess() {
               throw new Error(
                 response.data
                   ?.message ||
-                  'Google 로그인 토큰 응답이 올바르지 않습니다.',
+                'Google 로그인 토큰 응답이 올바르지 않습니다.',
               )
             }
 
@@ -298,7 +299,7 @@ export default function GoogleLoginSuccess() {
               900,
             )
           } catch (
-            error
+          error
           ) {
             console.error(
               'Google 인증 코드 교환 실패:',
@@ -311,7 +312,7 @@ export default function GoogleLoginSuccess() {
 
             const {
               code:
-                errorCode,
+              errorCode,
               message,
             } =
               getGoogleTokenErrorDetails(
@@ -384,18 +385,8 @@ export default function GoogleLoginSuccess() {
 
         <div className="flex min-h-[374px] w-full flex-col items-center justify-center rounded-[12px] border-2 border-[#E4E4E7] bg-white px-[40px] py-[50px]">
           <div className="flex w-full flex-col items-center gap-[38px]">
-            {success ? (
-              <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#DFF2DF] text-[32px] font-bold text-[#3C7A52]">
-                ✓
-              </div>
-            ) : failed ? (
-              <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#FBF1F0] text-[30px] font-bold text-[#EF8888]">
-                !
-              </div>
-            ) : (
-              <div className="h-[52px] w-[52px] animate-spin rounded-full border-[5px] border-[#E4E4E7] border-t-[#6366F1]" />
-            )}
 
+            <img src={googleImg} className='w-[60px] h-[60px]' />
             <div className="flex flex-col items-center gap-[11px]">
               <h2 className="text-center text-[28px] font-bold tracking-[-0.03em] text-[#27272A]">
                 {success

@@ -44,16 +44,16 @@ export function GoalSettingBlock() {
   return (
     <ExpandableSettingBlock
       title="목표 정하기"
-      code="IN-002"
-      stage="INPUT"
-      description="이번 작업의 목표 유형을 정하고 완료 기준을 지정합니다."
-      icon={<Target size={18} />}
-      tagCounts={{
-        required: 1,
-        optional: 2,
-        conditional: Number(isCustomGoal),
-        missing: missingCount,
-      }}
+      // code="IN-002"
+      // stage="INPUT"
+      // description="이번 작업의 목표 유형을 정하고 완료 기준을 지정합니다."
+      // icon={<Target size={18} />}
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 2,
+      //   conditional: Number(isCustomGoal),
+      //   missing: missingCount,
+      // }}
       required
       footer={
         <div className="flex items-center justify-between">

@@ -15,17 +15,20 @@ export function ResultUsageBlock() {
   const [formality, setFormality] = useState('internal')
 
   return (
-    <ExpandableSettingBlock title="결과 사용 상황 정하기" code="IN-008" stage="INPUT" description="결과물이 쓰일 상황과 매체를 지정해 형식을 맞춥니다." icon={<Compass size={18} />} category="RECOMMENDED" tagCounts={{ required: 1, optional: 3, missing: Number(usage.length === 0) }} required footer={<div className="flex items-center justify-between"><span className="text-xs text-slate-400">{usage ? '사용 상황 선택 완료' : '사용 상황 미선택'}</span><Button size="sm" variant="secondary">검증</Button></div>}>
+    <ExpandableSettingBlock
+      title="결과 사용 상황 정하기"
+      // code="IN-008" stage="INPUT" description="결과물이 쓰일 상황과 매체를 지정해 형식을 맞춥니다." icon={<Compass size={18} />} category="RECOMMENDED" tagCounts={{ required: 1, optional: 3, missing: Number(usage.length === 0) }} 
+      required footer={<div className="flex items-center justify-between"><span className="text-xs text-slate-400">{usage ? '사용 상황 선택 완료' : '사용 상황 미선택'}</span><Button size="sm" variant="secondary">검증</Button></div>}>
       <div className="space-y-5">
         <div><p className="mb-2 text-xs font-bold text-slate-700">
           사용 상황 <span className="text-rose-500">*</span>
         </p>
           <div className="space-y-2">
-          <BlockCard
+            <BlockCard
               columns={4}
               options={usages.slice(0, 4).map(([label, icon]) => ({ label, value: label, icon: <span>{icon}</span> }))}
               value={usage} onChange={setUsage} />
-          <BlockCard
+            <BlockCard
               columns={3}
               options={usages.slice(4).map(([label, icon]) => ({ label, value: label, icon: <span>{icon}</span> }))}
               value={usage} onChange={setUsage} />

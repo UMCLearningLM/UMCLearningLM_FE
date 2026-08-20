@@ -87,7 +87,7 @@ export function QuestionListInspector({
 
   const questionCount =
     typeof questionCountValue ===
-    'number'
+      'number'
       ? questionCountValue
       : 5
 
@@ -123,25 +123,25 @@ export function QuestionListInspector({
   ) => {
     const nextPurpose =
       typeof patch.questionPurpose ===
-      'string'
+        'string'
         ? patch.questionPurpose
         : questionPurpose
 
     const nextTarget =
       typeof patch.questionTarget ===
-      'string'
+        'string'
         ? patch.questionTarget
         : questionTarget
 
     const nextCount =
       typeof patch.questionCount ===
-      'number'
+        'number'
         ? patch.questionCount
         : questionCount
 
     const nextCountMode =
       typeof patch.questionCountMode ===
-      'string'
+        'string'
         ? patch.questionCountMode
         : questionCountMode
 
@@ -154,7 +154,7 @@ export function QuestionListInspector({
       ) &&
       (
         nextCountMode ===
-          'auto' ||
+        'auto' ||
         nextCount > 0
       )
 
@@ -172,12 +172,11 @@ export function QuestionListInspector({
       {
         summaryValue:
           complete
-            ? `${nextPurpose} · ${
-                nextCountMode ===
-                'auto'
-                  ? '자동'
-                  : `${nextCount}개`
-              }`
+            ? `${nextPurpose} · ${nextCountMode ===
+              'auto'
+              ? '자동'
+              : `${nextCount}개`
+            }`
             : '',
 
         state:
@@ -196,14 +195,14 @@ export function QuestionListInspector({
         type,
       )
         ? questionTypes.filter(
-            (item) =>
-              item !==
-              type,
-          )
-        : [
-            ...questionTypes,
+          (item) =>
+            item !==
             type,
-          ]
+        )
+        : [
+          ...questionTypes,
+          type,
+        ]
 
     save({
       questionTypes:
@@ -220,7 +219,7 @@ export function QuestionListInspector({
         Math.min(
           99,
           questionCount +
-            difference,
+          difference,
         ),
       )
 
@@ -236,23 +235,23 @@ export function QuestionListInspector({
   return (
     <ExpandableSettingBlock
       title="질문 리스트 만들기"
-      code="PR-012"
-      stage="PROCESS"
-      description="확인이 필요한 질문 목록을 생성합니다."
-      icon={
-        <CircleHelp
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        missing:
-          Number(
-            !questionTarget,
-          ),
-      }}
+      // code="PR-012"
+      // stage="PROCESS"
+      // description="확인이 필요한 질문 목록을 생성합니다."
+      // icon={
+      //   <CircleHelp
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !questionTarget,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -424,7 +423,7 @@ export function QuestionListInspector({
 
               <div className="flex w-12 items-center justify-center text-sm font-bold text-slate-700">
                 {questionCountMode ===
-                'auto'
+                  'auto'
                   ? '자동'
                   : questionCount}
               </div>
@@ -468,7 +467,7 @@ export function QuestionListInspector({
                     'h-[36px] rounded-lg border px-3 text-xs font-bold',
                     questionCountMode ===
                       'fixed' &&
-                    questionCount ===
+                      questionCount ===
                       count
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-500',
@@ -492,7 +491,7 @@ export function QuestionListInspector({
               className={[
                 'h-[36px] rounded-lg border px-3 text-xs font-bold',
                 questionCountMode ===
-                'auto'
+                  'auto'
                   ? 'border-indigo-500 text-indigo-500'
                   : 'border-slate-200 text-slate-500',
               ].join(
@@ -681,13 +680,13 @@ export function CallSkillInspector({
   ) => {
     const nextPreset =
       typeof patch.skillPreset ===
-      'string'
+        'string'
         ? patch.skillPreset
         : skillPreset
 
     const nextPurpose =
       typeof patch.executionPurpose ===
-      'string'
+        'string'
         ? patch.executionPurpose
         : executionPurpose
 
@@ -725,24 +724,24 @@ export function CallSkillInspector({
   return (
     <ExpandableSettingBlock
       title="특정 스킬 호출하기"
-      code="PR-013"
-      stage="PROCESS"
-      description="프리셋 스킬을 불러와 이전 결과에 적용합니다."
-      icon={
-        <Sparkles
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        optional: 2,
-        recommended: 1,
-        missing:
-          Number(
-            !executionPurpose.trim(),
-          ),
-      }}
+      // code="PR-013"
+      // stage="PROCESS"
+      // description="프리셋 스킬을 불러와 이전 결과에 적용합니다."
+      // icon={
+      //   <Sparkles
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 2,
+      //   recommended: 1,
+      //   missing:
+      //     Number(
+      //       !executionPurpose.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -960,7 +959,7 @@ export function CallSkillInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     intensity ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -1111,34 +1110,34 @@ export function PromptComposeInspector({
   ) => {
     const nextOrder =
       'pieceOrder' in
-      patch
+        patch
         ? readStringArray(
-            patch.pieceOrder,
-            pieceOrder,
-          )
+          patch.pieceOrder,
+          pieceOrder,
+        )
         : pieceOrder
 
     const nextRole =
       typeof patch.roleText ===
-      'string'
+        'string'
         ? patch.roleText
         : roleText
 
     const nextTask =
       typeof patch.taskText ===
-      'string'
+        'string'
         ? patch.taskText
         : taskText
 
     const nextOutputInstruction =
       typeof patch.outputInstruction ===
-      'string'
+        'string'
         ? patch.outputInstruction
         : outputInstruction
 
     const nextOutputFormat =
       typeof patch.outputFormat ===
-      'string'
+        'string'
         ? patch.outputFormat
         : outputFormat
 
@@ -1324,29 +1323,29 @@ export function PromptComposeInspector({
   return (
     <ExpandableSettingBlock
       title="프롬프트 조립하기"
-      code="PR-014"
-      stage="PROCESS"
-      description="역할·작업·참고·조건·출력 조각을 끌어 순서대로 조립합니다."
-      icon={
-        <Puzzle
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        conditional: 5,
-        missing:
-          Number(
-            !roleText.trim(),
-          ) +
-          Number(
-            !taskText.trim(),
-          ) +
-          Number(
-            !outputInstruction.trim(),
-          ),
-      }}
+      // code="PR-014"
+      // stage="PROCESS"
+      // description="역할·작업·참고·조건·출력 조각을 끌어 순서대로 조립합니다."
+      // icon={
+      //   <Puzzle
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   conditional: 5,
+      //   missing:
+      //     Number(
+      //       !roleText.trim(),
+      //     ) +
+      //     Number(
+      //       !taskText.trim(),
+      //     ) +
+      //     Number(
+      //       !outputInstruction.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -1358,8 +1357,8 @@ export function PromptComposeInspector({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
             {roleText.trim() &&
-            taskText.trim() &&
-            outputInstruction.trim()
+              taskText.trim() &&
+              outputInstruction.trim()
               ? '필수 조각(역할·작업·출력) 충족'
               : '필수 프롬프트 조각 미입력'}
           </span>
@@ -1438,7 +1437,7 @@ export function PromptComposeInspector({
                             'reference'
                             ? 'bg-amber-600'
                             : type ===
-                                'output'
+                              'output'
                               ? 'bg-emerald-600'
                               : 'bg-[#4A5E8A]',
                         ].join(
@@ -1554,10 +1553,10 @@ export function PromptComposeInspector({
 
                     {option ===
                       '표' && (
-                      <span className="ml-2 text-[10px] font-normal text-slate-400">
-                        행/열 구조로 출력
-                      </span>
-                    )}
+                        <span className="ml-2 text-[10px] font-normal text-slate-400">
+                          행/열 구조로 출력
+                        </span>
+                      )}
                   </button>
                 )
               },

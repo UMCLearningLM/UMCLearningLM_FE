@@ -60,9 +60,8 @@ import {
 import GoogleLoginLoading from '../pages/auth/GoogleLogin'
 import GoogleLoginSuccess from '../pages/auth/GoogleLoginSuccess'
 import GoogleLoginError from '../pages/auth/GoogleLoginError'
-import {
-  MyProfile,
-} from '../pages/auth/MyProfile'
+import { SessionCheck } from '../pages/auth/SessionCheck'
+import { MyProfile } from '../pages/auth/MyProfile'
 
 import {
   LegalPage,

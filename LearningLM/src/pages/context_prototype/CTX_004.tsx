@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Search, Layers, Lightbulb, Check, X, ChevronDown } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import text from "../../assets/text.svg";
 import { BottomBar } from "./component/BottomBar";
 import light from "../../assets/light.svg";
@@ -50,25 +49,6 @@ export function CTX_004() {
     return (
         <div className="min-h-[848px] w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[27px] pb-6">
-                    <PageHeader
-                        title="참고 범위 정하기"
-                        subTitle="CTX-004 · CONTEXT"
-                        content="참고할 자료의 범위 방식을 정합니다."
-                        text1="필수1"
-                        text2="조건부1"
-                        text3="선택2"
-                        bor1="6366F1"
-                        bor2="9CA3AF"
-                        bor3="5FAA81"
-                        bg1="DFE0FF"
-                        bg2="F1F1F2"
-                        bg3="DFF2DF"
-                        pageState="RECOMMENDED"
-                        imgState={group}
-                    />
-                </div>
-                <div className="w-[484px] h-[1.5px] mt-[-16px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-8px] pb-6">
 
                     {/* Checkbox row */}

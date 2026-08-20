@@ -72,12 +72,12 @@ export function DraftBlock() {
   return (
     <ExpandableSettingBlock
       title="초안 작성하기"
-      code="PRO-009"
-      stage="PROCESS"
-      description="문서 유형과 목차 구성 방식을 정해 초안을 만듭니다."
-      icon={<NotebookText size={18} />}
-      category="CORE"
-      tagCounts={{ required: 3, optional: 2, conditional: 1, missing: validationAttempted ? missingCount : 0 }}
+      // code="PRO-009"
+      // stage="PROCESS"
+      // description="문서 유형과 목차 구성 방식을 정해 초안을 만듭니다."
+      // icon={<NotebookText size={18} />}
+      // category="CORE"
+      // tagCounts={{ required: 3, optional: 2, conditional: 1, missing: validationAttempted ? missingCount : 0 }}
       required
       validationMessage={validationAttempted && missingCount > 0 ? '필수 작성 항목입니다' : undefined}
       defaultOpen

@@ -79,12 +79,12 @@ export function SummaryPromptLayoutBlock() {
   return (
     <ExpandableSettingBlock
       title="요약 프롬프트 배치하기"
-      code="DR-016"
-      stage="PROCESS"
-      description="역할·작업·참고·출력 카드를 사각 아이콘으로 구분해 배치합니다. 각 카드에 한 줄 요약을 적고 상세 프롬프트를 연결할 수 있습니다."
-      icon={<Lightbulb size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 1, optional: 1 }}
+      // code="DR-016"
+      // stage="PROCESS"
+      // description="역할·작업·참고·출력 카드를 사각 아이콘으로 구분해 배치합니다. 각 카드에 한 줄 요약을 적고 상세 프롬프트를 연결할 수 있습니다."
+      // icon={<Lightbulb size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 1, optional: 1 }}
       required
       defaultOpen
       validationMessage="* 필수 작성 항목입니다"

@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Check, ChevronDown, AlertTriangle } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import text from "../../assets/text.svg";
 import flag from "../../assets/flag-checkered.svg";
 import { BottomBar } from "./component/BottomBar";
@@ -32,25 +31,6 @@ export function CTX_006() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[26px] pb-6">
-                    <PageHeader
-                        title="배경 설명 추가하기"
-                        subTitle="CTX-006 · CONTEXT"
-                        content="작업의 배경 상황과 현재 단계를 알려줍니다."
-                        text1="필수1"
-                        text2="선택3"
-                        text3="누락1"
-                        bor1="6366F1"
-                        bor2="5FAA81"
-                        bor3="EF8888"
-                        bg1="DFE0FF"
-                        bg2="DFF2DF"
-                        bg3="FFE1E1"
-                        pageState="RECOMMENDED"
-                        imgState={flag}
-                    />
-                </div>
-                <div className="w-[498px] h-[1.5px] mt-[-16px] ml-[-24px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-8px] pb-6">
                     {/* Checkbox row */}
                     <div className="pt-6 flex items-center justify-between">

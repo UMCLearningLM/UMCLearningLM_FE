@@ -22,7 +22,7 @@ export function ConnectedSegmentedControl({
   return (
     <div
       className={[
-        'grid w-full overflow-hidden rounded-xl border-2 border-slate-200 bg-white',
+        'grid w-full overflow-hidden text-[13px] font-bold rounded-xl border-2 border-slate-200 bg-white',
         disabled ? 'opacity-60' : '',
         className,
       ].join(' ')}

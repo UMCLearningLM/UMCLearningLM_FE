@@ -278,26 +278,26 @@ export function MissingCheckInspector({
   return (
     <ExpandableSettingBlock
       title="누락 확인하기"
-      code="RV-001"
-      stage="REVIEW"
-      description="빠진 항목이 없는지 기준에 따라 점검합니다."
-      icon={
-        <CheckCircle2 size={18} />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        conditional:
-          Number(
-            directCriteriaRequired,
-          ),
-        optional: 2,
-        missing:
-          Number(
-            directCriteriaRequired &&
-              !customCriteria.trim(),
-          ),
-      }}
+      // code="RV-001"
+      // stage="REVIEW"
+      // description="빠진 항목이 없는지 기준에 따라 점검합니다."
+      // icon={
+      //   <CheckCircle2 size={18} />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   conditional:
+      //     Number(
+      //       directCriteriaRequired,
+      //     ),
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       directCriteriaRequired &&
+      //         !customCriteria.trim(),
+      //     ),
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -307,7 +307,7 @@ export function MissingCheckInspector({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
             {directCriteriaRequired &&
-            !customCriteria.trim()
+              !customCriteria.trim()
               ? '직접 기준 입력 대기'
               : '누락 검사 설정 완료'}
           </span>
@@ -632,21 +632,21 @@ export function FormatCheckInspector({
   return (
     <ExpandableSettingBlock
       title="형식 확인하기"
-      code="RV-002"
-      stage="REVIEW"
-      description="결과물이 기대 형식과 일치하는지 검사합니다."
-      icon={
-        <Archive size={18} />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        optional: 1,
-        missing:
-          Number(
-            !errorHandling,
-          ),
-      }}
+      // code="RV-002"
+      // stage="REVIEW"
+      // description="결과물이 기대 형식과 일치하는지 검사합니다."
+      // icon={
+      //   <Archive size={18} />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       !errorHandling,
+      //     ),
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -875,17 +875,17 @@ export function ConditionCheckInspector({
   return (
     <ExpandableSettingBlock
       title="조건 충족 확인하기"
-      code="RV-003"
-      stage="REVIEW"
-      description="이전 블록의 조건을 불러와 충족 여부를 검사합니다."
-      icon={
-        <Braces size={18} />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 1,
-      }}
+      // code="RV-003"
+      // stage="REVIEW"
+      // description="이전 블록의 조건을 불러와 충족 여부를 검사합니다."
+      // icon={
+      //   <Braces size={18} />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -1126,21 +1126,21 @@ export function PolicyConflictInspector({
   return (
     <ExpandableSettingBlock
       title="정책 충돌 확인하기"
-      code="RV-004"
-      stage="REVIEW"
-      description="기능과 정책, 정책 간 충돌을 점검합니다."
-      icon={
-        <ShieldCheck size={18} />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-        missing:
-          Number(
-            !policyDocument,
-          ),
-      }}
+      // code="RV-004"
+      // stage="REVIEW"
+      // description="기능과 정책, 정책 간 충돌을 점검합니다."
+      // icon={
+      //   <ShieldCheck size={18} />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !policyDocument,
+      //     ),
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -1413,11 +1413,11 @@ export function EvidenceCheckInspector({
         patch.requiredTargets,
       )
         ? patch.requiredTargets.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item === 'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item === 'string',
+        )
         : requiredTargets
 
     const nextEvidence =
@@ -1425,11 +1425,11 @@ export function EvidenceCheckInspector({
         patch.allowedEvidence,
       )
         ? patch.allowedEvidence.filter(
-            (
-              item,
-            ): item is string =>
-              typeof item === 'string',
-          )
+          (
+            item,
+          ): item is string =>
+            typeof item === 'string',
+        )
         : allowedEvidence
 
     const nextHandling =
@@ -1470,17 +1470,17 @@ export function EvidenceCheckInspector({
   return (
     <ExpandableSettingBlock
       title="근거 확인하기"
-      code="RV-005"
-      stage="REVIEW"
-      description="주장·수치에 근거가 있는지 검사합니다."
-      icon={
-        <BookOpenCheck size={18} />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 3,
-        optional: 3,
-      }}
+      // code="RV-005"
+      // stage="REVIEW"
+      // description="주장·수치에 근거가 있는지 검사합니다."
+      // icon={
+      //   <BookOpenCheck size={18} />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 3,
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -1771,17 +1771,17 @@ export function DuplicateRemovalInspector({
   return (
     <ExpandableSettingBlock
       title="중복 제거하기"
-      code="RV-006"
-      stage="REVIEW"
-      description="반복되는 내용을 정리합니다."
-      icon={
-        <CopyCheck size={18} />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 2,
-      }}
+      // code="RV-006"
+      // stage="REVIEW"
+      // description="반복되는 내용을 정리합니다."
+      // icon={
+      //   <CopyCheck size={18} />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 2,
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -2115,17 +2115,17 @@ export function ToneAdjustmentInspector({
   return (
     <ExpandableSettingBlock
       title="톤 조정하기"
-      code="RV-007"
-      stage="REVIEW"
-      description="결과물의 어조를 목표 톤에 맞게 다듬습니다."
-      icon={
-        <SlidersHorizontal size={18} />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 3,
-      }}
+      // code="RV-007"
+      // stage="REVIEW"
+      // description="결과물의 어조를 목표 톤에 맞게 다듬습니다."
+      // icon={
+      //   <SlidersHorizontal size={18} />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 3,
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -2389,10 +2389,9 @@ export function ErrorLocationInspector({
       },
       {
         summaryValue:
-          `블록 단위 · 강조 ${
-            nextHighlight
-              ? 'ON'
-              : 'OFF'
+          `블록 단위 · 강조 ${nextHighlight
+            ? 'ON'
+            : 'OFF'
           }`,
 
         state:
@@ -2408,17 +2407,17 @@ export function ErrorLocationInspector({
   return (
     <ExpandableSettingBlock
       title="오류 위치 표시하기"
-      code="RV-009"
-      stage="REVIEW"
-      description="검토에 실패한 위치와 오류 지점을 표시합니다."
-      icon={
-        <MapPin size={18} />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 1,
-        optional: 1,
-      }}
+      // code="RV-009"
+      // stage="REVIEW"
+      // description="검토에 실패한 위치와 오류 지점을 표시합니다."
+      // icon={
+      //   <MapPin size={18} />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 1,
+      //   optional: 1,
+      // }}
       required={slot.required}
       defaultOpen
       className={
@@ -2649,17 +2648,17 @@ export function FixGuideInspector({
   return (
     <ExpandableSettingBlock
       title="수정 가이드 제공하기"
-      code="RV-010"
-      stage="REVIEW"
-      description="검토 실패 시 어디를 어떻게 고칠지 안내합니다."
-      icon={
-        <Wrench size={18} />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 3,
-      }}
+      // code="RV-010"
+      // stage="REVIEW"
+      // description="검토 실패 시 어디를 어떻게 고칠지 안내합니다."
+      // icon={
+      //   <Wrench size={18} />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 3,
+      // }}
       required={slot.required}
       defaultOpen
       className={

@@ -139,12 +139,12 @@ export function ArrangeInOrderBlock() {
   return (
     <ExpandableSettingBlock
       title="순서대로 정리하기"
-      code="PRO-005"
-      stage="PROCESS"
-      description="단계 카드를 끌어 순서를 지정합니다. 드래그 중 원래 위치에는 반투명 placeholder가, 놓을 위치에는 삽입선이 표시됩니다."
-      icon={<ListOrdered size={18} />}
-      category="CORE"
-      tagCounts={{ required: 2, optional: 2 }}
+      // code="PRO-005"
+      // stage="PROCESS"
+      // description="단계 카드를 끌어 순서를 지정합니다. 드래그 중 원래 위치에는 반투명 placeholder가, 놓을 위치에는 삽입선이 표시됩니다."
+      // icon={<ListOrdered size={18} />}
+      // category="CORE"
+      // tagCounts={{ required: 2, optional: 2 }}
       required
       defaultOpen
       footer={

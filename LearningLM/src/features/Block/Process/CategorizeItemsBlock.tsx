@@ -65,16 +65,16 @@ export function CategorizeItemsBlock() {
   return (
     <ExpandableSettingBlock
       title="항목별로 분류하기"
-      code="PRO-003"
-      stage="PROCESS"
-      description="분류 기준을 정하고 카테고리를 구성합니다."
-      icon={<ListChecks size={18} />}
-      category="CORE"
-      tagCounts={{
-        required: 2,
-        optional: 1,
-        missing: hasValidationError ? missingCount : 0,
-      }}
+      // code="PRO-003"
+      // stage="PROCESS"
+      // description="분류 기준을 정하고 카테고리를 구성합니다."
+      // icon={<ListChecks size={18} />}
+      // category="CORE"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 1,
+      //   missing: hasValidationError ? missingCount : 0,
+      // }}
       required
       validationMessage={hasValidationError ? '필수 작성 항목입니다' : undefined}
       defaultOpen
@@ -113,7 +113,7 @@ export function CategorizeItemsBlock() {
             className="[&_button]:min-h-[88px] [&_button]:px-2 [&_button]:py-3"
           />
         </div>
-       {/* 직접 입력을 선택했을 때만 카테고리 이름 입력 영역 표시 */}
+        {/* 직접 입력을 선택했을 때만 카테고리 이름 입력 영역 표시 */}
         {isCustomCriterion && <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-baseline gap-2">

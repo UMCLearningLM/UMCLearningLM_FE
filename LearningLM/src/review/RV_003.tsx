@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Check, ChevronDown, Plus } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import text from "../assets/text.svg";
 import light from "../assets/light.svg";
 import dashed from "../assets/coditionBtn.png";
@@ -73,24 +72,6 @@ export function RV_003() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[550px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[26px] pb-6">
-                    <PageHeader
-                        title="조건 충족 확인하기"
-                        subTitle="RV-003 · REVIEW"
-                        content="이전 블록의 조건을 불러와 검사 순서를 정합니다. 각 조건은 소스 포트로 원본 블록과 연결됩니다."
-                        text1="필수2"
-                        text2="선택1"
-                        text3=""
-                        bor1="6366F1"
-                        bor2="5FAA81"
-                        bor3="FFF"
-                        bg1="DFE0FF"
-                        bg2="DFF2DF"
-                        bg3="FFF"
-                        pageState="CORE"
-                        imgState={light}
-                    />
-                </div>
                 <div className="w-[550px] h-[1.5px] mt-[-10px] ml-[-26px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-8px] pb-6">
                     {/* Checkbox row */}

@@ -10,12 +10,13 @@ import {
 import {
   clearAuthStorage,
 } from '../../api/authStorage'
+import googleImg from '../../assets/google.svg';
 
 function getFallbackMessage(
   errorCode: string,
 ): string {
   switch (
-    errorCode
+  errorCode
   ) {
     case 'OAUTH_CODE_MISSING':
       return 'Google 인증 코드가 없습니다.'
@@ -94,19 +95,20 @@ export default function GoogleLoginError() {
 
         <div className="flex w-full flex-col items-center rounded-[12px] border-2 border-[#E4E4E7] bg-white px-[40px] py-[50px]">
           <div className="flex w-full flex-col items-center gap-[38px]">
-            <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#FBF1F0] text-[#EF8888]">
+            {/* <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#FBF1F0] text-[#EF8888]">
               <Info
                 size={32}
               />
-            </div>
+            </div> */}
+            <img src={googleImg} className='w-[60px] h-[60px]' />
 
             <div className="flex w-full flex-col items-center gap-[11px]">
               <h1 className="text-center text-[28px] font-bold tracking-[-0.03em] text-[#27272A]">
-                Google 계정으로 로그인 실패
+                Google 계정으로 인증 실패
               </h1>
 
               <p className="text-center text-[18px] text-[#52525B]">
-                Google 인증을 완료하지 못했습니다.
+                잠시만 기다려 주세요. 권한 확인을 실패하여 잠시 중단합니다.
               </p>
             </div>
 
@@ -120,10 +122,6 @@ export default function GoogleLoginError() {
                 <div className="min-w-0 flex-1">
                   <p className="text-[16px] font-bold text-[#27272A]">
                     인증 실패
-                  </p>
-
-                  <p className="mt-[6px] break-words text-[15px] font-bold text-[#EF8888]">
-                    {errorCode}
                   </p>
 
                   <p className="mt-[4px] break-words text-[15px] leading-[22px] text-[#52525B]">

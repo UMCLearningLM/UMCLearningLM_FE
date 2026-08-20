@@ -48,12 +48,12 @@ export function PolicyConnectionBlock() {
   return (
     <ExpandableSettingBlock
       title="정책과 연결하기"
-      code="PRO-007"
-      stage="PROCESS"
-      description="기능·화면을 정책 문서와 연결합니다."
-      icon={<Download size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 5, missing: validationAttempted ? missingCount : 0 }}
+      // code="PRO-007"
+      // stage="PROCESS"
+      // description="기능·화면을 정책 문서와 연결합니다."
+      // icon={<Download size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 5, missing: validationAttempted ? missingCount : 0 }}
       required
       validationMessage={validationAttempted && missingCount > 0 ? '필수 작성 항목입니다' : undefined}
       defaultOpen

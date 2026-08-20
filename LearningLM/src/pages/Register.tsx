@@ -49,7 +49,7 @@ function getApiErrorMessage(
 
     if (
       typeof message ===
-        'string' &&
+      'string' &&
       message.trim()
     ) {
       return message
@@ -84,11 +84,11 @@ function isDuplicateEmailError(
 
   const responseData =
     error.response?.data as
-      | {
-          code?: unknown
-          message?: unknown
-        }
-      | undefined
+    | {
+      code?: unknown
+      message?: unknown
+    }
+    | undefined
 
   const searchableText = [
     responseData?.code,
@@ -231,7 +231,7 @@ export function Register() {
 
   const emailVerified =
     verificationStatus ===
-      'verified' &&
+    'verified' &&
     Boolean(
       temporaryAccessToken.trim(),
     )
@@ -244,7 +244,7 @@ export function Register() {
   const passwordsMatch =
     Boolean(password) &&
     password ===
-      passwordConfirm
+    passwordConfirm
 
   useEffect(
     () => {
@@ -330,7 +330,7 @@ export function Register() {
 
       if (
         verificationStatus !==
-          'idle' ||
+        'idle' ||
         temporaryAccessToken
       ) {
         resetVerification()
@@ -401,7 +401,7 @@ export function Register() {
             '인증번호를 전송했습니다. 이메일을 확인해 주세요.',
         })
       } catch (
-        error
+      error
       ) {
         console.error(
           '인증번호 전송 실패:',
@@ -491,7 +491,7 @@ export function Register() {
 
         if (
           typeof temporaryToken !==
-            'string' ||
+          'string' ||
           !temporaryToken.trim()
         ) {
           throw new Error(
@@ -512,7 +512,7 @@ export function Register() {
             '이메일 인증을 완료했습니다.',
         })
       } catch (
-        error
+      error
       ) {
         console.error(
           '이메일 인증 실패:',
@@ -650,10 +650,10 @@ export function Register() {
 
         if (
           typeof accessToken ===
-            'string' &&
+          'string' &&
           accessToken &&
           typeof refreshToken ===
-            'string' &&
+          'string' &&
           refreshToken
         ) {
           saveAuthSession(
@@ -682,7 +682,7 @@ export function Register() {
           },
         )
       } catch (
-        error
+      error
       ) {
         console.error(
           '회원가입 실패:',
@@ -735,9 +735,9 @@ export function Register() {
 
       if (
         verificationStatus ===
-          'code-sent' ||
+        'code-sent' ||
         verificationStatus ===
-          'verification-error'
+        'verification-error'
       ) {
         return (
           <>
@@ -758,7 +758,7 @@ export function Register() {
               className={[
                 'mt-[15px] h-[54px] rounded-[8px] border-2 pl-[20px] outline-none',
                 verificationStatus ===
-                'verification-error'
+                  'verification-error'
                   ? 'border-[#F8A3A3]'
                   : 'border-[#E4E4E7] hover:border-[#666666]',
               ].join(
@@ -787,12 +787,12 @@ export function Register() {
               <span className="font-bold text-[#EF8888]">
                 {Math.floor(
                   countdown /
-                    60,
+                  60,
                 )}
                 :
                 {String(
                   countdown %
-                    60,
+                  60,
                 ).padStart(
                   2,
                   '0',
@@ -919,7 +919,7 @@ export function Register() {
                     className={[
                       'font-bold',
                       emailMessage.type ===
-                      'success'
+                        'success'
                         ? 'text-[#5FAA81]'
                         : 'text-[#EF8888]',
                     ].join(
@@ -1182,7 +1182,7 @@ export function Register() {
               className={[
                 'mt-[18px] w-full text-center text-[15px] font-bold',
                 signupMessage.type ===
-                'success'
+                  'success'
                   ? 'text-[#5FAA81]'
                   : 'text-[#EF8888]',
               ].join(

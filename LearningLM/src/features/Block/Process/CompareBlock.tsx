@@ -79,12 +79,12 @@ export function CompareBlock() {
   return (
     <ExpandableSettingBlock
       title="비교하기"
-      code="PRO-004"
-      stage="PROCESS"
-      description="비교 대상과 기준을 각각 카드로 만들어 정렬합니다. 기준마다 가중치 슬라이더로 중요도를 조절할 수 있습니다."
-      icon={<Lightbulb size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 3, optional: 1 }}
+      // code="PRO-004"
+      // stage="PROCESS"
+      // description="비교 대상과 기준을 각각 카드로 만들어 정렬합니다. 기준마다 가중치 슬라이더로 중요도를 조절할 수 있습니다."
+      // icon={<Lightbulb size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 3, optional: 1 }}
       required
       defaultOpen
       validationMessage="* 필수 작성 항목입니다"

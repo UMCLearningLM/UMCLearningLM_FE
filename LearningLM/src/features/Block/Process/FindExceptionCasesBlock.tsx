@@ -35,12 +35,12 @@ export function FindExceptionCasesBlock() {
   return (
     <ExpandableSettingBlock
       title="예외 케이스 찾기"
-      code="PRO-008"
-      stage="PROCESS"
-      description="점검할 예외 유형과 범위를 정합니다."
-      icon={<FileWarning size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 2, optional: 2, missing: missingCount }}
+      // code="PRO-008"
+      // stage="PROCESS"
+      // description="점검할 예외 유형과 범위를 정합니다."
+      // icon={<FileWarning size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 2, optional: 2, missing: missingCount }}
       required
       validationMessage={missingCount > 0 ? '필수 작성 항목입니다' : undefined}
       defaultOpen

@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { ChevronDown, Check, Bold } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import text from "../../assets/text.svg";
 import { BottomBar } from "./component/BottomBar";
 
@@ -38,26 +37,6 @@ export function CTX_003() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[498px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                {/* Header */}
-
-                <div className="px-[25px] pt-[26px] pb-6">
-                    <PageHeader
-                        title="직접 입력 내용 사용하기"
-                        subTitle="CTX-002 · CONTEXT"
-                        content="대표 주제와 키워드를 입력해 작업 범위를 정합니다."
-                        text1="필수1"
-                        text2="선택3"
-                        text3="누락1"
-                        bor1="6366F1"
-                        bor2="5FAA81"
-                        bor3="EF8888"
-                        bg1="DFE0FF"
-                        bg2="DFF2DF"
-                        bg3="FFE1E1"
-                        pageState="CORE"
-                        imgState={text} />
-                    <div className="w-[548px] h-[1.5px] mt-[8px] ml-[-24px] bg-[#E4E4E7]" />
-                </div>
                 {/*main */}
                 <div className="px-[50px] mt-[-8px] pb-6">
                     <div className="flex items-center justify-between">

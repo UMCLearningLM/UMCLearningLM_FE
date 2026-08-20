@@ -173,140 +173,140 @@ const studioBlockInspectorRegistry:
       StudioBlockInspectorComponent
     >
   > = {
-    /*
-     * INPUT
-     */
+  /*
+   * INPUT
+   */
 
-    'input-text':
-      UserRequestInspector,
+  'input-text':
+    UserRequestInspector,
 
-    'input-goal':
-      GoalSettingInspector,
+  'input-goal':
+    GoalSettingInspector,
 
-    'input-topic':
-      TopicInputInspector,
+  'input-topic':
+    TopicInputInspector,
 
-    'input-file-upload':
-      FileUploadInspector,
+  'input-file-upload':
+    FileUploadInspector,
 
-    'input-required-document':
-      RequiredDocumentInspector,
+  'input-required-document':
+    RequiredDocumentInspector,
 
-    'input-required-skill':
-      RequiredSkillInspector,
+  'input-required-skill':
+    RequiredSkillInspector,
 
-    'input-target-audience':
-      TargetAudienceInspector,
+  'input-target-audience':
+    TargetAudienceInspector,
 
-    'input-result-usage':
-      ResultUsageInspector,
+  'input-result-usage':
+    ResultUsageInspector,
 
-    'input-constraints':
-      ConstraintInputInspector,
+  'input-constraints':
+    ConstraintInputInspector,
 
-    /*
-     * CONTEXT
-     */
+  /*
+   * CONTEXT
+   */
 
-    'context-project-document':
-      ProjectDocumentInspector,
+  'context-project-document':
+    ProjectDocumentInspector,
 
-    'context-uploaded-document':
-      UploadedDocumentInspector,
+  'context-uploaded-document':
+    UploadedDocumentInspector,
 
-    'context-direct-input':
-      DirectContextInputInspector,
+  'context-direct-input':
+    DirectContextInputInspector,
 
-    'context-reference-scope':
-      ReferenceScopeInspector,
+  'context-reference-scope':
+    ReferenceScopeInspector,
 
-    'context-role':
-      RoleAssignmentInspector,
+  'context-role':
+    RoleAssignmentInspector,
 
-    'context-background':
-      BackgroundContextInspector,
+  'context-background':
+    BackgroundContextInspector,
 
-    'context-exclusion':
-      ExclusionContextInspector,
+  'context-exclusion':
+    ExclusionContextInspector,
 
-          /*
-     * PROCESS
-     */
+  /*
+* PROCESS
+*/
 
-    'process-extract-core':
-      ExtractCoreInspector,
+  'process-extract-core':
+    ExtractCoreInspector,
 
-    'process-summary':
-      SummaryInspector,
-    
-      /*
-     * REVIEW
-     */
+  'process-summary':
+    SummaryInspector,
 
-    'review-missing':
-      MissingCheckInspector,
+  /*
+ * REVIEW
+ */
 
-    'review-quality':
-      FormatCheckInspector,
+  'review-missing':
+    MissingCheckInspector,
 
-    'review-condition':
-      ConditionCheckInspector,
+  'review-quality':
+    FormatCheckInspector,
 
-    'review-policy-conflict':
-      PolicyConflictInspector,
+  'review-condition':
+    ConditionCheckInspector,
 
-    'review-evidence':
-      EvidenceCheckInspector,
+  'review-policy-conflict':
+    PolicyConflictInspector,
 
-    'review-deduplicate':
-      DuplicateRemovalInspector,
+  'review-evidence':
+    EvidenceCheckInspector,
 
-    'review-tone':
-      ToneAdjustmentInspector,
+  'review-deduplicate':
+    DuplicateRemovalInspector,
 
-    'review-error-location':
-      ErrorLocationInspector,
+  'review-tone':
+    ToneAdjustmentInspector,
 
-    'review-fix-guide':
-      FixGuideInspector,
+  'review-error-location':
+    ErrorLocationInspector,
 
-          /*
-     * OUTPUT
-     */
+  'review-fix-guide':
+    FixGuideInspector,
 
-    'output-text':
-      TextOutputInspector,
+  /*
+* OUTPUT
+*/
 
-    'output-table':
-      TableOutputInspector,
+  'output-text':
+    TextOutputInspector,
 
-    'output-checklist':
-      ChecklistOutputInspector,
+  'output-table':
+    TableOutputInspector,
 
-    'output-document-draft':
-      DocumentDraftInspector,
+  'output-checklist':
+    ChecklistOutputInspector,
 
-    'output-presentation-summary':
-      PresentationSummaryInspector,
+  'output-document-draft':
+    DocumentDraftInspector,
 
-    'output-developer-handoff':
-      DeveloperHandoffInspector,
+  'output-presentation-summary':
+    PresentationSummaryInspector,
 
-    'output-prompt':
-      PromptOutputInspector,
+  'output-developer-handoff':
+    DeveloperHandoffInspector,
 
-    'output-step-guide':
-      StepGuideInspector,
+  'output-prompt':
+    PromptOutputInspector,
 
-    'output-save-storage':
-      SaveStorageInspector,
+  'output-step-guide':
+    StepGuideInspector,
 
-    'output-public-description':
-      PublicDescriptionInspector,
+  'output-save-storage':
+    SaveStorageInspector,
 
-    'output-copyable-flow':
-      CopyableFlowInspector,
-  }
+  'output-public-description':
+    PublicDescriptionInspector,
+
+  'output-copyable-flow':
+    CopyableFlowInspector,
+}
 
 export function hasStudioBlockInspector(
   blockId: string,
@@ -322,7 +322,7 @@ export function hasStudioBlockInspector(
 
   return Boolean(
     studioBlockInspectorRegistry[
-      definition.id as StudioBlockId
+    definition.id as StudioBlockId
     ],
   )
 }
@@ -348,7 +348,7 @@ function GenericStudioBlockInspector({
     slot.required
       ? '필수'
       : definition?.requirement ===
-          'recommended'
+        'recommended'
         ? '권장'
         : '선택'
 
@@ -360,10 +360,10 @@ function GenericStudioBlockInspector({
   const hasConfig =
     Boolean(
       slot.config &&
-        Object.keys(
-          slot.config,
-        ).length >
-          0,
+      Object.keys(
+        slot.config,
+      ).length >
+      0,
     )
 
   return (
@@ -389,8 +389,8 @@ function GenericStudioBlockInspector({
 
             stage
               ? stageColorMap[
-                  stage
-                ]
+              stage
+              ]
               : 'bg-[#9A9AA3]',
           ].join(' ')}
         />
@@ -418,7 +418,7 @@ function GenericStudioBlockInspector({
             slot.required
               ? 'text-[#6366F1]'
               : definition?.requirement ===
-                  'recommended'
+                'recommended'
                 ? 'rounded-[6px] bg-[#EEF4EE] px-[7px] py-[3px] text-[#5FAA81]'
                 : 'rounded-[6px] bg-[#F0F0F3] px-[7px] py-[3px] text-[#9A9AA3]',
           ].join(' ')}
@@ -497,7 +497,7 @@ export function StudioBlockInspector({
 
   const InspectorComponent =
     studioBlockInspectorRegistry[
-      definition.id as StudioBlockId
+    definition.id as StudioBlockId
     ]
 
   if (!InspectorComponent) {

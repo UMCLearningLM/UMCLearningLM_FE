@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { PageHeader } from "./component/PageHeader"
 import { Box, Check, ChevronDown } from "lucide-react";
 import Arrow from "../../assets/Arrow.svg";
 import light from "../../assets/light.svg"
@@ -49,23 +48,6 @@ export function CTX_002() {
     const [includeTable, setIncludeTable] = useState(true);
     return (
         <div className="w-[498px] min-h-[1084px] flex flex-col items-center px-[22px] py-[26px] bg-white border-[1.5px] tracking-tighter">
-            <PageHeader
-                title="업로드 문서 읽기"
-                subTitle="CTX-002 · CONTEXT"
-                content="업로드한 파일의 읽기 범위를 지정합니다."
-                text1="필수2"
-                text2="조건부1"
-                text3="선택1"
-                bor1="6366F1"
-                bor2="A9BDD4"
-                bor3="5FAA81"
-                bg1="DFE0FF"
-                bg2="ECEEFF"
-                bg3="DFF2DF"
-                pageState="RECOMMENDED"
-                imgState={light} />
-            <div className="w-[498px] h-[1.5px] mt-[8px] ml-[-25px] bg-[#E4E4E7]" />
-
 
             {/**----------------------------------- */}
             <div className="w-[408px] h-[661px] py-[16px]">

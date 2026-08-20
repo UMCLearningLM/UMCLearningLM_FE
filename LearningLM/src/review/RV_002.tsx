@@ -10,7 +10,6 @@ import {
     Plus,
     AlertTriangle,
 } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import chart from "../assets/chart.svg";
 import { BottomBar } from "./component/BottomBar";
 
@@ -54,24 +53,6 @@ export function RV_002() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[550px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[25px] pt-[25px] pb-6">
-                    <PageHeader
-                        title="형식 확인하기"
-                        subTitle="RV-002 · REVIEW"
-                        content="결과물이 기대 형식과 일치하는지 검사합니다."
-                        text1="필수3"
-                        text2="선택1"
-                        text3="누락1"
-                        bor1="6366F1"
-                        bor2="5FAA81"
-                        bor3="EF8888"
-                        bg1="DFE0FF"
-                        bg2="DFF2DF"
-                        bg3="FFE1E1"
-                        pageState="CORE"
-                        imgState={chart}
-                    />
-                </div>
                 <div className="w-[550px] h-[1.5px] mt-[-16px] ml-[-26px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-9px] pb-6">
                     {/* Checkbox row */}

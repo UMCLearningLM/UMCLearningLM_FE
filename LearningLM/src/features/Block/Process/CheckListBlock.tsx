@@ -33,12 +33,12 @@ export function CheckListBlock() {
   return (
     <ExpandableSettingBlock
       title="체크리스트로 바꾸기"
-      code="PRO-011"
-      stage="PROCESS"
-      description="내용을 점검 가능한 체크리스트로 변환합니다."
-      icon={<ListChecks size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 2, optional: 3 }}
+      // code="PRO-011"
+      // stage="PROCESS"
+      // description="내용을 점검 가능한 체크리스트로 변환합니다."
+      // icon={<ListChecks size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 2, optional: 3 }}
       required
       defaultOpen
       footer={

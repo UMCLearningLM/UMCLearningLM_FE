@@ -50,12 +50,12 @@ export function SummarizeBlock() {
   return (
     <ExpandableSettingBlock
       title="요약하기"
-      code="PRO-002"
-      stage="PROCESS"
-      description="요약의 길이·형식·관점을 정합니다."
-      icon={<Settings2 size={18} />}
-      category="CORE"
-      tagCounts={{ required: 2, optional: 2, recommended: 2 }}
+      // code="PRO-002"
+      // stage="PROCESS"
+      // description="요약의 길이·형식·관점을 정합니다."
+      // icon={<Settings2 size={18} />}
+      // category="CORE"
+      // tagCounts={{ required: 2, optional: 2, recommended: 2 }}
       required
       defaultOpen
       footer={

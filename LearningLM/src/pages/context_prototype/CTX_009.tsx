@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import { PageHeader } from "./component/PageHeader";
 import file from "../../assets/multiFile.svg";
 import { BottomBar } from "./component/BottomBar";
 
@@ -47,25 +46,6 @@ export function CTX_009() {
     return (
         <div className="min-h-screen w-full bg-slate-100 flex items-start justify-center p-6">
             <div className="w-[500px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-[19px] pt-[26px] pb-6">
-                    <PageHeader
-                        title="참고 제외 내용 정하기"
-                        subTitle="CTX-009 · CONTEXT"
-                        content="참고에서 제외할 유형과 대상을 정합니다."
-                        text1="필수2"
-                        text2="조건부1"
-                        text3="선택1"
-                        bor1="6366F1"
-                        bor2="A9BDD4"
-                        bor3="5FAA81"
-                        bg1="DFE0FF"
-                        bg2="ECEEFF"
-                        bg3="DFF2DF"
-                        pageState="RECOMMENDED"
-                        imgState={file}
-                    />
-                </div>
-                <div className="w-[498px] h-[1.5px] mt-[-16px] bg-[#E4E4E7]" />
                 <div className="px-[50px] mt-[-7px] pb-6">
                     {/* Checkbox row */}
                     <div className="pt-6 flex items-center justify-between">

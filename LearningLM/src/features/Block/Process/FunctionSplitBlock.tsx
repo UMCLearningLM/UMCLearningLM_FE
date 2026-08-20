@@ -25,12 +25,12 @@ export function FunctionSplitBlock() {
   return (
     <ExpandableSettingBlock
       title="기능으로 분해하기"
-      code="PRO-006"
-      stage="PROCESS"
-      description="대상을 기능 단위로 분해합니다."
-      icon={<Network size={18} />}
-      category="RECOMMENDED"
-      tagCounts={{ required: 3, optional: 2 }}
+      // code="PRO-006"
+      // stage="PROCESS"
+      // description="대상을 기능 단위로 분해합니다."
+      // icon={<Network size={18} />}
+      // category="RECOMMENDED"
+      // tagCounts={{ required: 3, optional: 2 }}
       required
       defaultOpen
       footer={

@@ -126,39 +126,39 @@ export function DraftInspector({
   ) => {
     const nextDocumentType =
       typeof patch.documentType ===
-      'string'
+        'string'
         ? patch.documentType
         : documentType
 
     const nextPurpose =
       typeof patch.purpose ===
-      'string'
+        'string'
         ? patch.purpose
         : purpose
 
     const nextCompositionMode =
       typeof patch.compositionMode ===
-      'string'
+        'string'
         ? patch.compositionMode
         : compositionMode
 
     const nextSections =
       'sections' in patch
         ? readStringArray(
-            patch.sections,
-            sections,
-          )
+          patch.sections,
+          sections,
+        )
         : sections
 
     const nextCompletionLevel =
       typeof patch.completionLevel ===
-      'string'
+        'string'
         ? patch.completionLevel
         : completionLevel
 
     const nextMissingInfoHandling =
       typeof patch.missingInfoHandling ===
-      'string'
+        'string'
         ? patch.missingInfoHandling
         : missingInfoHandling
 
@@ -274,24 +274,24 @@ export function DraftInspector({
   return (
     <ExpandableSettingBlock
       title="초안 작성하기"
-      code="PR-009"
-      stage="PROCESS"
-      description="문서 유형과 목적, 구성 방식을 정해 초안을 만듭니다."
-      icon={
-        <FilePenLine
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        conditional: 1,
-        optional: 2,
-        missing:
-          Number(
-            !purpose.trim(),
-          ),
-      }}
+      // code="PR-009"
+      // stage="PROCESS"
+      // description="문서 유형과 목적, 구성 방식을 정해 초안을 만듭니다."
+      // icon={
+      //   <FilePenLine
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   conditional: 1,
+      //   optional: 2,
+      //   missing:
+      //     Number(
+      //       !purpose.trim(),
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -433,7 +433,7 @@ export function DraftInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     compositionMode ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -449,101 +449,101 @@ export function DraftInspector({
 
         {compositionMode ===
           '직접 목차' && (
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <p className="text-xs font-bold text-slate-700">
-                목차 블록
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-xs font-bold text-slate-700">
+                  목차 블록
+                </p>
+
+                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
+                  조건부
+                </span>
+              </div>
+
+              <p className="mb-3 text-[11px] font-semibold text-indigo-500">
+                ↳ 직접 목차 선택됨
               </p>
 
-              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
-                조건부
-              </span>
-            </div>
-
-            <p className="mb-3 text-[11px] font-semibold text-indigo-500">
-              ↳ 직접 목차 선택됨
-            </p>
-
-            <div className="space-y-3">
-              {sections.map(
-                (
-                  section,
-                  index,
-                ) => (
-                  <div
-                    key={
-                      index
-                    }
-                    draggable
-                    onDragStart={() =>
-                      setDragIndex(
-                        index,
-                      )
-                    }
-                    onDragOver={(
-                      event,
-                    ) =>
-                      event.preventDefault()
-                    }
-                    onDrop={() => {
-                      if (
-                        dragIndex !==
-                        null
-                      ) {
-                        reorderSection(
-                          dragIndex,
+              <div className="space-y-3">
+                {sections.map(
+                  (
+                    section,
+                    index,
+                  ) => (
+                    <div
+                      key={
+                        index
+                      }
+                      draggable
+                      onDragStart={() =>
+                        setDragIndex(
                           index,
                         )
                       }
-
-                      setDragIndex(
-                        null,
-                      )
-                    }}
-                    className="flex h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
-                      {index +
-                        1}
-                    </span>
-
-                    <input
-                      type="text"
-                      value={
-                        section
-                      }
-                      onChange={(
+                      onDragOver={(
                         event,
                       ) =>
-                        updateSection(
-                          index,
-                          event.target
-                            .value,
-                        )
+                        event.preventDefault()
                       }
-                      placeholder="섹션 제목 입력"
-                      className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                ),
-              )}
+                      onDrop={() => {
+                        if (
+                          dragIndex !==
+                          null
+                        ) {
+                          reorderSection(
+                            dragIndex,
+                            index,
+                          )
+                        }
 
-              <button
-                type="button"
-                onClick={
-                  addSection
-                }
-                className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
-              >
-                <Plus
-                  size={14}
-                  className="mr-1"
-                />
-                섹션 추가
-              </button>
+                        setDragIndex(
+                          null,
+                        )
+                      }}
+                      className="flex h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
+                        {index +
+                          1}
+                      </span>
+
+                      <input
+                        type="text"
+                        value={
+                          section
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateSection(
+                            index,
+                            event.target
+                              .value,
+                          )
+                        }
+                        placeholder="섹션 제목 입력"
+                        className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  onClick={
+                    addSection
+                  }
+                  className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
+                >
+                  <Plus
+                    size={14}
+                    className="mr-1"
+                  />
+                  섹션 추가
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -575,7 +575,7 @@ export function DraftInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     completionLevel ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -724,21 +724,21 @@ export function TableTransformInspector({
   ) => {
     const nextPurpose =
       typeof patch.tablePurpose ===
-      'string'
+        'string'
         ? patch.tablePurpose
         : tablePurpose
 
     const nextColumns =
       'columns' in patch
         ? readStringArray(
-            patch.columns,
-            columns,
-          )
+          patch.columns,
+          columns,
+        )
         : columns
 
     const nextRowKey =
       typeof patch.rowKey ===
-      'string'
+        'string'
         ? patch.rowKey
         : rowKey
 
@@ -753,7 +753,7 @@ export function TableTransformInspector({
         nextPurpose,
       ) &&
       validColumns.length >=
-        2 &&
+      2 &&
       Boolean(
         nextRowKey,
       )
@@ -845,27 +845,27 @@ export function TableTransformInspector({
   return (
     <ExpandableSettingBlock
       title="표로 재구성하기"
-      code="PR-010"
-      stage="PROCESS"
-      description="열 블록을 가로로 끌어 순서를 바꾸고, 행 기준을 정합니다."
-      icon={
-        <Table2
-          size={18}
-        />
-      }
-      category="CORE"
-      tagCounts={{
-        required: 3,
-        optional: 1,
-        missing:
-          Number(
-            columns.filter(
-              (item) =>
-                item.trim(),
-            ).length <
-              2,
-          ),
-      }}
+      // code="PR-010"
+      // stage="PROCESS"
+      // description="열 블록을 가로로 끌어 순서를 바꾸고, 행 기준을 정합니다."
+      // icon={
+      //   <Table2
+      //     size={18}
+      //   />
+      // }
+      // category="CORE"
+      // tagCounts={{
+      //   required: 3,
+      //   optional: 1,
+      //   missing:
+      //     Number(
+      //       columns.filter(
+      //         (item) =>
+      //           item.trim(),
+      //       ).length <
+      //       2,
+      //     ),
+      // }}
       required={
         slot.required
       }
@@ -919,7 +919,7 @@ export function TableTransformInspector({
                   className={[
                     'h-[38px] rounded-lg px-4 text-xs font-bold',
                     tablePurpose ===
-                    option
+                      option
                       ? 'text-indigo-500'
                       : 'border border-slate-200 text-slate-600',
                   ].join(
@@ -1097,7 +1097,7 @@ export function TableTransformInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     cellLength ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
@@ -1255,22 +1255,22 @@ export function ChecklistTransformInspector({
   ) => {
     const nextPurpose =
       typeof patch.checklistPurpose ===
-      'string'
+        'string'
         ? patch.checklistPurpose
         : checklistPurpose
 
     const nextDetailLevel =
       typeof patch.detailLevel ===
-      'string'
+        'string'
         ? patch.detailLevel
         : detailLevel
 
     const nextStatusValues =
       'statusValues' in patch
         ? readStringArray(
-            patch.statusValues,
-            statusValues,
-          )
+          patch.statusValues,
+          statusValues,
+        )
         : statusValues
 
     const complete =
@@ -1315,14 +1315,14 @@ export function ChecklistTransformInspector({
         option,
       )
         ? statusValues.filter(
-            (item) =>
-              item !==
-              option,
-          )
-        : [
-            ...statusValues,
+          (item) =>
+            item !==
             option,
-          ]
+        )
+        : [
+          ...statusValues,
+          option,
+        ]
 
     save({
       statusValues:
@@ -1333,19 +1333,19 @@ export function ChecklistTransformInspector({
   return (
     <ExpandableSettingBlock
       title="체크리스트로 바꾸기"
-      code="PR-011"
-      stage="PROCESS"
-      description="내용을 점검 가능한 체크리스트로 변환합니다."
-      icon={
-        <ListChecks
-          size={18}
-        />
-      }
-      category="RECOMMENDED"
-      tagCounts={{
-        required: 2,
-        optional: 3,
-      }}
+      // code="PR-011"
+      // stage="PROCESS"
+      // description="내용을 점검 가능한 체크리스트로 변환합니다."
+      // icon={
+      //   <ListChecks
+      //     size={18}
+      //   />
+      // }
+      // category="RECOMMENDED"
+      // tagCounts={{
+      //   required: 2,
+      //   optional: 3,
+      // }}
       required={
         slot.required
       }
@@ -1399,7 +1399,7 @@ export function ChecklistTransformInspector({
                   className={[
                     'min-h-[64px] rounded-xl border-2 text-xs font-bold',
                     checklistPurpose ===
-                    option
+                      option
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-600',
                   ].join(
@@ -1440,7 +1440,7 @@ export function ChecklistTransformInspector({
                   className={[
                     'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
                     detailLevel ===
-                    option
+                      option
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(
