@@ -629,16 +629,6 @@ export const studioBlockCatalog = [
     availability: 'available',
   },
   {
-    id: 'output-save-storage',
-    stage: 'OUTPUT',
-    order: 9,
-    title: '내 저장소에 저장하기',
-    description:
-      '완성된 결과와 워크플로우를 내 저장소에 저장합니다.',
-    requirement: 'required',
-    availability: 'available',
-  },
-  {
     id: 'output-public-description',
     stage: 'OUTPUT',
     order: 10,
