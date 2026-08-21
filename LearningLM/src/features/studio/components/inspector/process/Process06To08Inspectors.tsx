@@ -404,18 +404,52 @@ export function DecomposeFunctionsInspector({
  * PR-007
  * 정책과 연결하기
  *
- * BE main:
- * - input.policyDocuments: string[]
- * - options.targetType
- * - options.policyTypes
- * - options.matchingMode
- * - options.missingPolicy
+ * BE #78 V15 기준
  *
- * 정책 파일은 POST /flows/{flowId}/files로 서버에 업로드합니다.
- * Flow Preview에서 BE가 해당 Flow의 업로드 파일을 REFERENCE artifact로
- * AI에 전달하므로, policyDocuments에는 업로드 성공한 파일명을 저장합니다.
+ * input.policyDocuments:
+ * - 업로드 파일:
+ *   {
+ *     fileId,
+ *     fileName,
+ *     fileType,
+ *     fileSize,
+ *   }
+ *
+ * - 웹 문서:
+ *   {
+ *     url,
+ *     title?,
+ *   }
+ *
+ * options:
+ * - targetType
+ * - policyTypes
+ * - matchingMode
+ * - missingPolicy
+ *
+ * 파일은 POST /flows/{flowId}/files로 먼저 업로드하고
+ * 서버가 발급한 실제 fileId를 Studio config에 저장합니다.
+ *
+ * 웹 URL은 파일과 별도 객체로 저장합니다.
+ * 현재 BE에서는 URL 본문을 직접 가져오는 기능은 지원하지 않습니다.
  * ============================================================
  */
+
+type PolicyFileDocument = {
+  fileId: number
+  fileName: string
+  fileType: string
+  fileSize: number
+}
+
+type PolicyWebDocument = {
+  url: string
+  title?: string
+}
+
+type PolicyDocument =
+  | PolicyFileDocument
+  | PolicyWebDocument
 
 const policyLinkTargets = [
   {
@@ -559,8 +593,7 @@ function parsePolicyFlowId(
     Number.isInteger(
       parsed,
     ) &&
-    parsed >
-      0
+    parsed > 0
   )
     ? parsed
     : undefined
@@ -581,9 +614,7 @@ function normalizePolicyTypes(
   values: string[],
 ): string[] {
   return values.map(
-    (
-      value,
-    ) =>
+    (value) =>
       legacyPolicyTypeMap[
         value
       ] ??
@@ -616,6 +647,10 @@ function normalizeMissingPolicy(
 function getPolicyFileValidationError(
   file: File,
 ): string | null {
+  if (file.size <= 0) {
+    return '빈 파일은 업로드할 수 없습니다.'
+  }
+
   const extension =
     file.name
       .split('.')
@@ -639,6 +674,237 @@ function getPolicyFileValidationError(
   }
 
   return null
+}
+
+function isRecord(
+  value: unknown,
+): value is Record<
+  string,
+  unknown
+> {
+  return (
+    typeof value ===
+      'object' &&
+    value !== null &&
+    !Array.isArray(
+      value,
+    )
+  )
+}
+
+function isPolicyFileDocument(
+  value: unknown,
+): value is PolicyFileDocument {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+    typeof value.fileId ===
+      'number' &&
+    value.fileId > 0 &&
+    typeof value.fileName ===
+      'string' &&
+    Boolean(
+      value.fileName.trim(),
+    ) &&
+    typeof value.fileType ===
+      'string' &&
+    typeof value.fileSize ===
+      'number'
+  )
+}
+
+function isPolicyWebDocument(
+  value: unknown,
+): value is PolicyWebDocument {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+    typeof value.url ===
+      'string' &&
+    Boolean(
+      value.url.trim(),
+    )
+  )
+}
+
+function readPolicyDocuments(
+  value: unknown,
+): PolicyDocument[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const documents:
+    PolicyDocument[] = []
+
+  for (const item of value) {
+    if (
+      isPolicyFileDocument(
+        item,
+      )
+    ) {
+      documents.push({
+        fileId:
+          item.fileId,
+
+        fileName:
+          item.fileName,
+
+        fileType:
+          item.fileType,
+
+        fileSize:
+          item.fileSize,
+      })
+
+      continue
+    }
+
+    if (
+      isPolicyWebDocument(
+        item,
+      )
+    ) {
+      documents.push({
+        url:
+          item.url.trim(),
+
+        ...(typeof item.title ===
+          'string' &&
+        item.title.trim()
+          ? {
+              title:
+                item.title.trim(),
+            }
+          : {}),
+      })
+    }
+  }
+
+  return documents
+}
+
+function readLegacyPolicyDocumentNames(
+  value: unknown,
+): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.filter(
+    (
+      item,
+    ): item is string =>
+      typeof item ===
+        'string' &&
+      Boolean(
+        item.trim(),
+      ),
+  )
+}
+
+function getPolicyDocumentKey(
+  document: PolicyDocument,
+): string {
+  if (
+    'fileId' in
+    document
+  ) {
+    return `file:${document.fileId}`
+  }
+
+  return `url:${document.url}`
+}
+
+function mergePolicyDocuments(
+  current:
+    PolicyDocument[],
+  additions:
+    PolicyDocument[],
+): PolicyDocument[] {
+  const result =
+    [...current]
+
+  const keys =
+    new Set(
+      current.map(
+        getPolicyDocumentKey,
+      ),
+    )
+
+  for (
+    const document of
+      additions
+  ) {
+    const key =
+      getPolicyDocumentKey(
+        document,
+      )
+
+    if (
+      keys.has(
+        key,
+      )
+    ) {
+      continue
+    }
+
+    keys.add(
+      key,
+    )
+
+    result.push(
+      document,
+    )
+  }
+
+  return result
+}
+
+function isValidPolicyUrl(
+  value: string,
+): boolean {
+  try {
+    const url =
+      new URL(
+        value,
+      )
+
+    return (
+      url.protocol ===
+        'http:' ||
+      url.protocol ===
+        'https:'
+    )
+  } catch {
+    return false
+  }
+}
+
+function formatPolicyFileSize(
+  bytes: number,
+): string {
+  if (
+    bytes <
+    1024 * 1024
+  ) {
+    return `${Math.max(
+      1,
+      Math.round(
+        bytes / 1024,
+      ),
+    )}KB`
+  }
+
+  return `${(
+    bytes /
+    1024 /
+    1024
+  ).toFixed(1)}MB`
 }
 
 export function LinkPolicyInspector({
@@ -680,6 +946,24 @@ export function LinkPolicyInspector({
       [],
     )
 
+  const [
+    webDocumentUrl,
+    setWebDocumentUrl,
+  ] =
+    useState('')
+
+  const [
+    webDocumentTitle,
+    setWebDocumentTitle,
+  ] =
+    useState('')
+
+  const [
+    webDocumentError,
+    setWebDocumentError,
+  ] =
+    useState('')
+
   const locationState =
     location.state as
       | {
@@ -703,6 +987,12 @@ export function LinkPolicyInspector({
       locationState?.flowId,
     )
 
+  const policyDocuments =
+    readPolicyDocuments(
+      slot.config
+        ?.policyDocuments,
+    )
+
   const legacyPolicyDocument =
     getString(
       slot.config,
@@ -710,16 +1000,19 @@ export function LinkPolicyInspector({
       '',
     )
 
-  const policyDocuments =
-    getStringArray(
-      slot.config,
-      'policyDocuments',
-      legacyPolicyDocument
+  const legacyPolicyDocuments =
+    [
+      ...readLegacyPolicyDocumentNames(
+        slot.config
+          ?.policyDocuments,
+      ),
+
+      ...(legacyPolicyDocument
         ? [
             legacyPolicyDocument,
           ]
-        : [],
-    )
+        : []),
+    ]
 
   const targetType =
     normalizePolicyTarget(
@@ -794,9 +1087,8 @@ export function LinkPolicyInspector({
     const nextPolicyDocuments =
       'policyDocuments' in
         patch
-        ? readStringArray(
+        ? readPolicyDocuments(
             patch.policyDocuments,
-            policyDocuments,
           )
         : policyDocuments
 
@@ -844,9 +1136,7 @@ export function LinkPolicyInspector({
 
     const targetLabel =
       policyLinkTargets.find(
-        (
-          option,
-        ) =>
+        (option) =>
           option.value ===
           nextTargetType,
       )?.label ??
@@ -854,16 +1144,9 @@ export function LinkPolicyInspector({
 
     onConfigChange(
       {
-        /*
-         * BE PR-007 input_schema.
-         * 현재 Preview 정규화 과정에서 input으로 분류될 값입니다.
-         */
         policyDocuments:
           nextPolicyDocuments,
 
-        /*
-         * BE PR-007 option_schema.
-         */
         targetType:
           nextTargetType,
 
@@ -875,8 +1158,6 @@ export function LinkPolicyInspector({
 
         missingPolicy:
           nextMissingPolicy,
-
-        ...patch,
       },
       {
         summaryValue:
@@ -900,9 +1181,7 @@ export function LinkPolicyInspector({
         value,
       )
         ? policyTypes.filter(
-            (
-              item,
-            ) =>
+            (item) =>
               item !==
               value,
           )
@@ -916,6 +1195,80 @@ export function LinkPolicyInspector({
         next,
     })
   }
+
+  const removePolicyDocument = (
+    target:
+      PolicyDocument,
+  ) => {
+    const targetKey =
+      getPolicyDocumentKey(
+        target,
+      )
+
+    save({
+      policyDocuments:
+        policyDocuments.filter(
+          (document) =>
+            getPolicyDocumentKey(
+              document,
+            ) !==
+            targetKey,
+        ),
+    })
+  }
+
+  const addWebDocument =
+    () => {
+      const normalizedUrl =
+        webDocumentUrl.trim()
+
+      if (
+        !isValidPolicyUrl(
+          normalizedUrl,
+        )
+      ) {
+        setWebDocumentError(
+          'http:// 또는 https:// 형식의 URL을 입력해 주세요.',
+        )
+
+        return
+      }
+
+      const document:
+        PolicyWebDocument = {
+        url:
+          normalizedUrl,
+
+        ...(webDocumentTitle.trim()
+          ? {
+              title:
+                webDocumentTitle.trim(),
+            }
+          : {}),
+      }
+
+      save({
+        policyDocuments:
+          mergePolicyDocuments(
+            policyDocuments,
+            [
+              document,
+            ],
+          ),
+      })
+
+      setWebDocumentUrl(
+        '',
+      )
+
+      setWebDocumentTitle(
+        '',
+      )
+
+      setWebDocumentError(
+        '',
+      )
+    }
 
   const handlePolicyFiles =
     async (
@@ -949,9 +1302,7 @@ export function LinkPolicyInspector({
 
       const validFiles =
         selectedFiles.filter(
-          (
-            file,
-          ) => {
+          (file) => {
             const error =
               getPolicyFileValidationError(
                 file,
@@ -984,8 +1335,9 @@ export function LinkPolicyInspector({
         true,
       )
 
-      const uploadedDocumentNames:
-        string[] = []
+      const uploadedDocuments:
+        PolicyFileDocument[] =
+        []
 
       const requestErrors =
         [
@@ -1013,19 +1365,34 @@ export function LinkPolicyInspector({
               )
             }
 
+            const result =
+              response.result
+
             if (
-              response.result.status ===
+              result.status ===
               'PARSE_FAILED'
             ) {
               requestErrors.push(
-                `${response.result.fileName}: 서버에서 문서 내용을 처리하지 못했습니다.`,
+                `${result.fileName}: 서버에서 문서 내용을 처리하지 못했습니다.`,
               )
 
               continue
             }
 
-            uploadedDocumentNames.push(
-              response.result.fileName,
+            uploadedDocuments.push(
+              {
+                fileId:
+                  result.fileId,
+
+                fileName:
+                  result.fileName,
+
+                fileType:
+                  result.fileType,
+
+                fileSize:
+                  result.fileSize,
+              },
             )
           } catch (
             error
@@ -1033,7 +1400,7 @@ export function LinkPolicyInspector({
             requestErrors.push(
               `${file.name}: ${
                 error instanceof
-                  Error &&
+                    Error &&
                 error.message
                   ? error.message
                   : '정책 문서 업로드에 실패했습니다.'
@@ -1043,16 +1410,15 @@ export function LinkPolicyInspector({
         }
 
         if (
-          uploadedDocumentNames.length >
+          uploadedDocuments.length >
           0
         ) {
           save({
-            policyDocuments: [
-              ...new Set([
-                ...policyDocuments,
-                ...uploadedDocumentNames,
-              ]),
-            ],
+            policyDocuments:
+              mergePolicyDocuments(
+                policyDocuments,
+                uploadedDocuments,
+              ),
           })
         }
 
@@ -1112,9 +1478,7 @@ export function LinkPolicyInspector({
 
           <div className="grid grid-cols-4 gap-2">
             {policyLinkTargets.map(
-              (
-                option,
-              ) => (
+              (option) => (
                 <button
                   key={
                     option.value
@@ -1129,7 +1493,7 @@ export function LinkPolicyInspector({
                   className={[
                     'h-[44px] rounded-xl border-2 text-xs font-bold',
                     targetType ===
-                      option.value
+                    option.value
                       ? 'border-indigo-500 text-indigo-500'
                       : 'border-slate-200 text-slate-600',
                   ].join(
@@ -1147,7 +1511,7 @@ export function LinkPolicyInspector({
 
         <div>
           <p className="mb-3 text-xs font-bold text-slate-700">
-            정책 문서{' '}
+            정책 파일{' '}
             <span className="text-rose-500">
               *
             </span>
@@ -1190,14 +1554,10 @@ export function LinkPolicyInspector({
             }
             className={[
               'flex min-h-[64px] w-full items-center gap-3 rounded-xl border-2 px-4 text-left transition',
-              policyDocuments.length >
-                0
-                ? 'border-slate-200 bg-white'
-                : 'border-rose-200 bg-rose-50',
               isUploading ||
               !flowId
-                ? 'cursor-not-allowed opacity-60'
-                : 'cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30',
+                ? 'cursor-not-allowed border-slate-200 opacity-60'
+                : 'cursor-pointer border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30',
             ].join(
               ' ',
             )}
@@ -1210,27 +1570,11 @@ export function LinkPolicyInspector({
               <p className="truncate text-xs font-bold text-slate-500">
                 {isUploading
                   ? '정책 문서를 서버에 업로드하고 있습니다.'
-                  : policyDocuments.length >
-                      0
-                    ? '정책 문서 추가 선택'
-                    : '정책 문서를 선택하세요'}
+                  : '정책 파일 선택'}
               </p>
 
-              <p
-                className={[
-                  'mt-1 text-[10px] font-bold',
-                  policyDocuments.length >
-                    0
-                    ? 'text-emerald-500'
-                    : 'text-rose-400',
-                ].join(
-                  ' ',
-                )}
-              >
-                {policyDocuments.length >
-                0
-                  ? `${policyDocuments.length}개 선택됨`
-                  : '필수 · 미선택'}
+              <p className="mt-1 text-[10px] font-bold text-slate-400">
+                실제 서버 fileId를 사용합니다.
               </p>
             </div>
           </button>
@@ -1267,40 +1611,169 @@ export function LinkPolicyInspector({
             </div>
           )}
 
-          {policyDocuments.length >
+          {legacyPolicyDocuments.length >
             0 && (
-            <div className="mt-3 space-y-2">
-              {policyDocuments.map(
-                (
-                  document,
-                ) => (
-                  <div
-                    key={
-                      document
-                    }
-                    className="flex min-h-[58px] items-center gap-3 rounded-xl border-2 border-slate-200 bg-white px-4"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-black text-slate-500">
-                      DOC
-                    </span>
+            <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2">
+              <p className="text-xs font-bold text-amber-700">
+                이전 버전에서 파일명만 저장된 정책 문서가 있습니다.
+              </p>
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-bold text-slate-700">
-                        {
-                          document
-                        }
-                      </p>
-
-                      <p className="mt-1 text-[10px] font-semibold text-emerald-500">
-                        서버 업로드 완료
-                      </p>
-                    </div>
-                  </div>
-                ),
-              )}
+              <p className="mt-1 text-[11px] leading-5 text-amber-600">
+                실제 fileId가 없어 AI 파일 컨텍스트로 사용할 수 없습니다. 정책 파일을 다시 업로드해 주세요.
+              </p>
             </div>
           )}
         </div>
+
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-700">
+              웹 문서 URL
+            </p>
+
+            <span className="text-[11px] text-emerald-500">
+              선택
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <input
+              type="url"
+              value={
+                webDocumentUrl
+              }
+              onChange={(
+                event,
+              ) => {
+                setWebDocumentUrl(
+                  event.target.value,
+                )
+
+                if (
+                  webDocumentError
+                ) {
+                  setWebDocumentError(
+                    '',
+                  )
+                }
+              }}
+              placeholder="https://example.com/policy"
+              className="h-[46px] w-full rounded-xl border-2 border-slate-200 px-4 text-sm outline-none focus:border-indigo-500"
+            />
+
+            <input
+              type="text"
+              value={
+                webDocumentTitle
+              }
+              onChange={(
+                event,
+              ) =>
+                setWebDocumentTitle(
+                  event.target.value,
+                )
+              }
+              placeholder="문서 제목 · 선택"
+              className="h-[46px] w-full rounded-xl border-2 border-slate-200 px-4 text-sm outline-none focus:border-indigo-500"
+            />
+
+            <button
+              type="button"
+              onClick={
+                addWebDocument
+              }
+              className="h-[42px] w-full rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 hover:border-indigo-300"
+            >
+              웹 문서 추가
+            </button>
+          </div>
+
+          {webDocumentError && (
+            <p className="mt-2 text-xs font-semibold text-rose-500">
+              {
+                webDocumentError
+              }
+            </p>
+          )}
+
+          <p className="mt-2 text-[11px] leading-5 text-amber-600">
+            URL 값은 파일과 구분해 전달합니다. 현재 백엔드는 웹 페이지 본문을 직접 불러오는 기능을 지원하지 않습니다.
+          </p>
+        </div>
+
+        {policyDocuments.length >
+          0 && (
+          <div>
+            <p className="mb-2 text-xs font-bold text-slate-700">
+              연결된 정책 문서
+            </p>
+
+            <div className="space-y-2">
+              {policyDocuments.map(
+                (
+                  document,
+                ) => {
+                  const isFile =
+                    'fileId' in
+                    document
+
+                  const key =
+                    getPolicyDocumentKey(
+                      document,
+                    )
+
+                  return (
+                    <div
+                      key={
+                        key
+                      }
+                      className="flex min-h-[64px] items-center gap-3 rounded-xl border-2 border-slate-200 bg-white px-4 py-3"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-black text-slate-500">
+                        {isFile
+                          ? 'DOC'
+                          : 'URL'}
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold text-slate-700">
+                          {isFile
+                            ? document.fileName
+                            : document.title ||
+                              document.url}
+                        </p>
+
+                        <p className="mt-1 truncate text-[10px] font-semibold text-slate-400">
+                          {isFile
+                            ? `fileId ${document.fileId} · ${formatPolicyFileSize(
+                                document.fileSize,
+                              )}`
+                            : document.url}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removePolicyDocument(
+                            document,
+                          )
+                        }
+                        className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-500 hover:border-rose-200 hover:text-rose-500"
+                      >
+                        제외
+                      </button>
+                    </div>
+                  )
+                },
+              )}
+            </div>
+
+            <p className="mt-2 text-[11px] leading-5 text-slate-400">
+              제외하면 서버 파일 자체를 삭제하지 않고 현재 Preview 요청에서만 빠집니다.
+            </p>
+          </div>
+        )}
 
         <div>
           <p className="mb-3 text-xs font-bold text-slate-700">
@@ -1392,7 +1865,7 @@ export function LinkPolicyInspector({
                   className={[
                     'h-[44px] flex-1 text-xs font-bold',
                     matchingMode ===
-                      option.value
+                    option.value
                       ? 'bg-indigo-500 text-white'
                       : 'bg-white text-slate-600',
                   ].join(

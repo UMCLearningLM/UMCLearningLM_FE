@@ -1060,10 +1060,33 @@ function readUploadedFiles(
   config:
     StudioBlockConfig | undefined,
 ): StudioUploadedFile[] {
-  return getObjectArray(
-    config,
-    'uploadedFiles',
-  )
+  /*
+   * 편집 중인 FE config에서는 uploadedFiles를 사용합니다.
+   *
+   * #78 계약으로 저장된 Flow를 다시 불러온 경우에는
+   * backend options에 files가 남아 있을 수 있으므로
+   * uploadedFiles key 자체가 존재하지 않을 때만 files로 fallback합니다.
+   *
+   * uploadedFiles: []가 명시적으로 저장된 경우에는
+   * 사용자가 파일을 모두 제외한 것이므로 files로 되돌아가면 안 됩니다.
+   */
+  const hasUploadedFilesConfig =
+    Array.isArray(
+      config?.uploadedFiles,
+    )
+
+  const source =
+    hasUploadedFilesConfig
+      ? getObjectArray(
+          config,
+          'uploadedFiles',
+        )
+      : getObjectArray(
+          config,
+          'files',
+        )
+
+  return source
     .map(
       (
         value,
@@ -1072,7 +1095,12 @@ function readUploadedFiles(
           typeof value.fileId ===
             'number'
             ? value.fileId
-            : 0
+            : typeof value.fileId ===
+                'string'
+              ? Number(
+                  value.fileId,
+                )
+              : 0
 
         const fileName =
           typeof value.fileName ===
@@ -1090,8 +1118,17 @@ function readUploadedFiles(
           typeof value.fileSize ===
             'number'
             ? value.fileSize
-            : 0
+            : typeof value.fileSize ===
+                'string'
+              ? Number(
+                  value.fileSize,
+                )
+              : 0
 
+        /*
+         * #78 files에는 status가 없을 수 있습니다.
+         * 저장된 서버 파일은 별도 실패 표시가 없으면 READY로 복원합니다.
+         */
         const status =
           value.status ===
             'PARSE_FAILED'
@@ -1111,6 +1148,9 @@ function readUploadedFiles(
       (
         file,
       ) =>
+        Number.isInteger(
+          file.fileId,
+        ) &&
         file.fileId >
           0 &&
         Boolean(
@@ -1118,7 +1158,12 @@ function readUploadedFiles(
         ) &&
         Boolean(
           file.fileType,
-        ),
+        ) &&
+        Number.isFinite(
+          file.fileSize,
+        ) &&
+        file.fileSize >=
+          0,
     )
 }
 
@@ -1227,13 +1272,27 @@ export function FileUploadInspector({
       slot.config,
     )
 
-  const legacyFilesExist =
-    files.length ===
-      0 &&
+  const hasUploadedFilesConfig =
+    Array.isArray(
+      slot.config
+        ?.uploadedFiles,
+    )
+
+  const storedBackendFileEntries =
     getObjectArray(
       slot.config,
       'files',
-    ).length >
+    )
+
+  /*
+   * files key는 존재하지만 #78의 실제 서버 file metadata로
+   * 해석할 수 없는 과거 데이터만 경고합니다.
+   */
+  const legacyFilesExist =
+    !hasUploadedFilesConfig &&
+    files.length ===
+      0 &&
+    storedBackendFileEntries.length >
       0
 
   const legacyMissingAction =
@@ -1307,9 +1366,11 @@ export function FileUploadInspector({
     onConfigChange(
       {
         /*
-         * BE V9 input_schema와 동일한 key를 사용합니다.
-         * Studio 저장 시에는 options JSON 안에 들어가고,
-         * Preview 요청 생성 시 uploadedFiles만 input으로 다시 분리합니다.
+         * Studio 편집 상태에서는 기존 FE 구조를 유지합니다.
+         *
+         * 실제 PUT / Preview 요청을 만들 때
+         * studioFlowPersistence의 request sanitizer가 #78 계약인
+         * files / missingAction으로 변환합니다.
          */
         uploadedFiles:
           nextFiles.map(
@@ -1485,9 +1546,30 @@ export function FileUploadInspector({
           uploadedFiles.length >
           0
         ) {
+          /*
+           * 같은 fileId가 이미 존재하는 경우 중복시키지 않습니다.
+           */
+          const mergedFileMap =
+            new Map<
+              number,
+              StudioUploadedFile
+            >()
+
+          for (
+            const file of
+              [
+                ...files,
+                ...uploadedFiles,
+              ]
+          ) {
+            mergedFileMap.set(
+              file.fileId,
+              file,
+            )
+          }
+
           save([
-            ...files,
-            ...uploadedFiles,
+            ...mergedFileMap.values(),
           ])
         }
 
@@ -1500,6 +1582,27 @@ export function FileUploadInspector({
         )
       }
     }
+
+  const removeFileSelection = (
+    fileId: number,
+  ) => {
+    /*
+     * 서버 S3/DB 객체 자체는 삭제하지 않습니다.
+     *
+     * Studio의 현재 선택 목록에서만 제거하고,
+     * serializer가 이 uploadedFiles 배열을 기준으로
+     * 다음 Preview의 input.files를 다시 구성합니다.
+     */
+    save(
+      files.filter(
+        (
+          file,
+        ) =>
+          file.fileId !==
+          fileId,
+      ),
+    )
+  }
 
   return (
     <ExpandableSettingBlock
@@ -1673,20 +1776,34 @@ export function FileUploadInspector({
                           </span>
                         </span>
 
-                        <span
-                          className={[
-                            'shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold',
-                            hasError
-                              ? 'bg-rose-100 text-rose-600'
-                              : 'bg-emerald-50 text-emerald-600',
-                          ].join(
-                            ' ',
-                          )}
-                        >
-                          {
-                            file.status
-                          }
-                        </span>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span
+                            className={[
+                              'rounded-full px-2.5 py-1 text-[11px] font-bold',
+                              hasError
+                                ? 'bg-rose-100 text-rose-600'
+                                : 'bg-emerald-50 text-emerald-600',
+                            ].join(
+                              ' ',
+                            )}
+                          >
+                            {
+                              file.status
+                            }
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeFileSelection(
+                                file.fileId,
+                              )
+                            }
+                            className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-500 hover:border-rose-200 hover:text-rose-500"
+                          >
+                            제외
+                          </button>
+                        </div>
                       </div>
                     )
                   },
@@ -1694,7 +1811,7 @@ export function FileUploadInspector({
               </div>
 
               <p className="mt-2 text-[11px] leading-[18px] text-slate-400">
-                현재 BE에는 개별 업로드 파일 삭제 API가 없어 서버에 올라간 파일은 이 화면에서 제거하지 않습니다.
+                제외하면 서버 파일 자체는 삭제하지 않고 현재 Workflow의 Preview 대상에서만 제거됩니다.
               </p>
             </div>
           )}

@@ -551,8 +551,24 @@ function readUploadedFileReferences(
   config:
     StudioBlockConfig | undefined,
 ): StudioUploadedFileReference[] {
-  const value =
+  /*
+   * 편집 중 FE 데이터는 uploadedFiles,
+   * #78 계약으로 저장됐다 복원된 IN-004는 files를 사용할 수 있습니다.
+   */
+  const legacyValue =
     config?.uploadedFiles
+
+  const backendValue =
+    config?.files
+
+  const value =
+    Array.isArray(
+      legacyValue,
+    ) &&
+    legacyValue.length >
+      0
+      ? legacyValue
+      : backendValue
 
   if (
     !Array.isArray(
@@ -584,7 +600,12 @@ function readUploadedFileReferences(
           typeof item.fileId ===
             'number'
             ? item.fileId
-            : 0
+            : typeof item.fileId ===
+                'string'
+              ? Number(
+                  item.fileId,
+                )
+              : 0
 
         const fileName =
           typeof item.fileName ===
@@ -604,6 +625,10 @@ function readUploadedFileReferences(
             ? item.fileSize
             : 0
 
+        /*
+         * BE #78의 files에는 status가 없으므로
+         * 저장된 서버 파일은 READY로 간주합니다.
+         */
         const status =
           item.status ===
             'PARSE_FAILED'
@@ -611,6 +636,9 @@ function readUploadedFileReferences(
             : 'READY'
 
         if (
+          !Number.isInteger(
+            fileId,
+          ) ||
           fileId <=
             0 ||
           !fileName ||

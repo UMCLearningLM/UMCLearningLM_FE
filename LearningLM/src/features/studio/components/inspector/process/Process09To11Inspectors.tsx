@@ -36,16 +36,20 @@ import {
  * PR-009
  * 초안 작성하기
  *
- * UI는 기존 한글 라벨을 유지하고,
- * BE main V9 schema에 맞는 enum/key를 config에 저장합니다.
+ * BE #78 V15 기준
  *
- * BE:
- * input.documentType
- * input.purpose
- * options.compositionMode
- * options.sections
- * options.completionLevel
- * options.missingInformationPolicy
+ * input:
+ * - documentType
+ * - purpose
+ *
+ * options:
+ * - compositionMode
+ * - sections
+ * - completionLevel
+ * - missingInformationPolicy
+ *
+ * CUSTOM_OUTLINE에서는 모든 section 제목이 채워져 있어야 합니다.
+ * AUTO / TEMPLATE에서는 sections가 실제 요청에서 제거됩니다.
  * ============================================================
  */
 
@@ -104,167 +108,348 @@ const draftMissingInfoOptions = [
   },
 ] as const
 
-const legacyCompositionModeMap: Record<string, string> = {
-  자동: 'AUTO',
-  템플릿: 'TEMPLATE',
-  '직접 목차': 'CUSTOM_OUTLINE',
+const legacyCompositionModeMap:
+  Record<string, string> = {
+    자동: 'AUTO',
+    템플릿: 'TEMPLATE',
+    '직접 목차':
+      'CUSTOM_OUTLINE',
+  }
+
+const legacyCompletionLevelMap:
+  Record<string, string> = {
+    뼈대: 'SKELETON',
+    수정용: 'EDITABLE',
+    '거의 완성':
+      'NEAR_COMPLETE',
+  }
+
+const legacyMissingInformationPolicyMap:
+  Record<string, string> = {
+    '미정으로 표시':
+      'UNDECIDED',
+    '가정으로 채움':
+      'ASSUMPTION',
+    '질문으로 남김':
+      'QUESTION',
+  }
+
+function normalizeCompositionMode(
+  value: string,
+): string {
+  return (
+    legacyCompositionModeMap[
+      value
+    ] ??
+    value
+  )
 }
 
-const legacyCompletionLevelMap: Record<string, string> = {
-  뼈대: 'SKELETON',
-  수정용: 'EDITABLE',
-  '거의 완성': 'NEAR_COMPLETE',
+function normalizeCompletionLevel(
+  value: string,
+): string {
+  return (
+    legacyCompletionLevelMap[
+      value
+    ] ??
+    value
+  )
 }
 
-const legacyMissingInformationPolicyMap: Record<string, string> = {
-  '미정으로 표시': 'UNDECIDED',
-  '가정으로 채움': 'ASSUMPTION',
-  '질문으로 남김': 'QUESTION',
-}
-
-function normalizeCompositionMode(value: string): string {
-  return legacyCompositionModeMap[value] ?? value
-}
-
-function normalizeCompletionLevel(value: string): string {
-  return legacyCompletionLevelMap[value] ?? value
-}
-
-function normalizeMissingInformationPolicy(value: string): string {
-  return legacyMissingInformationPolicyMap[value] ?? value
+function normalizeMissingInformationPolicy(
+  value: string,
+): string {
+  return (
+    legacyMissingInformationPolicyMap[
+      value
+    ] ??
+    value
+  )
 }
 
 export function DraftInspector({
   slot,
   onConfigChange,
 }: StudioBlockInspectorComponentProps) {
-  const documentType = getString(slot.config, 'documentType', '보고서')
-  const purpose = getString(slot.config, 'purpose')
-
-  const compositionMode = normalizeCompositionMode(
-    getString(slot.config, 'compositionMode', 'CUSTOM_OUTLINE'),
-  )
-
-  const sections = getStringArray(slot.config, 'sections', ['', ''])
-
-  const completionLevel = normalizeCompletionLevel(
-    getString(slot.config, 'completionLevel', 'EDITABLE'),
-  )
-
-  const missingInformationPolicy = normalizeMissingInformationPolicy(
+  const documentType =
     getString(
       slot.config,
-      'missingInformationPolicy',
-      getString(slot.config, 'missingInfoHandling', 'UNDECIDED'),
-    ),
-  )
+      'documentType',
+      '보고서',
+    )
 
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const purpose =
+    getString(
+      slot.config,
+      'purpose',
+    )
 
-  const save = (patch: StudioBlockConfig) => {
+  const compositionMode =
+    normalizeCompositionMode(
+      getString(
+        slot.config,
+        'compositionMode',
+        'CUSTOM_OUTLINE',
+      ),
+    )
+
+  const sections =
+    getStringArray(
+      slot.config,
+      'sections',
+      [''],
+    )
+
+  const completionLevel =
+    normalizeCompletionLevel(
+      getString(
+        slot.config,
+        'completionLevel',
+        'EDITABLE',
+      ),
+    )
+
+  const missingInformationPolicy =
+    normalizeMissingInformationPolicy(
+      getString(
+        slot.config,
+        'missingInformationPolicy',
+        getString(
+          slot.config,
+          'missingInfoHandling',
+          'UNDECIDED',
+        ),
+      ),
+    )
+
+  const [
+    dragIndex,
+    setDragIndex,
+  ] =
+    useState<
+      number | null
+    >(null)
+
+  const save = (
+    patch:
+      StudioBlockConfig,
+  ) => {
     const nextDocumentType =
-      typeof patch.documentType === 'string'
+      typeof patch.documentType ===
+        'string'
         ? patch.documentType
         : documentType
 
     const nextPurpose =
-      typeof patch.purpose === 'string'
+      typeof patch.purpose ===
+        'string'
         ? patch.purpose
         : purpose
 
     const nextCompositionMode =
-      typeof patch.compositionMode === 'string'
-        ? normalizeCompositionMode(patch.compositionMode)
+      typeof patch.compositionMode ===
+        'string'
+        ? normalizeCompositionMode(
+            patch.compositionMode,
+          )
         : compositionMode
 
     const nextSections =
-      'sections' in patch
-        ? readStringArray(patch.sections, sections)
+      'sections' in
+        patch
+        ? readStringArray(
+            patch.sections,
+            sections,
+          )
         : sections
 
     const nextCompletionLevel =
-      typeof patch.completionLevel === 'string'
-        ? normalizeCompletionLevel(patch.completionLevel)
+      typeof patch.completionLevel ===
+        'string'
+        ? normalizeCompletionLevel(
+            patch.completionLevel,
+          )
         : completionLevel
 
     const nextMissingInformationPolicy =
-      typeof patch.missingInformationPolicy === 'string'
+      typeof patch.missingInformationPolicy ===
+        'string'
         ? normalizeMissingInformationPolicy(
             patch.missingInformationPolicy,
           )
         : missingInformationPolicy
 
+    const customOutlineComplete =
+      nextCompositionMode !==
+        'CUSTOM_OUTLINE' ||
+      (
+        nextSections.length >
+          0 &&
+        nextSections.every(
+          (section) =>
+            Boolean(
+              section.trim(),
+            ),
+        )
+      )
+
     const complete =
-      Boolean(nextDocumentType) &&
-      Boolean(nextPurpose.trim()) &&
-      Boolean(nextCompositionMode)
+      Boolean(
+        nextDocumentType,
+      ) &&
+      Boolean(
+        nextPurpose.trim(),
+      ) &&
+      Boolean(
+        nextCompositionMode,
+      ) &&
+      Boolean(
+        nextCompletionLevel,
+      ) &&
+      Boolean(
+        nextMissingInformationPolicy,
+      ) &&
+      customOutlineComplete
 
     const completionLabel =
       draftCompletionLevels.find(
-        (option) => option.value === nextCompletionLevel,
-      )?.label ?? nextCompletionLevel
+        (option) =>
+          option.value ===
+          nextCompletionLevel,
+      )?.label ??
+      nextCompletionLevel
 
     onConfigChange(
       {
-        documentType: nextDocumentType,
-        purpose: nextPurpose,
-        compositionMode: nextCompositionMode,
-        sections: nextSections,
-        completionLevel: nextCompletionLevel,
-        missingInformationPolicy: nextMissingInformationPolicy,
+        documentType:
+          nextDocumentType,
+
+        purpose:
+          nextPurpose,
+
+        compositionMode:
+          nextCompositionMode,
+
+        sections:
+          nextSections,
+
+        completionLevel:
+          nextCompletionLevel,
+
+        missingInformationPolicy:
+          nextMissingInformationPolicy,
       },
       {
-        summaryValue: complete
-          ? `${nextDocumentType} · ${completionLabel}`
-          : '',
-        state: resolveState(complete),
+        summaryValue:
+          complete
+            ? `${nextDocumentType} · ${completionLabel}`
+            : '',
+
+        state:
+          resolveState(
+            complete,
+          ),
       },
     )
   }
 
-  const updateSection = (index: number, value: string) => {
-    const next = [...sections]
-    next[index] = value
-    save({ sections: next })
-  }
+  const updateSection = (
+    index: number,
+    value: string,
+  ) => {
+    const next =
+      [...sections]
 
-  const addSection = () => {
+    next[index] =
+      value
+
     save({
-      sections: [...sections, ''],
+      sections:
+        next,
     })
   }
+
+  const addSection =
+    () => {
+      save({
+        sections: [
+          ...sections,
+          '',
+        ],
+      })
+    }
 
   const reorderSection = (
     sourceIndex: number,
     targetIndex: number,
   ) => {
-    if (sourceIndex === targetIndex) {
+    if (
+      sourceIndex ===
+      targetIndex
+    ) {
       return
     }
 
-    const next = [...sections]
-    const [moved] = next.splice(sourceIndex, 1)
-    next.splice(targetIndex, 0, moved)
-    save({ sections: next })
+    const next =
+      [...sections]
+
+    const [
+      moved,
+    ] =
+      next.splice(
+        sourceIndex,
+        1,
+      )
+
+    next.splice(
+      targetIndex,
+      0,
+      moved,
+    )
+
+    save({
+      sections:
+        next,
+    })
   }
+
+  const hasInvalidSection =
+    compositionMode ===
+      'CUSTOM_OUTLINE' &&
+    (
+      sections.length ===
+        0 ||
+      sections.some(
+        (section) =>
+          !section.trim(),
+      )
+    )
 
   return (
     <ExpandableSettingBlock
       title="초안 작성하기"
-      required={slot.required}
+      required={
+        slot.required
+      }
       defaultOpen
-      className={studioInspectorClassName}
+      className={
+        studioInspectorClassName
+      }
       footer={
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
-            {purpose.trim()
-              ? '초안 설정 완료'
-              : '작성 목적 미입력'}
+            {!purpose.trim()
+              ? '작성 목적 미입력'
+              : hasInvalidSection
+                ? '목차 항목 미완료'
+                : '초안 설정 완료'}
           </span>
 
           <button
             type="button"
-            onClick={() => save({})}
+            onClick={() =>
+              save({})
+            }
             className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700"
           >
             검증
@@ -275,43 +460,67 @@ export function DraftInspector({
       <div className="space-y-6">
         <div>
           <p className="mb-3 text-xs font-bold text-slate-700">
-            문서 유형 <span className="text-rose-500">*</span>
+            문서 유형{' '}
+            <span className="text-rose-500">
+              *
+            </span>
           </p>
 
           <div className="grid grid-cols-4 gap-2">
-            {draftDocumentTypes.map((option) => {
-              const selected = documentType === option
+            {draftDocumentTypes.map(
+              (option) => {
+                const selected =
+                  documentType ===
+                  option
 
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => save({ documentType: option })}
-                  className={[
-                    'min-h-[64px] rounded-xl border-2 px-2 text-xs font-bold',
-                    selected
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-slate-200 text-slate-600',
-                  ].join(' ')}
-                >
-                  {option}
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={
+                      option
+                    }
+                    type="button"
+                    onClick={() =>
+                      save({
+                        documentType:
+                          option,
+                      })
+                    }
+                    className={[
+                      'min-h-[64px] rounded-xl border-2 px-2 text-xs font-bold',
+                      selected
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-slate-200 text-slate-600',
+                    ].join(
+                      ' ',
+                    )}
+                  >
+                    {option}
+                  </button>
+                )
+              },
+            )}
           </div>
         </div>
 
         <label className="block">
           <span className="mb-3 block text-xs font-bold text-slate-700">
-            작성 목적 <span className="text-rose-500">*</span>
+            작성 목적{' '}
+            <span className="text-rose-500">
+              *
+            </span>
           </span>
 
           <input
             type="text"
-            value={purpose}
-            onChange={(event) =>
+            value={
+              purpose
+            }
+            onChange={(
+              event,
+            ) =>
               save({
-                purpose: event.target.value,
+                purpose:
+                  event.target.value,
               })
             }
             placeholder="작성 목적을 입력하세요"
@@ -320,7 +529,9 @@ export function DraftInspector({
               purpose.trim()
                 ? 'border-slate-200 focus:border-indigo-500'
                 : 'border-rose-200 focus:border-rose-400',
-            ].join(' ')}
+            ].join(
+              ' ',
+            )}
           />
 
           {!purpose.trim() && (
@@ -332,29 +543,47 @@ export function DraftInspector({
 
         <div>
           <p className="mb-3 text-xs font-bold text-slate-700">
-            구성 방식 <span className="text-rose-500">*</span>
+            구성 방식{' '}
+            <span className="text-rose-500">
+              *
+            </span>
           </p>
 
           <div className="flex overflow-hidden rounded-xl border-2 border-slate-200">
-            {draftCompositionModes.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => save({ compositionMode: option.value })}
-                className={[
-                  'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
-                  compositionMode === option.value
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-white text-slate-600',
-                ].join(' ')}
-              >
-                {option.label}
-              </button>
-            ))}
+            {draftCompositionModes.map(
+              (option) => (
+                <button
+                  key={
+                    option.value
+                  }
+                  type="button"
+                  onClick={() =>
+                    save({
+                      compositionMode:
+                        option.value,
+                    })
+                  }
+                  className={[
+                    'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
+                    compositionMode ===
+                    option.value
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-white text-slate-600',
+                  ].join(
+                    ' ',
+                  )}
+                >
+                  {
+                    option.label
+                  }
+                </button>
+              ),
+            )}
           </div>
         </div>
 
-        {compositionMode === 'CUSTOM_OUTLINE' && (
+        {compositionMode ===
+          'CUSTOM_OUTLINE' && (
           <div>
             <div className="mb-2 flex items-center gap-2">
               <p className="text-xs font-bold text-slate-700">
@@ -367,47 +596,107 @@ export function DraftInspector({
             </div>
 
             <p className="mb-3 text-[11px] font-semibold text-indigo-500">
-              ↳ 직접 목차 선택됨
+              ↳ 직접 목차 선택됨 · 모든 항목 입력 필요
             </p>
 
             <div className="space-y-3">
-              {sections.map((section, index) => (
-                <div
-                  key={index}
-                  draggable
-                  onDragStart={() => setDragIndex(index)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => {
-                    if (dragIndex !== null) {
-                      reorderSection(dragIndex, index)
-                    }
+              {sections.map(
+                (
+                  section,
+                  index,
+                ) => {
+                  const invalid =
+                    !section.trim()
 
-                    setDragIndex(null)
-                  }}
-                  className="flex h-[52px] items-center gap-3 rounded-xl border-2 border-slate-200 px-4"
-                >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
-                    {index + 1}
-                  </span>
+                  return (
+                    <div
+                      key={
+                        index
+                      }
+                    >
+                      <div
+                        draggable
+                        onDragStart={() =>
+                          setDragIndex(
+                            index,
+                          )
+                        }
+                        onDragOver={(
+                          event,
+                        ) =>
+                          event.preventDefault()
+                        }
+                        onDrop={() => {
+                          if (
+                            dragIndex !==
+                            null
+                          ) {
+                            reorderSection(
+                              dragIndex,
+                              index,
+                            )
+                          }
 
-                  <input
-                    type="text"
-                    value={section}
-                    onChange={(event) =>
-                      updateSection(index, event.target.value)
-                    }
-                    placeholder="섹션 제목 입력"
-                    className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
-                  />
-                </div>
-              ))}
+                          setDragIndex(
+                            null,
+                          )
+                        }}
+                        className={[
+                          'flex h-[52px] items-center gap-3 rounded-xl border-2 px-4',
+                          invalid
+                            ? 'border-rose-200'
+                            : 'border-slate-200',
+                        ].join(
+                          ' ',
+                        )}
+                      >
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
+                          {index +
+                            1}
+                        </span>
+
+                        <input
+                          type="text"
+                          value={
+                            section
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            updateSection(
+                              index,
+                              event.target.value,
+                            )
+                          }
+                          placeholder="섹션 제목 입력"
+                          className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-700 outline-none placeholder:text-slate-400"
+                        />
+                      </div>
+
+                      {invalid && (
+                        <p className="mt-1.5 text-xs font-semibold text-rose-500">
+                          빈 목차 항목은 사용할 수 없습니다.
+                        </p>
+                      )}
+                    </div>
+                  )
+                },
+              )}
 
               <button
                 type="button"
-                onClick={addSection}
+                onClick={
+                  addSection
+                }
                 className="flex h-[48px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-xs font-bold text-slate-400"
               >
-                <Plus size={14} className="mr-1" />
+                <Plus
+                  size={
+                    14
+                  }
+                  className="mr-1"
+                />
+
                 섹션 추가
               </button>
             </div>
@@ -419,25 +708,42 @@ export function DraftInspector({
             <p className="text-xs font-bold text-slate-700">
               완성도
             </p>
-            <span className="text-[11px] text-emerald-500">선택</span>
+
+            <span className="text-[11px] text-emerald-500">
+              선택
+            </span>
           </div>
 
           <div className="flex overflow-hidden rounded-xl border-2 border-slate-200">
-            {draftCompletionLevels.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => save({ completionLevel: option.value })}
-                className={[
-                  'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
-                  completionLevel === option.value
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-white text-slate-600',
-                ].join(' ')}
-              >
-                {option.label}
-              </button>
-            ))}
+            {draftCompletionLevels.map(
+              (option) => (
+                <button
+                  key={
+                    option.value
+                  }
+                  type="button"
+                  onClick={() =>
+                    save({
+                      completionLevel:
+                        option.value,
+                    })
+                  }
+                  className={[
+                    'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
+                    completionLevel ===
+                    option.value
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-white text-slate-600',
+                  ].join(
+                    ' ',
+                  )}
+                >
+                  {
+                    option.label
+                  }
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -446,43 +752,58 @@ export function DraftInspector({
             <p className="text-xs font-bold text-slate-700">
               빈 정보
             </p>
-            <span className="text-[11px] text-emerald-500">선택</span>
+
+            <span className="text-[11px] text-emerald-500">
+              선택
+            </span>
           </div>
 
           <div className="space-y-2">
-            {draftMissingInfoOptions.map((option) => {
-              const selected =
-                missingInformationPolicy === option.value
+            {draftMissingInfoOptions.map(
+              (option) => {
+                const selected =
+                  missingInformationPolicy ===
+                  option.value
 
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    save({
-                      missingInformationPolicy: option.value,
-                    })
-                  }
-                  className={[
-                    'flex h-[48px] w-full items-center gap-3 rounded-xl border-2 px-4 text-left text-sm font-bold',
-                    selected
-                      ? 'border-indigo-500 text-slate-700'
-                      : 'border-slate-200 text-slate-500',
-                  ].join(' ')}
-                >
-                  <span
+                return (
+                  <button
+                    key={
+                      option.value
+                    }
+                    type="button"
+                    onClick={() =>
+                      save({
+                        missingInformationPolicy:
+                          option.value,
+                      })
+                    }
                     className={[
-                      'h-4 w-4 rounded-full',
+                      'flex h-[48px] w-full items-center gap-3 rounded-xl border-2 px-4 text-left text-sm font-bold',
                       selected
-                        ? 'bg-indigo-500'
-                        : 'border border-slate-200',
-                    ].join(' ')}
-                  />
+                        ? 'border-indigo-500 text-slate-700'
+                        : 'border-slate-200 text-slate-500',
+                    ].join(
+                      ' ',
+                    )}
+                  >
+                    <span
+                      className={[
+                        'h-4 w-4 rounded-full',
+                        selected
+                          ? 'bg-indigo-500'
+                          : 'border border-slate-200',
+                      ].join(
+                        ' ',
+                      )}
+                    />
 
-                  {option.label}
-                </button>
-              )
-            })}
+                    {
+                      option.label
+                    }
+                  </button>
+                )
+              },
+            )}
           </div>
         </div>
       </div>
@@ -495,14 +816,21 @@ export function DraftInspector({
  * PR-010
  * 표로 재구성하기
  *
- * UI는 한글 라벨을 유지하고,
- * config에는 BE main V9 enum을 저장합니다.
+ * BE #78 V15 기준
  *
- * BE:
- * input.columns
- * options.tablePurpose
- * options.rowKey
- * options.cellLength
+ * input:
+ * - columns
+ *
+ * options:
+ * - tablePurpose
+ * - rowKey
+ * - cellLength
+ *
+ * FE에서도 다음을 보장합니다.
+ * - 빈 열 이름은 유효 열로 취급하지 않음
+ * - 중복 열 이름 차단
+ * - rowKey는 실제 columns 중 하나
+ * - 기본 columns / rowKey 일치
  * ============================================================
  */
 
@@ -550,140 +878,352 @@ const defaultTableColumns = [
   '제품 B',
 ]
 
-const legacyTablePurposeMap: Record<string, string> = {
-  요약: 'SUMMARY',
-  비교: 'COMPARISON',
-  기능: 'FEATURE',
-  일정: 'SCHEDULE',
-  체크: 'CHECK',
+const legacyTablePurposeMap:
+  Record<string, string> = {
+    요약: 'SUMMARY',
+    비교: 'COMPARISON',
+    기능: 'FEATURE',
+    일정: 'SCHEDULE',
+    체크: 'CHECK',
+  }
+
+const legacyCellLengthMap:
+  Record<string, string> = {
+    '한 줄':
+      'ONE_LINE',
+    짧게: 'SHORT',
+    자세히:
+      'DETAILED',
+  }
+
+function normalizeTablePurpose(
+  value: string,
+): string {
+  return (
+    legacyTablePurposeMap[
+      value
+    ] ??
+    value
+  )
 }
 
-const legacyCellLengthMap: Record<string, string> = {
-  '한 줄': 'ONE_LINE',
-  짧게: 'SHORT',
-  자세히: 'DETAILED',
+function normalizeCellLength(
+  value: string,
+): string {
+  return (
+    legacyCellLengthMap[
+      value
+    ] ??
+    value
+  )
 }
 
-function normalizeTablePurpose(value: string): string {
-  return legacyTablePurposeMap[value] ?? value
+function getNormalizedTableColumns(
+  values: string[],
+): string[] {
+  return values
+    .map(
+      (value) =>
+        value.trim(),
+    )
+    .filter(
+      Boolean,
+    )
 }
 
-function normalizeCellLength(value: string): string {
-  return legacyCellLengthMap[value] ?? value
+function hasDuplicateTableColumns(
+  values: string[],
+): boolean {
+  const normalized =
+    getNormalizedTableColumns(
+      values,
+    )
+
+  return (
+    new Set(
+      normalized,
+    ).size !==
+    normalized.length
+  )
 }
 
 export function TableTransformInspector({
   slot,
   onConfigChange,
 }: StudioBlockInspectorComponentProps) {
-  const tablePurpose = normalizeTablePurpose(
-    getString(slot.config, 'tablePurpose', 'COMPARISON'),
-  )
+  const tablePurpose =
+    normalizeTablePurpose(
+      getString(
+        slot.config,
+        'tablePurpose',
+        'COMPARISON',
+      ),
+    )
 
-  const columns = getStringArray(
-    slot.config,
-    'columns',
-    defaultTableColumns,
-  )
+  const columns =
+    getStringArray(
+      slot.config,
+      'columns',
+      defaultTableColumns,
+    )
 
-  const rowKey = getString(slot.config, 'rowKey', '기능')
+  const normalizedColumns =
+    getNormalizedTableColumns(
+      columns,
+    )
 
-  const cellLength = normalizeCellLength(
-    getString(slot.config, 'cellLength', 'SHORT'),
-  )
+  const configuredRowKey =
+    getString(
+      slot.config,
+      'rowKey',
+      '항목',
+    ).trim()
 
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const rowKey =
+    normalizedColumns.includes(
+      configuredRowKey,
+    )
+      ? configuredRowKey
+      : normalizedColumns[0] ??
+        ''
 
-  const save = (patch: StudioBlockConfig) => {
+  const cellLength =
+    normalizeCellLength(
+      getString(
+        slot.config,
+        'cellLength',
+        'SHORT',
+      ),
+    )
+
+  const [
+    dragIndex,
+    setDragIndex,
+  ] =
+    useState<
+      number | null
+    >(null)
+
+  const save = (
+    patch:
+      StudioBlockConfig,
+  ) => {
     const nextPurpose =
-      typeof patch.tablePurpose === 'string'
-        ? normalizeTablePurpose(patch.tablePurpose)
+      typeof patch.tablePurpose ===
+        'string'
+        ? normalizeTablePurpose(
+            patch.tablePurpose,
+          )
         : tablePurpose
 
     const nextColumns =
-      'columns' in patch
-        ? readStringArray(patch.columns, columns)
+      'columns' in
+        patch
+        ? readStringArray(
+            patch.columns,
+            columns,
+          )
         : columns
 
-    const nextRowKey =
-      typeof patch.rowKey === 'string'
-        ? patch.rowKey
+    const nextNormalizedColumns =
+      getNormalizedTableColumns(
+        nextColumns,
+      )
+
+    const requestedRowKey =
+      typeof patch.rowKey ===
+        'string'
+        ? patch.rowKey.trim()
         : rowKey
 
+    const nextRowKey =
+      nextNormalizedColumns.includes(
+        requestedRowKey,
+      )
+        ? requestedRowKey
+        : nextNormalizedColumns[0] ??
+          ''
+
     const nextCellLength =
-      typeof patch.cellLength === 'string'
-        ? normalizeCellLength(patch.cellLength)
+      typeof patch.cellLength ===
+        'string'
+        ? normalizeCellLength(
+            patch.cellLength,
+          )
         : cellLength
 
-    const validColumns = nextColumns.filter((item) => item.trim())
+    const hasBlankColumn =
+      nextColumns.some(
+        (column) =>
+          !column.trim(),
+      )
+
+    const hasDuplicateColumn =
+      hasDuplicateTableColumns(
+        nextColumns,
+      )
 
     const complete =
-      Boolean(nextPurpose) &&
-      validColumns.length >= 2 &&
-      Boolean(nextRowKey)
+      Boolean(
+        nextPurpose,
+      ) &&
+      nextNormalizedColumns.length >=
+        2 &&
+      !hasBlankColumn &&
+      !hasDuplicateColumn &&
+      Boolean(
+        nextRowKey,
+      ) &&
+      nextNormalizedColumns.includes(
+        nextRowKey,
+      )
 
     const purposeLabel =
       tablePurposeOptions.find(
-        (option) => option.value === nextPurpose,
-      )?.label ?? nextPurpose
+        (option) =>
+          option.value ===
+          nextPurpose,
+      )?.label ??
+      nextPurpose
 
     onConfigChange(
       {
-        tablePurpose: nextPurpose,
-        columns: nextColumns,
-        rowKey: nextRowKey,
-        cellLength: nextCellLength,
+        tablePurpose:
+          nextPurpose,
+
+        columns:
+          nextColumns,
+
+        rowKey:
+          nextRowKey,
+
+        cellLength:
+          nextCellLength,
       },
       {
-        summaryValue: complete
-          ? `${purposeLabel} · 열 ${validColumns.length}개`
-          : '',
-        state: resolveState(complete),
+        summaryValue:
+          complete
+            ? `${purposeLabel} · 열 ${nextNormalizedColumns.length}개`
+            : '',
+
+        state:
+          resolveState(
+            complete,
+          ),
       },
     )
   }
 
-  const updateColumn = (index: number, value: string) => {
-    const next = [...columns]
-    next[index] = value
-    save({ columns: next })
-  }
+  const updateColumn = (
+    index: number,
+    value: string,
+  ) => {
+    const next =
+      [...columns]
 
-  const addColumn = () => {
+    next[index] =
+      value
+
     save({
-      columns: [...columns, ''],
+      columns:
+        next,
     })
   }
+
+  const addColumn =
+    () => {
+      save({
+        columns: [
+          ...columns,
+          '',
+        ],
+      })
+    }
 
   const reorderColumn = (
     sourceIndex: number,
     targetIndex: number,
   ) => {
-    if (sourceIndex === targetIndex) {
+    if (
+      sourceIndex ===
+      targetIndex
+    ) {
       return
     }
 
-    const next = [...columns]
-    const [moved] = next.splice(sourceIndex, 1)
-    next.splice(targetIndex, 0, moved)
-    save({ columns: next })
+    const next =
+      [...columns]
+
+    const [
+      moved,
+    ] =
+      next.splice(
+        sourceIndex,
+        1,
+      )
+
+    next.splice(
+      targetIndex,
+      0,
+      moved,
+    )
+
+    save({
+      columns:
+        next,
+    })
   }
+
+  const hasBlankColumn =
+    columns.some(
+      (column) =>
+        !column.trim(),
+    )
+
+  const hasDuplicateColumn =
+    hasDuplicateTableColumns(
+      columns,
+    )
+
+  const tableValid =
+    normalizedColumns.length >=
+      2 &&
+    !hasBlankColumn &&
+    !hasDuplicateColumn &&
+    Boolean(
+      rowKey,
+    ) &&
+    normalizedColumns.includes(
+      rowKey,
+    )
 
   return (
     <ExpandableSettingBlock
       title="표로 재구성하기"
-      required={slot.required}
+      required={
+        slot.required
+      }
       defaultOpen
-      className={studioInspectorClassName}
+      className={
+        studioInspectorClassName
+      }
       footer={
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-slate-400">
-            열 2개 이상 · 미리보기 갱신됨
+            {hasBlankColumn
+              ? '빈 열 이름이 있습니다.'
+              : hasDuplicateColumn
+                ? '중복된 열 이름이 있습니다.'
+                : tableValid
+                  ? `열 ${normalizedColumns.length}개 · 행 기준 ${rowKey}`
+                  : '표 설정을 확인해 주세요.'}
           </span>
 
           <button
             type="button"
-            onClick={() => save({})}
+            onClick={() =>
+              save({})
+            }
             className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700"
           >
             적용
@@ -694,99 +1234,240 @@ export function TableTransformInspector({
       <div className="space-y-6">
         <div>
           <p className="mb-3 text-xs font-bold text-slate-700">
-            표 목적 <span className="text-rose-500">*</span>
+            표 목적{' '}
+            <span className="text-rose-500">
+              *
+            </span>
           </p>
 
           <div className="flex flex-wrap gap-2">
-            {tablePurposeOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => save({ tablePurpose: option.value })}
-                className={[
-                  'h-[38px] rounded-lg px-4 text-xs font-bold',
-                  tablePurpose === option.value
-                    ? 'text-indigo-500'
-                    : 'border border-slate-200 text-slate-600',
-                ].join(' ')}
-              >
-                {option.label}
-              </button>
-            ))}
+            {tablePurposeOptions.map(
+              (option) => (
+                <button
+                  key={
+                    option.value
+                  }
+                  type="button"
+                  onClick={() =>
+                    save({
+                      tablePurpose:
+                        option.value,
+                    })
+                  }
+                  className={[
+                    'h-[38px] rounded-lg px-4 text-xs font-bold',
+                    tablePurpose ===
+                    option.value
+                      ? 'text-indigo-500'
+                      : 'border border-slate-200 text-slate-600',
+                  ].join(
+                    ' ',
+                  )}
+                >
+                  {
+                    option.label
+                  }
+                </button>
+              ),
+            )}
           </div>
         </div>
 
         <div>
           <p className="mb-3 text-xs font-bold text-slate-700">
-            열 구성 · 가로 드래그 <span className="text-rose-500">*</span>
+            열 구성 · 가로 드래그{' '}
+            <span className="text-rose-500">
+              *
+            </span>
           </p>
 
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {columns.map((column, index) => (
-              <div
-                key={index}
-                draggable
-                onDragStart={() => setDragIndex(index)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => {
-                  if (dragIndex !== null) {
-                    reorderColumn(dragIndex, index)
-                  }
+            {columns.map(
+              (
+                column,
+                index,
+              ) => {
+                const normalized =
+                  column.trim()
 
-                  setDragIndex(null)
-                }}
-                className="w-[120px] shrink-0 rounded-xl border-2 border-slate-200 p-3"
-              >
-                <div className="mb-2 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>•••</span>
-                </div>
+                const duplicate =
+                  Boolean(
+                    normalized,
+                  ) &&
+                  normalizedColumns.filter(
+                    (item) =>
+                      item ===
+                      normalized,
+                  ).length >
+                    1
 
-                <input
-                  type="text"
-                  value={column}
-                  onChange={(event) =>
-                    updateColumn(index, event.target.value)
-                  }
-                  placeholder="열 이름"
-                  className="w-full bg-transparent text-xs font-bold text-slate-700 outline-none"
-                />
+                const invalid =
+                  !normalized ||
+                  duplicate
 
-                <div className="mt-3 space-y-1">
-                  <div className="h-2 rounded bg-slate-100" />
-                  <div className="h-2 w-4/5 rounded bg-slate-100" />
-                  <div className="h-2 w-2/3 rounded bg-slate-100" />
-                </div>
-              </div>
-            ))}
+                return (
+                  <div
+                    key={
+                      index
+                    }
+                    draggable
+                    onDragStart={() =>
+                      setDragIndex(
+                        index,
+                      )
+                    }
+                    onDragOver={(
+                      event,
+                    ) =>
+                      event.preventDefault()
+                    }
+                    onDrop={() => {
+                      if (
+                        dragIndex !==
+                        null
+                      ) {
+                        reorderColumn(
+                          dragIndex,
+                          index,
+                        )
+                      }
+
+                      setDragIndex(
+                        null,
+                      )
+                    }}
+                    className={[
+                      'w-[120px] shrink-0 rounded-xl border-2 p-3',
+                      invalid
+                        ? 'border-rose-200'
+                        : 'border-slate-200',
+                    ].join(
+                      ' ',
+                    )}
+                  >
+                    <div className="mb-2 flex items-center justify-between text-[10px] text-slate-400">
+                      <span>
+                        •••
+                      </span>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={
+                        column
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        updateColumn(
+                          index,
+                          event.target.value,
+                        )
+                      }
+                      placeholder="열 이름"
+                      className="w-full bg-transparent text-xs font-bold text-slate-700 outline-none"
+                    />
+
+                    <div className="mt-3 space-y-1">
+                      <div className="h-2 rounded bg-slate-100" />
+                      <div className="h-2 w-4/5 rounded bg-slate-100" />
+                      <div className="h-2 w-2/3 rounded bg-slate-100" />
+                    </div>
+
+                    {invalid && (
+                      <p className="mt-2 text-[10px] font-bold leading-4 text-rose-500">
+                        {duplicate
+                          ? '중복 열'
+                          : '이름 필요'}
+                      </p>
+                    )}
+                  </div>
+                )
+              },
+            )}
 
             <button
               type="button"
-              onClick={addColumn}
+              onClick={
+                addColumn
+              }
               className="flex w-[62px] shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-slate-400"
             >
-              <Plus size={22} />
+              <Plus
+                size={
+                  22
+                }
+              />
             </button>
           </div>
+
+          {hasBlankColumn && (
+            <p className="mt-2 text-xs font-semibold text-rose-500">
+              이름이 비어 있는 열은 사용할 수 없습니다.
+            </p>
+          )}
+
+          {hasDuplicateColumn && (
+            <p className="mt-2 text-xs font-semibold text-rose-500">
+              같은 열 이름을 두 번 사용할 수 없습니다.
+            </p>
+          )}
         </div>
 
         <label className="block">
           <span className="mb-3 block text-xs font-bold text-slate-700">
-            행 기준 <span className="text-rose-500">*</span>
+            행 기준{' '}
+            <span className="text-rose-500">
+              *
+            </span>
           </span>
 
           <select
-            value={rowKey}
-            onChange={(event) =>
+            value={
+              rowKey
+            }
+            onChange={(
+              event,
+            ) =>
               save({
-                rowKey: event.target.value,
+                rowKey:
+                  event.target.value,
               })
             }
-            className="h-[48px] w-full rounded-xl border-2 border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-indigo-500"
+            disabled={
+              normalizedColumns.length ===
+              0
+            }
+            className="h-[48px] w-full rounded-xl border-2 border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-50"
           >
-            <option value="기능">기능</option>
-            <option value="항목">항목</option>
-            <option value="단계">단계</option>
-            <option value="대상">대상</option>
+            {normalizedColumns
+              .filter(
+                (
+                  column,
+                  index,
+                  array,
+                ) =>
+                  array.indexOf(
+                    column,
+                  ) ===
+                  index,
+              )
+              .map(
+                (column) => (
+                  <option
+                    key={
+                      column
+                    }
+                    value={
+                      column
+                    }
+                  >
+                    {
+                      column
+                    }
+                  </option>
+                ),
+              )}
           </select>
         </label>
 
@@ -795,25 +1476,42 @@ export function TableTransformInspector({
             <p className="text-xs font-bold text-slate-700">
               셀 길이
             </p>
-            <span className="text-[11px] text-emerald-500">선택</span>
+
+            <span className="text-[11px] text-emerald-500">
+              선택
+            </span>
           </div>
 
           <div className="flex overflow-hidden rounded-xl border-2 border-slate-200">
-            {tableCellLengthOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => save({ cellLength: option.value })}
-                className={[
-                  'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
-                  cellLength === option.value
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-white text-slate-600',
-                ].join(' ')}
-              >
-                {option.label}
-              </button>
-            ))}
+            {tableCellLengthOptions.map(
+              (option) => (
+                <button
+                  key={
+                    option.value
+                  }
+                  type="button"
+                  onClick={() =>
+                    save({
+                      cellLength:
+                        option.value,
+                    })
+                  }
+                  className={[
+                    'h-[44px] flex-1 border-r border-slate-200 text-xs font-bold last:border-r-0',
+                    cellLength ===
+                    option.value
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-white text-slate-600',
+                  ].join(
+                    ' ',
+                  )}
+                >
+                  {
+                    option.label
+                  }
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -824,23 +1522,39 @@ export function TableTransformInspector({
 
           <div className="overflow-hidden rounded-xl border border-slate-200">
             <div className="grid grid-cols-3 bg-slate-100">
-              {columns.slice(0, 3).map((column, index) => (
-                <div
-                  key={index}
-                  className="px-3 py-3 text-xs font-bold text-slate-700"
-                >
-                  {column || '열'}
-                </div>
-              ))}
+              {normalizedColumns
+                .slice(
+                  0,
+                  3,
+                )
+                .map(
+                  (
+                    column,
+                    index,
+                  ) => (
+                    <div
+                      key={
+                        `${column}-${index}`
+                      }
+                      className="px-3 py-3 text-xs font-bold text-slate-700"
+                    >
+                      {
+                        column
+                      }
+                    </div>
+                  ),
+                )}
             </div>
 
             <div className="grid grid-cols-3 border-t border-slate-200">
               <div className="px-3 py-3 text-xs text-slate-600">
                 가격
               </div>
+
               <div className="px-3 py-3 text-xs text-slate-600">
                 ₩29,000
               </div>
+
               <div className="px-3 py-3 text-xs text-slate-600">
                 ₩34,000
               </div>
@@ -850,9 +1564,11 @@ export function TableTransformInspector({
               <div className="px-3 py-3 text-xs text-slate-600">
                 지원
               </div>
+
               <div className="px-3 py-3 text-xs text-slate-600">
                 24시간
               </div>
+
               <div className="px-3 py-3 text-xs text-slate-600">
                 평일
               </div>
