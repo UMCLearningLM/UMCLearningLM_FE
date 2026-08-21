@@ -22,6 +22,10 @@ import {
 } from 'react-router-dom'
 
 import {
+  REFACTORING_SCENARIO_TUTORIAL_ID,
+} from '../features/tutorial/data/tutorials'
+
+import {
   Trash2,
 } from 'lucide-react'
 
@@ -53,11 +57,12 @@ import {
 import {
   STUDIO_STAGE_ORDER,
   getStudioBlockDefinition,
-  studioBlockCatalog,
   studioStageLabelMap,
 } from '../features/studio/data/studioBlockCatalog'
 
-import { useStudioEditor } from '../features/studio/hooks/useStudioEditor'
+import {
+  useScenarioAwareStudioEditor,
+} from '../features/studio/guided/useScenarioAwareStudioEditor'
 
 import type {
   StudioBlockDefinition,
@@ -520,15 +525,29 @@ export function Stdio_create1() {
     )
 
   /*
-   * 제출용 공식 튜토리얼은 현재 하나만 지원하므로
-   * guided mode 전체를 자료조사 Guided Studio로 사용합니다.
+   * 기존 Research Guided Tutorial과
+   * 리팩토링 서브 시나리오 Guide는 모두 mode=guided를 사용합니다.
    *
-   * BE에서 tutorialId가 달라져도
-   * Guided UI가 사라지지 않도록 ID 자체에는 묶지 않습니다.
+   * 리팩토링 서브 시나리오는 guide query parameter로만 구분합니다.
+   * 기존 자료조사 튜토리얼 URL에는 guide가 없으므로
+   * 기존 튜토리얼 동작은 그대로 유지됩니다.
    */
+  const isRefactoringScenarioGuide =
+    mode ===
+      'guided' &&
+    (
+      searchParams.get(
+        'guide',
+      ) ===
+        'refactoring-scenario' ||
+      tutorialId ===
+        REFACTORING_SCENARIO_TUTORIAL_ID
+    )
+
   const isResearchGuidedTutorial =
     mode ===
-    'guided'
+      'guided' &&
+    !isRefactoringScenarioGuide
 
   const [searchText, setSearchText] = useState('')
 
@@ -583,19 +602,14 @@ export function Stdio_create1() {
     )
 
   /*
-   * 같은 페이지에서 저장 검토/미리보기에서 돌아온 경우에는
-   * location.state의 React Flow 상태를 즉시 재사용합니다.
+   * 기존 Research Guided Tutorial 최초 진입은
+   * 5개 Stage Node에 기존 preset을 배치합니다.
    *
-   * 브라우저 새로고침 또는 내 저장소에서 편집으로 진입해
-   * state가 없는 경우에는 아래 hydration effect가
-   * GET /flows/{flowId} 응답으로 캔버스를 복원합니다.
-   */
-  /*
-   * Guided Tutorial 최초 진입은 빈 Canvas가 아니라
-   * 5개 Stage Node에 일부 블록이 미리 배치된 상태로 시작합니다.
+   * 리팩토링 Scenario에서는 여기서 아무 것도 만들지 않고,
+   * useScenarioAwareStudioEditor가 별도의 8개 빈 preset을 생성합니다.
    *
    * Preview 등에서 돌아와 location.state에 작업 상태가 있다면
-   * 새 preset을 만들지 않고 기존 편집 상태를 그대로 사용합니다.
+   * 두 모드 모두 기존 편집 상태를 그대로 사용합니다.
    */
   const guidedInitialNodes =
     useMemo(
@@ -623,8 +637,23 @@ export function Stdio_create1() {
       ],
     )
 
+  /*
+   * 일반 Studio와 기존 Research Tutorial의 편집 기능은
+   * 기존 useStudioEditor 동작을 그대로 사용합니다.
+   *
+   * 리팩토링 Scenario에서만 Adapter가 다음 기능을 추가합니다.
+   *
+   * - 최초 8개 빈 블록 배치
+   * - 정답 20개 Slot을 required로 표시
+   * - 나머지 블록을 optional로 표시
+   * - Scenario 전용 Validator 사용
+   * - Scenario 전용 Palette requirement 제공
+   */
   const studio =
-    useStudioEditor({
+    useScenarioAwareStudioEditor({
+      refactoringScenarioEnabled:
+        isRefactoringScenarioGuide,
+
       initialNodes:
         locationState?.nodes?.length
           ? locationState.nodes
@@ -1270,11 +1299,15 @@ export function Stdio_create1() {
           .toLowerCase()
 
       /*
-       * 제출 시점에는 실제 Inspector가
-       * 완성된 블록만 Palette에 노출합니다.
+       * 일반 Studio / 기존 Research Tutorial:
+       * 기존 Catalog requirement를 그대로 사용합니다.
+       *
+       * 리팩토링 Scenario:
+       * Adapter가 정답 20개를 required,
+       * 나머지를 optional로 복제한 Palette Catalog를 제공합니다.
        */
       const usableBlocks =
-        studioBlockCatalog.filter(
+        studio.paletteCatalog.filter(
           (
             block,
           ) => {
@@ -1292,8 +1325,11 @@ export function Stdio_create1() {
             }
 
             /*
-             * Guided mode에서는 현재 단계에서 사용자가 직접 추가해야 하는
-             * 목표 블록 하나만 Palette에 노출합니다.
+             * 기존 Research Guided Tutorial에서만
+             * 현재 단계의 목표 블록 하나를 Palette에 노출합니다.
+             *
+             * 리팩토링 Scenario는 퍼즐형 Guide이므로
+             * 사용 가능한 전체 Palette를 노출합니다.
              */
             if (
               isResearchGuidedTutorial
@@ -1334,6 +1370,7 @@ export function Stdio_create1() {
       currentGuidedTargetBlockId,
       isResearchGuidedTutorial,
       searchText,
+      studio.paletteCatalog,
     ])
 
   const workflowStructureSignature = useMemo(() => {
@@ -1376,129 +1413,226 @@ export function Stdio_create1() {
   }, [selectedNode?.id])
 
   const validationChecks = useMemo<ValidationCheck[]>(() => {
+    const stageCheckDefinitions:
+      ReadonlyArray<{
+        id: number
+        stage: StudioStage
+        title: string
+      }> =
+      isRefactoringScenarioGuide
+        ? [
+            {
+              id: 1,
+              stage: 'INPUT',
+              title: '입력 노드 필수 블록',
+            },
+            {
+              id: 2,
+              stage: 'CONTEXT',
+              title: '컨텍스트 노드 필수 블록',
+            },
+            {
+              id: 3,
+              stage: 'PROCESS',
+              title: '프로세스 노드 필수 블록',
+            },
+            {
+              id: 4,
+              stage: 'REVIEW',
+              title: '검토 노드 필수 블록',
+            },
+            {
+              id: 5,
+              stage: 'OUTPUT',
+              title: '결과 노드 필수 블록',
+            },
+          ]
+        : [
+            {
+              id: 1,
+              stage: 'INPUT',
+              title: '입력 노드 CORE 블록',
+            },
+            {
+              id: 2,
+              stage: 'PROCESS',
+              title: '프로세스 노드 CORE 블록',
+            },
+            {
+              id: 3,
+              stage: 'OUTPUT',
+              title: '결과 노드 CORE 블록',
+            },
+          ]
+
+    const slotCheckId =
+      stageCheckDefinitions.length +
+      1
+
+    const saveCheckId =
+      stageCheckDefinitions.length +
+      2
+
     if (!validationResult) {
       return [
+        ...stageCheckDefinitions.map(
+          (definition) => ({
+            id: definition.id,
+            title: definition.title,
+            status:
+              'pending' as const,
+            criterion:
+              isRefactoringScenarioGuide
+                ? '이번 시나리오에서 필수로 지정된 블록이 모두 포함되어야 합니다.'
+                : `${studioStageLabelMap[definition.stage]} 단계의 필수 블록이 모두 포함되어야 합니다.`,
+            result:
+              '아직 검증을 실행하지 않았습니다.',
+          }),
+        ),
         {
-          id: 1,
-          title: '입력 노드 CORE 블록',
+          id: slotCheckId,
+          title:
+            isRefactoringScenarioGuide
+              ? '시나리오 필수 블록 설정'
+              : '필수 슬롯 채움',
           status: 'pending',
           criterion:
-            '입력 단계의 필수 블록이 모두 포함되어야 합니다.',
-          result: '아직 검증을 실행하지 않았습니다.',
+            isRefactoringScenarioGuide
+              ? '시나리오 필수 20개 블록의 Inspector 설정이 모두 완료되어야 합니다.'
+              : '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
+          result:
+            '아직 검증을 실행하지 않았습니다.',
         },
         {
-          id: 2,
-          title: '프로세스 노드 CORE 블록',
-          status: 'pending',
-          criterion:
-            '프로세스 단계의 필수 블록이 모두 포함되어야 합니다.',
-          result: '아직 검증을 실행하지 않았습니다.',
-        },
-        {
-          id: 3,
-          title: '결과 노드 CORE 블록',
-          status: 'pending',
-          criterion:
-            '결과 단계의 필수 블록이 모두 포함되어야 합니다.',
-          result: '아직 검증을 실행하지 않았습니다.',
-        },
-        {
-          id: 4,
-          title: '필수 슬롯 채움',
-          status: 'pending',
-          criterion:
-            '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
-          result: '아직 검증을 실행하지 않았습니다.',
-        },
-        {
-          id: 5,
+          id: saveCheckId,
           title: '저장 조건',
           status: 'pending',
           criterion:
-            '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
-          result: '검증을 실행하면 저장 가능 여부가 표시됩니다.',
+            isRefactoringScenarioGuide
+              ? '시나리오 필수 블록과 Inspector 설정 검증을 통과해야 합니다.'
+              : '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
+          result:
+            '검증을 실행하면 저장 가능 여부가 표시됩니다.',
         },
       ]
     }
 
-    const missingRequiredByStage = (stage: StudioStage) =>
+    const missingRequiredByStage =
+      (stage: StudioStage) =>
+        validationResult.issues.filter(
+          (issue) =>
+            issue.stage === stage &&
+            issue.type ===
+              'missing-required-block',
+        )
+
+    const slotIssues =
       validationResult.issues.filter(
         (issue) =>
-          issue.stage === stage &&
-          issue.type === 'missing-required-block',
+          issue.type ===
+            'missing-required-slot-value' ||
+          issue.type ===
+            'invalid-required-slot' ||
+          issue.type ===
+            'required-slot-warning',
       )
 
-    const inputIssues = missingRequiredByStage('INPUT')
-    const processIssues = missingRequiredByStage('PROCESS')
-    const outputIssues = missingRequiredByStage('OUTPUT')
+    const slotErrorIssues =
+      slotIssues.filter(
+        (issue) =>
+          issue.severity ===
+          'error',
+      )
 
-    const slotIssues = validationResult.issues.filter(
-      (issue) =>
-        issue.type === 'missing-required-slot-value' ||
-        issue.type === 'invalid-required-slot' ||
-        issue.type === 'required-slot-warning',
-    )
-
-    const slotErrorIssues = slotIssues.filter(
-      (issue) => issue.severity === 'error',
-    )
-
-    const buildStageResult = (issues: StudioValidationIssue[]) =>
-      issues.length === 0
-        ? '필수 블록이 모두 포함되어 있습니다.'
-        : `누락: ${getIssueBlockTitles(issues)}`
+    const buildStageResult =
+      (
+        issues:
+          StudioValidationIssue[],
+      ) =>
+        issues.length ===
+        0
+          ? '필수 블록이 모두 포함되어 있습니다.'
+          : `누락: ${getIssueBlockTitles(issues)}`
 
     return [
+      ...stageCheckDefinitions.map(
+        (definition) => {
+          const issues =
+            missingRequiredByStage(
+              definition.stage,
+            )
+
+          return {
+            id:
+              definition.id,
+            title:
+              definition.title,
+            status:
+              issues.length === 0
+                ? ('pass' as const)
+                : ('fail' as const),
+            criterion:
+              isRefactoringScenarioGuide
+                ? '이번 시나리오에서 필수로 지정된 블록이 모두 포함되어야 합니다.'
+                : `${studioStageLabelMap[definition.stage]} 단계의 필수 블록이 모두 포함되어야 합니다.`,
+            result:
+              buildStageResult(
+                issues,
+              ),
+          }
+        },
+      ),
       {
-        id: 1,
-        title: '입력 노드 CORE 블록',
-        status: inputIssues.length === 0 ? 'pass' : 'fail',
+        id: slotCheckId,
+        title:
+          isRefactoringScenarioGuide
+            ? '시나리오 필수 블록 설정'
+            : '필수 슬롯 채움',
+        status:
+          slotIssues.length === 0
+            ? 'pass'
+            : slotErrorIssues.length > 0
+              ? 'fail'
+              : 'warning',
         criterion:
-          '입력 단계의 필수 블록이 모두 포함되어야 합니다.',
-        result: buildStageResult(inputIssues),
-      },
-      {
-        id: 2,
-        title: '프로세스 노드 CORE 블록',
-        status: processIssues.length === 0 ? 'pass' : 'fail',
-        criterion:
-          '프로세스 단계의 필수 블록이 모두 포함되어야 합니다.',
-        result: buildStageResult(processIssues),
-      },
-      {
-        id: 3,
-        title: '결과 노드 CORE 블록',
-        status: outputIssues.length === 0 ? 'pass' : 'fail',
-        criterion:
-          '결과 단계의 필수 블록이 모두 포함되어야 합니다.',
-        result: buildStageResult(outputIssues),
-      },
-      {
-        id: 4,
-        title: '필수 슬롯 채움',
-        status: slotIssues.length === 0 ? 'pass' : 'warning',
-        criterion:
-          '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
+          isRefactoringScenarioGuide
+            ? '시나리오 필수 20개 블록의 Inspector 설정이 모두 완료되어야 합니다.'
+            : '각 노드의 required slot 설정이 모두 완료되어야 합니다.',
         result:
           slotIssues.length === 0
-            ? '필수 슬롯 설정이 모두 완료되었습니다.'
-            : slotIssues.map((issue) => issue.message).join(' '),
+            ? '필수 블록 설정이 모두 완료되었습니다.'
+            : slotIssues
+                .map(
+                  (issue) =>
+                    issue.message,
+                )
+                .join(' '),
       },
       {
-        id: 5,
+        id: saveCheckId,
         title: '저장 조건',
-        status: validationResult.valid ? 'pass' : 'pending',
+        status:
+          validationResult.valid
+            ? 'pass'
+            : 'pending',
         criterion:
-          '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
-        result: validationResult.valid
-          ? '저장 조건을 충족했습니다.'
-          : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${slotErrorIssues.length > 0
-            ? ' 필수 슬롯 설정을 확인하세요.'
-            : ''
-          }`,
+          isRefactoringScenarioGuide
+            ? '시나리오 필수 블록과 Inspector 설정 검증을 통과해야 합니다.'
+            : '필수 블록과 필수 슬롯 검증을 통과해야 합니다.',
+        result:
+          validationResult.valid
+            ? '저장 조건을 충족했습니다.'
+            : `오류 ${validationResult.errorCount}개가 남아 있어 저장할 수 없습니다.${
+                slotErrorIssues.length > 0
+                  ? ' 필수 블록 설정을 확인하세요.'
+                  : ''
+              }`,
       },
     ]
-  }, [validationResult])
+  }, [
+    isRefactoringScenarioGuide,
+    validationResult,
+  ])
 
   const validationSummary = useMemo(() => {
     const passCount = validationChecks.filter(
@@ -2666,7 +2800,7 @@ export function Stdio_create1() {
                     {validationSummary.passCount}
 
                     <span className="mt-[10px] text-[14px] text-[#9A9AA3]">
-                      /5
+                      /{validationChecks.length}
                     </span>
                   </div>
 
@@ -2719,7 +2853,9 @@ export function Stdio_create1() {
         <p className="text-[14px] text-[#9A9AA3]">
           {isResearchGuidedTutorial
             ? '가이드 모드 · AI로 자료조사 흐름 만들기'
-            : '자유 제작'}{' '}
+            : isRefactoringScenarioGuide
+              ? '가이드 모드 · 코드 리팩토링 서브 시나리오'
+              : '자유 제작'}{' '}
           · 노드 {studio.nodes.length} ·
           입력→컨텍스트→프로세스→검토→결과
         </p>

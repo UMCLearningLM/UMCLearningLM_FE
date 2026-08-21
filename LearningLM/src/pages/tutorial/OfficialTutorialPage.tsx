@@ -5,6 +5,7 @@ import { Footer } from '../../components/layout/Footer'
 import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
 import {
+  REFACTORING_SCENARIO_TUTORIAL_ID,
   getTutorialById,
   tutorialCategories,
   tutorialLevels,
@@ -189,71 +190,81 @@ export function OfficialTutorialPage() {
   }
 
   // 서버 데이터를 기존 튜토리얼 카드 형식으로 변환
-  const apiTutorials = useMemo(() => {
-    const mappedTutorials =
-      tutorialItems.map(
-        (tutorial) => ({
-          id:
-            tutorial.tutorialId,
+  const apiTutorials =
+    useMemo(() => {
+      const mappedTutorials =
+        tutorialItems.map(
+          (tutorial) => ({
+            id:
+              tutorial.tutorialId,
 
-          title:
-            tutorial.title,
+            title:
+              tutorial.title,
 
-          description:
-            tutorial.summary,
+            description:
+              tutorial.summary,
 
-          level:
-            levelMap[
-              tutorial.difficulty
-            ] ?? '입문',
+            level:
+              levelMap[
+                tutorial.difficulty
+              ] ?? '입문',
 
-          categories:
-            tutorial.categories.map(
-              (category) =>
-                category.name as TutorialCategory,
-            ),
+            categories:
+              tutorial.categories.map(
+                (category) =>
+                  category.name as
+                    TutorialCategory,
+              ),
 
-          blockCount:
-            tutorial.blockCount,
+            blockCount:
+              tutorial.blockCount,
 
-          estimatedMinutes:
-            tutorial.estimatedMinutes,
-        }),
-      )
+            estimatedMinutes:
+              tutorial.estimatedMinutes,
+          }),
+        )
 
-    /*
-     * 제출용 공식 튜토리얼의 기준 시나리오.
-     *
-     * BE에서 같은 튜토리얼을 정상적으로 내려주면
-     * 서버 데이터를 우선 사용합니다.
-     */
-    const serverResearchTutorial =
-      mappedTutorials.find(
-        (tutorial) =>
-          tutorial.title ===
-          'AI로 자료조사 흐름 만들기',
-      )
+      /*
+       * 기존 자료조사 공식 튜토리얼.
+       *
+       * BE에 존재하면 서버 값을 우선 사용하고,
+       * 없으면 FE fallback을 사용합니다.
+       */
+      const researchTutorial =
+        mappedTutorials.find(
+          (tutorial) =>
+            tutorial.title ===
+            'AI로 자료조사 흐름 만들기',
+        ) ??
+        getTutorialById(
+          1,
+        )
 
-    if (serverResearchTutorial) {
+      /*
+       * 코드 리팩토링 Scenario Guide.
+       *
+       * 이 항목은 현재 FE 하드코딩으로 관리합니다.
+       */
+      const refactoringScenario =
+        getTutorialById(
+          REFACTORING_SCENARIO_TUTORIAL_ID,
+        )
+
       return [
-        serverResearchTutorial,
-      ]
-    }
-
-    /*
-     * BE 튜토리얼 데이터가 없거나
-     * 다른 데이터만 존재하는 경우에는
-     * FE에 이미 정의된 공식 튜토리얼을 fallback으로 사용합니다.
-     */
-    const fallbackTutorial =
-      getTutorialById(1)
-
-    return fallbackTutorial
-      ? [
-          fallbackTutorial,
-        ]
-      : []
-  }, [tutorialItems])
+        researchTutorial,
+        refactoringScenario,
+      ].filter(
+        (
+          tutorial,
+        ): tutorial is NonNullable<
+          typeof tutorial
+        > =>
+          tutorial !==
+          undefined,
+      )
+    }, [
+      tutorialItems,
+    ])
 
   const normalizedKeyword = keyword.trim()
 
