@@ -556,10 +556,10 @@ export function HomePage() {
               </form>
             </div>
 
-            <ThumbnailBox
-              variant="hero"
-              label="히어로 일러스트 / 블록 흐름 이미지"
-              className="min-h-64"
+            <iframe
+              src="../public/standalone"
+              title="."
+              className="min-h-64 w-full  h-full"
             />
           </div>
         </section>
