@@ -182,6 +182,48 @@ function getInputFromOptions(
   return {}
 }
 
+const PREVIEW_UI_ONLY_OPTION_KEYS = [
+  'studioBlockId',
+  'studioStage',
+  'studioNodeId',
+  'studioNodeOrder',
+  'studioNodePosition',
+  'studioSlotState',
+] as const
+
+function getPreviewOptions(
+  options:
+    Record<
+      string,
+      unknown
+    >,
+): Record<
+  string,
+  unknown
+> {
+  const previewOptions = {
+    ...options,
+  }
+
+  /*
+   * Studio 저장/복원에는 필요한 FE 전용 메타데이터지만
+   * AI Preview의 options에는 포함하면 안 됩니다.
+   *
+   * Notion Preview mismatch 문서에서
+   * FE 필수 처리 대상으로 명시된 항목입니다.
+   */
+  for (
+    const key of
+      PREVIEW_UI_ONLY_OPTION_KEYS
+  ) {
+    delete previewOptions[
+      key
+    ]
+  }
+
+  return previewOptions
+}
+
 function isWorkflowConnected(
   nodes:
     NonNullable<
@@ -370,12 +412,21 @@ function buildPreviewRequestFromSavedFlow(
             blockOrder:
               block.blockOrder,
 
+            /*
+             * input 추출에는 studioBlockId 같은 FE metadata가
+             * 아직 필요할 수 있으므로 원본 options를 사용합니다.
+             *
+             * 실제 Preview options에만 UI metadata를 제거합니다.
+             */
             input:
               getInputFromOptions(
                 options,
               ),
 
-            options,
+            options:
+              getPreviewOptions(
+                options,
+              ),
 
             resolvedContext:
               {},
@@ -773,13 +824,20 @@ export function Studio_create_review1() {
                     blockOrder:
                       block.blockOrder,
 
+                    /*
+                     * Studio 내부 직렬화 데이터는 그대로 유지하되
+                     * 실제 Preview 요청의 options에서만
+                     * FE 전용 metadata를 제거합니다.
+                     */
                     input:
                       getInputFromOptions(
                         block.options,
                       ),
 
                     options:
-                      block.options,
+                      getPreviewOptions(
+                        block.options,
+                      ),
 
                     resolvedContext:
                       {},
