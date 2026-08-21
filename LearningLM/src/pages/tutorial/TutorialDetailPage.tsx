@@ -1,11 +1,13 @@
 import { ArrowLeft, Blocks, Clock } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+
 import { Footer } from '../../components/layout/Footer'
 import { Header } from '../../components/layout/Header'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
+
 import {
   REFACTORING_SCENARIO_TUTORIAL_ID,
   getTutorialById,
@@ -13,40 +15,67 @@ import {
   type TutorialBlock,
   type TutorialLevel,
 } from '../../features/tutorial/data/tutorials'
+
 import {
-  getTutorialDetail,
-  saveTutorial,
+  createGuidedFlow,
   deleteFlow,
   deleteTutorialProgress,
-  createGuidedFlow,
+  getTutorialDetail,
+  saveTutorial,
   startTutorial,
   type TutorialDetailProgress,
 } from '../../api/tutorial'
+
 import {
   createFlow,
 } from '../api/StudioApi'
 
-type TutorialDetailViewModel = Tutorial & {
-  progress: TutorialDetailProgress | null
-}
+type TutorialDetailViewModel =
+  Tutorial & {
+    progress:
+      TutorialDetailProgress | null
+  }
 
 const levelClassMap = {
-  입문: 'bg-emerald-50 text-emerald-600',
-  기초: 'bg-blue-50 text-blue-600',
-  응용: 'bg-rose-50 text-rose-600',
+  입문:
+    'bg-emerald-50 text-emerald-600',
+
+  기초:
+    'bg-blue-50 text-blue-600',
+
+  응용:
+    'bg-rose-50 text-rose-600',
 }
 
-const blockColorClassMap: Record<TutorialBlock['color'], string> = {
-  blue: 'bg-blue-500',
-  teal: 'bg-teal-600',
-  green: 'bg-emerald-600',
-}
+const blockColorClassMap:
+  Record<
+    TutorialBlock['color'],
+    string
+  > = {
+    blue:
+      'bg-blue-500',
 
-const flowLabelClassMap: Record<TutorialBlock['color'], string> = {
-  blue: 'border-blue-300 bg-slate-50 text-slate-700',
-  teal: 'border-teal-300 bg-slate-50 text-slate-700',
-  green: 'border-emerald-300 bg-slate-50 text-slate-700',
-}
+    teal:
+      'bg-teal-600',
+
+    green:
+      'bg-emerald-600',
+  }
+
+const flowLabelClassMap:
+  Record<
+    TutorialBlock['color'],
+    string
+  > = {
+    blue:
+      'border-blue-300 bg-slate-50 text-slate-700',
+
+    teal:
+      'border-teal-300 bg-slate-50 text-slate-700',
+
+    green:
+      'border-emerald-300 bg-slate-50 text-slate-700',
+  }
 
 function FlowStep({
   label,
@@ -59,21 +88,35 @@ function FlowStep({
     <span
       className={[
         'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-black shadow-sm',
-        flowLabelClassMap[color],
-      ].join(' ')}
+        flowLabelClassMap[
+          color
+        ],
+      ].join(
+        ' ',
+      )}
     >
       <span
         className={[
           'h-2.5 w-2.5 rounded-sm',
-          blockColorClassMap[color],
-        ].join(' ')}
+
+          blockColorClassMap[
+            color
+          ],
+        ].join(
+          ' ',
+        )}
       />
+
       {label}
     </span>
   )
 }
 
-function BlockCard({ block }: { block: TutorialBlock }) {
+function BlockCard({
+  block,
+}: {
+  block: TutorialBlock
+}) {
   return (
     <Card className="px-6 py-5">
       <div className="flex items-start justify-between gap-4">
@@ -81,273 +124,415 @@ function BlockCard({ block }: { block: TutorialBlock }) {
           <span
             className={[
               'h-3 w-3 rounded-sm',
-              blockColorClassMap[block.color],
-            ].join(' ')}
+
+              blockColorClassMap[
+                block.color
+              ],
+            ].join(
+              ' ',
+            )}
           />
+
           <h3 className="text-xl font-black text-slate-950">
-            {block.title}
+            {
+              block.title
+            }
           </h3>
         </div>
 
         <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-500">
-          {block.type}
+          {
+            block.type
+          }
         </span>
       </div>
 
       <p className="mt-5 text-sm font-semibold text-slate-600">
-        {block.description}
+        {
+          block.description
+        }
       </p>
 
       <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-400">
         <span className="mr-2 text-slate-300">
           왜 필요?
         </span>
-        {block.why}
+
+        {
+          block.why
+        }
       </div>
     </Card>
   )
 }
 
 export function TutorialDetailPage() {
-  const params = useParams()
-  const navigate = useNavigate()
+  const params =
+    useParams()
 
-  // /official-tutorials/:tutorialId 경로의 값을 숫자로 변환한다.
-  const tutorialId = Number(params.tutorialId)
+  const navigate =
+    useNavigate()
 
-  // API 데이터, 로딩 여부, 오류 메시지를 각각 관리한다.
-  const [tutorial, setTutorial] =
-    useState<TutorialDetailViewModel | null>(null)
+  /*
+   * /official-tutorials/:tutorialId
+   */
+  const tutorialId =
+    Number(
+      params.tutorialId,
+    )
 
-  const [isLoading, setIsLoading] =
-    useState(true)
+  const [
+    tutorial,
+    setTutorial,
+  ] =
+    useState<
+      TutorialDetailViewModel | null
+    >(
+      null,
+    )
 
-  const [error, setError] =
-    useState('')
+  const [
+    isLoading,
+    setIsLoading,
+  ] =
+    useState(
+      true,
+    )
 
-  const [isSaving, setIsSaving] =
-    useState(false)
+  const [
+    error,
+    setError,
+  ] =
+    useState(
+      '',
+    )
 
-  const [isRemoving, setIsRemoving] =
-    useState(false)
+  const [
+    isSaving,
+    setIsSaving,
+  ] =
+    useState(
+      false,
+    )
 
-  const [saveMessage, setSaveMessage] =
-    useState('')
+  const [
+    isRemoving,
+    setIsRemoving,
+  ] =
+    useState(
+      false,
+    )
 
-  const [isStarting, setIsStarting] =
-    useState(false)
+  const [
+    saveMessage,
+    setSaveMessage,
+  ] =
+    useState(
+      '',
+    )
 
-  const [startMessage, setStartMessage] =
-    useState('')
+  const [
+    isStarting,
+    setIsStarting,
+  ] =
+    useState(
+      false,
+    )
 
-  useEffect(() => {
-    // 숫자가 아니거나 0 이하인 ID는 서버에 요청하지 않는다.
-    if (
-      !Number.isInteger(tutorialId) ||
-      tutorialId <= 0
-    ) {
-      setError('올바르지 않은 튜토리얼 번호입니다.')
-      setIsLoading(false)
-      return
-    }
+  const [
+    startMessage,
+    setStartMessage,
+  ] =
+    useState(
+      '',
+    )
 
-    // 화면을 벗어난 뒤 비동기 응답이 state를 변경하지 않도록 확인한다.
-    let isMounted = true
+  useEffect(
+    () => {
+      /*
+       * 숫자가 아니거나
+       * 0 이하인 ID는
+       * 서버에 요청하지 않습니다.
+       */
+      if (
+        !Number.isInteger(
+          tutorialId,
+        ) ||
+        tutorialId <=
+          0
+      ) {
+        setError(
+          '올바르지 않은 튜토리얼 번호입니다.',
+        )
 
-    // 현재 URL의 ID에 해당하는 튜토리얼 상세 API를 호출한다.
-    getTutorialDetail(tutorialId)
-      .then((result) => {
-        if (!isMounted) {
-          return
-        }
+        setIsLoading(
+          false,
+        )
 
-        const fallbackTutorial =
-          getTutorialById(
-            tutorialId,
-          )
+        return
+      }
 
-        const exampleInput =
-          result.example?.input ??
-          fallbackTutorial?.exampleInput ??
-          ''
+      /*
+       * 화면을 벗어난 뒤
+       * 비동기 응답이 state를
+       * 변경하지 않도록 합니다.
+       */
+      let isMounted =
+        true
 
-        const exampleResult =
-          result.example?.result
-            ? result.example.result
-                .split('\n')
-                .filter(Boolean)
-            : fallbackTutorial?.exampleResult ??
-              []
+      getTutorialDetail(
+        tutorialId,
+      )
+        .then(
+          (
+            result,
+          ) => {
+            if (
+              !isMounted
+            ) {
+              return
+            }
 
-        const resultSource:
-          Tutorial['resultSource'] =
-          result.example
-            ? result.example.source ===
-              'TEMPLATE'
-              ? 'Template'
-              : 'AI'
-            : fallbackTutorial?.resultSource ??
-              'Template'
+            const fallbackTutorial =
+              getTutorialById(
+                tutorialId,
+              )
 
-        // 백엔드 난이도 코드를 기존 카드 UI의 한글 값으로 변환한다.
-        const levelMap: Record<
-          string,
-          TutorialLevel
-        > = {
-          BEGINNER: '입문',
-          BASIC: '기초',
-          ADVANCED: '응용',
-        }
+            const exampleInput =
+              result.example
+                ?.input ??
+              fallbackTutorial
+                ?.exampleInput ??
+              ''
 
-        // API에는 색상 정보가 없으므로 흐름 순서에 따라 UI 색상을 반복 적용한다.
-        const colors: TutorialBlock['color'][] = [
-          'blue',
-          'teal',
-          'green',
-        ]
+            const exampleResult =
+              result.example
+                ?.result
+                ? result.example.result
+                    .split(
+                      '\n',
+                    )
+                    .filter(
+                      Boolean,
+                    )
+                : fallbackTutorial
+                    ?.exampleResult ??
+                  []
 
-        // API result를 기존 상세 화면에서 사용하는 Tutorial 형태로 변환한다.
-        setTutorial({
-          id: result.tutorialId,
+            const resultSource:
+              Tutorial['resultSource'] =
+              result.example
+                ? result
+                      .example
+                      .source ===
+                    'TEMPLATE'
+                  ? 'Template'
+                  : 'AI'
+                : fallbackTutorial
+                    ?.resultSource ??
+                  'Template'
 
-          title: result.title,
+            const levelMap:
+              Record<
+                string,
+                TutorialLevel
+              > = {
+                BEGINNER:
+                  '입문',
 
-          description:
-            result.summary,
+                BASIC:
+                  '기초',
 
-          level:
-            levelMap[
-              result.difficulty
-            ] ?? '입문',
+                ADVANCED:
+                  '응용',
+              }
 
-          categories:
-            result.categories.map(
-              (category) =>
-                category.name,
-            ) as Tutorial['categories'],
+            const colors:
+              TutorialBlock['color'][] =
+              [
+                'blue',
+                'teal',
+                'green',
+              ]
 
-          blockCount:
-            result.blockCount,
+            setTutorial({
+              id:
+                result.tutorialId,
 
-          estimatedMinutes:
-            result.estimatedMinutes,
+              title:
+                result.title,
 
-          useCases:
-            result.useCases,
+              description:
+                result.summary,
 
-          requiredConcepts:
-            result.requiredConcepts,
+              level:
+                levelMap[
+                  result.difficulty
+                ] ??
+                '입문',
 
-          // blockFlow 문자열 목록을 화면의 단계 컴포넌트 형식으로 변환한다.
-          flowSteps:
-            result.blockFlow.map(
-              (label, index) => ({
-                id: `${index}-${label}`,
-                label,
-                color:
-                  colors[
-                    index %
-                      colors.length
-                  ],
-              }),
-            ),
+              categories:
+                result.categories.map(
+                  (
+                    category,
+                  ) =>
+                    category.name,
+                ) as
+                  Tutorial['categories'],
 
-          // blocks 응답 필드를 기존 BlockCard의 필드명에 맞춘다.
-          blocks:
-            result.blocks.map(
-              (block, index) => ({
-                id: String(
-                  block.blockId,
+              blockCount:
+                result.blockCount,
+
+              estimatedMinutes:
+                result
+                  .estimatedMinutes,
+
+              useCases:
+                result.useCases,
+
+              requiredConcepts:
+                result
+                  .requiredConcepts,
+
+              flowSteps:
+                result.blockFlow.map(
+                  (
+                    label,
+                    index,
+                  ) => ({
+                    id:
+                      `${index}-${label}`,
+
+                    label,
+
+                    color:
+                      colors[
+                        index %
+                          colors.length
+                      ],
+                  }),
                 ),
 
-                title:
-                  block.name,
+              blocks:
+                result.blocks.map(
+                  (
+                    block,
+                    index,
+                  ) => ({
+                    id:
+                      String(
+                        block.blockId,
+                      ),
 
-                type:
-                  block.stage,
+                    title:
+                      block.name,
 
-                description:
-                  block.description,
+                    type:
+                      block.stage,
 
-                why:
-                  block.reason,
+                    description:
+                      block
+                        .description,
 
-                color:
-                  colors[
-                    index %
-                      colors.length
-                  ],
-              }),
-            ),
+                    why:
+                      block.reason,
 
-          exampleInput,
+                    color:
+                      colors[
+                        index %
+                          colors.length
+                      ],
+                  }),
+                ),
 
-          exampleResult,
+              exampleInput,
 
-          resultSource,
+              exampleResult,
 
-          // API 함수에서 토큰이 있는 경우에만 유지한 진행 정보를 화면 모델에 반영한다.
-          progress:
-            result.progress,
-        })
-      })
-      .catch(
-        (
-          requestError:
-            unknown,
-        ) => {
-          if (!isMounted) {
-            return
-          }
-
-          /*
-           * 제출용 메인 공식 튜토리얼은
-           * BE 상세 데이터가 없더라도
-           * FE에 이미 정의된 데이터를 사용합니다.
-           */
-          const fallbackTutorial =
-            tutorialId ===
-              1 ||
-            tutorialId ===
-              REFACTORING_SCENARIO_TUTORIAL_ID
-              ? getTutorialById(
-                  tutorialId,
-                )
-              : undefined
-
-          if (fallbackTutorial) {
-            setTutorial({
-              ...fallbackTutorial,
+              resultSource,
 
               progress:
-                null,
+                result.progress,
             })
+          },
+        )
+        .catch(
+          (
+            requestError:
+              unknown,
+          ) => {
+            if (
+              !isMounted
+            ) {
+              return
+            }
 
-            setError('')
+            /*
+             * 기존 공식 자료조사 Tutorial과
+             * FE 전용 Refactoring Scenario는
+             * BE 상세 데이터가 없어도
+             * FE 정의를 fallback으로 사용합니다.
+             */
+            const fallbackTutorial =
+              tutorialId ===
+                1 ||
+              tutorialId ===
+                REFACTORING_SCENARIO_TUTORIAL_ID
+                ? getTutorialById(
+                    tutorialId,
+                  )
+                : undefined
 
-            return
-          }
+            if (
+              fallbackTutorial
+            ) {
+              setTutorial({
+                ...fallbackTutorial,
 
-          setError(
-            requestError instanceof
-              Error
-              ? requestError.message
-              : '튜토리얼 상세 정보를 불러오지 못했습니다.',
-          )
-        },
-      )
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      })
+                progress:
+                  null,
+              })
 
-    return () => {
-      isMounted = false
-    }
-  }, [tutorialId])
+              setError(
+                '',
+              )
 
-  // 저장 버튼 클릭 시 인증을 확인하고 저장 전용 API를 호출한다.
+              return
+            }
+
+            setError(
+              requestError instanceof
+                Error
+                ? requestError.message
+                : '튜토리얼 상세 정보를 불러오지 못했습니다.',
+            )
+          },
+        )
+        .finally(
+          () => {
+            if (
+              isMounted
+            ) {
+              setIsLoading(
+                false,
+              )
+            }
+          },
+        )
+
+      return () => {
+        isMounted =
+          false
+      }
+    },
+    [
+      tutorialId,
+    ],
+  )
+
+  /*
+   * 튜토리얼 저장
+   */
   const handleSaveTutorial =
     async () => {
       const accessToken =
@@ -355,20 +540,224 @@ export function TutorialDetailPage() {
           'accessToken',
         )
 
-      if (!accessToken) {
+      if (
+        !accessToken
+      ) {
         window.alert(
           '로그인 후 튜토리얼을 저장할 수 있습니다.',
         )
+
         return
       }
 
-            /*
-       * 코드 리팩토링 Scenario Guide는
-       * 현재 FE 하드코딩 실습입니다.
+      setIsSaving(
+        true,
+      )
+
+      setSaveMessage(
+        '',
+      )
+
+      try {
+        const progress =
+          await saveTutorial(
+            tutorialId,
+          )
+
+        setTutorial(
+          (
+            previous,
+          ) =>
+            previous
+              ? {
+                  ...previous,
+
+                  progress,
+                }
+              : previous,
+        )
+
+        setSaveMessage(
+          '튜토리얼을 내 저장소에 저장했습니다.',
+        )
+      } catch (
+        requestError
+      ) {
+        setSaveMessage(
+          requestError instanceof
+            Error
+            ? requestError.message
+            : '튜토리얼을 저장하지 못했습니다.',
+        )
+      } finally {
+        setIsSaving(
+          false,
+        )
+      }
+    }
+
+  /*
+   * 저장 해제
+   */
+  const handleRemoveTutorial =
+    async () => {
+      if (
+        !tutorial?.progress
+      ) {
+        return
+      }
+
+      const shouldRemove =
+        window.confirm(
+          '저장을 해제하면 튜토리얼 진행 기록도 함께 삭제됩니다. 해제할까요?',
+        )
+
+      if (
+        !shouldRemove
+      ) {
+        return
+      }
+
+      setIsRemoving(
+        true,
+      )
+
+      setSaveMessage(
+        '',
+      )
+
+      try {
+        const {
+          status,
+          flowId,
+        } =
+          tutorial.progress
+
+        if (
+          (
+            status ===
+              'IN_PROGRESS' ||
+            status ===
+              'COMPLETED'
+          ) &&
+          flowId
+        ) {
+          await deleteFlow(
+            flowId,
+          )
+        }
+
+        await deleteTutorialProgress(
+          tutorialId,
+        )
+
+        setTutorial(
+          (
+            previous,
+          ) =>
+            previous
+              ? {
+                  ...previous,
+
+                  progress:
+                    null,
+                }
+              : previous,
+        )
+
+        setSaveMessage(
+          '튜토리얼 저장을 해제했습니다.',
+        )
+      } catch (
+        requestError
+      ) {
+        setSaveMessage(
+          requestError instanceof
+            Error
+            ? requestError.message
+            : '튜토리얼 저장을 해제하지 못했습니다.',
+        )
+      } finally {
+        setIsRemoving(
+          false,
+        )
+      }
+    }
+
+  /*
+   * 공식 Tutorial과 Scenario Guide가
+   * 공통으로 사용하는 Studio 진입 함수입니다.
+   *
+   * Refactoring Scenario의 tutorialId는
+   * Studio 내부에서 Scenario 식별자로만 사용합니다.
+   *
+   * POST /flows 요청에는 보내지 않습니다.
+   */
+  const openGuidedStudio =
+    (
+      flowId:
+        number,
+    ) => {
+      navigate(
+        `/studio/create?flowId=${flowId}&mode=guided&tutorialId=${tutorialId}`,
+        {
+          state: {
+            flowId,
+
+            tutorialId,
+
+            mode:
+              'guided',
+          },
+        },
+      )
+    }
+
+  /*
+   * Tutorial / Scenario 시작
+   */
+  const handleStartTutorial =
+    async () => {
+      const accessToken =
+        localStorage.getItem(
+          'accessToken',
+        ) ??
+        sessionStorage.getItem(
+          'accessToken',
+        )
+
+      if (
+        !accessToken
+      ) {
+        window.alert(
+          '로그인 후 튜토리얼을 시작할 수 있습니다.',
+        )
+
+        return
+      }
+
+      /*
+       * ========================================================
+       * Refactoring Scenario Guide
+       * ========================================================
        *
-       * BE Tutorial / Progress 데이터에 의존하지 않고
-       * 일반 CREATE DRAFT Flow를 만든 뒤
-       * Studio에서는 guided mode로 엽니다.
+       * 이 Scenario의 tutorialId는
+       * FE에서만 사용하는 식별자입니다.
+       *
+       * BE Tutorial DB에는 존재하지 않으므로
+       *
+       * {
+       *   mode: 'GUIDED',
+       *   tutorialId: 25
+       * }
+       *
+       * 형태로 POST /flows를 호출하면
+       * TUTORIAL40401 404가 발생합니다.
+       *
+       * 따라서 Scenario에서는
+       * CREATE Flow만 서버에서 만들고,
+       * FE Studio 진입 시 guided +
+       * tutorialId로 Scenario UI를 활성화합니다.
        */
       if (
         tutorialId ===
@@ -394,7 +783,8 @@ export function TutorialDetailPage() {
 
           if (
             !flow.success ||
-            !flow.result?.flowId
+            !flow.result
+              ?.flowId
           ) {
             throw new Error(
               flow.message ||
@@ -423,175 +813,30 @@ export function TutorialDetailPage() {
         return
       }
 
-      setIsSaving(true)
-      setSaveMessage('')
-
-      try {
-        const progress =
-          await saveTutorial(
-            tutorialId,
-          )
-
-        // 저장 성공 응답의 NOT_STARTED 진행 정보를 현재 상세 화면에 반영한다.
-        setTutorial(
-          (previous) =>
-            previous
-              ? {
-                  ...previous,
-                  progress,
-                }
-              : previous,
-        )
-
-        setSaveMessage(
-          '튜토리얼을 내 저장소에 저장했습니다.',
-        )
-      } catch (
-        requestError
-      ) {
-        setSaveMessage(
-          requestError instanceof
-            Error
-            ? requestError.message
-            : '튜토리얼을 저장하지 못했습니다.',
-        )
-      } finally {
-        setIsSaving(false)
-      }
-    }
-
-  // 진행 상태에 따라 연결된 flow를 먼저 삭제한 뒤 저장 기록을 해제한다.
-  const handleRemoveTutorial =
-    async () => {
-      if (
-        !tutorial?.progress
-      ) {
-        return
-      }
-
-      const shouldRemove =
-        window.confirm(
-          '저장을 해제하면 튜토리얼 진행 기록도 함께 삭제됩니다. 해제할까요?',
-        )
-
-      if (!shouldRemove) {
-        return
-      }
-
-      setIsRemoving(true)
-      setSaveMessage('')
-
-      try {
-        const {
-          status,
-          flowId,
-        } =
-          tutorial.progress
-
-        // 시작했거나 완료한 학습은 접근 불가능한 flow가 남지 않도록 먼저 삭제한다.
-        if (
-          (
-            status ===
-              'IN_PROGRESS' ||
-            status ===
-              'COMPLETED'
-          ) &&
-          flowId
-        ) {
-          await deleteFlow(
-            flowId,
-          )
-        }
-
-        // flow 삭제가 성공했거나 NOT_STARTED인 경우에만 진행 기록을 삭제한다.
-        await deleteTutorialProgress(
-          tutorialId,
-        )
-
-        setTutorial(
-          (previous) =>
-            previous
-              ? {
-                  ...previous,
-                  progress:
-                    null,
-                }
-              : previous,
-        )
-
-        setSaveMessage(
-          '튜토리얼 저장을 해제했습니다.',
-        )
-      } catch (
-        requestError
-      ) {
-        setSaveMessage(
-          requestError instanceof
-            Error
-            ? requestError.message
-            : '튜토리얼 저장을 해제하지 못했습니다.',
-        )
-      } finally {
-        setIsRemoving(false)
-      }
-    }
-
-  // 시작 버튼 한 번으로 가이드 작업 공간 생성과 학습 시작을 순서대로 처리한다.
-
-  /**
-   * 공식 튜토리얼에서 사용하는 Studio 진입 경로입니다.
-   *
-   * Studio 내부 mode 타입은 lowercase `guided`를 사용하므로
-   * URL과 navigation state를 동일하게 맞춥니다.
-   */
-  const openGuidedStudio = (
-    flowId: number,
-  ) => {
-    navigate(
-      `/studio/create?flowId=${flowId}&mode=guided&tutorialId=${tutorialId}`,
-      {
-        state: {
-          flowId,
-
-          tutorialId,
-
-          mode:
-            'guided',
-        },
-      },
-    )
-  }
-
-  // 시작 버튼 한 번으로 가이드 작업 공간 생성과 학습 시작을 처리한다.
-  const handleStartTutorial =
-    async () => {
-      const accessToken =
-        localStorage.getItem(
-          'accessToken',
-        ) ??
-        sessionStorage.getItem(
-          'accessToken',
-        )
-
-      if (!accessToken) {
-        window.alert(
-          '로그인 후 튜토리얼을 시작할 수 있습니다.',
-        )
-        return
-      }
+      /*
+       * ========================================================
+       * 기존 공식 Guided Tutorial
+       * ========================================================
+       */
 
       /*
-       * 이미 진행 중이고 기존 Flow가 있다면
-       * 새 Flow를 만들지 않고 그대로 이어서 엽니다.
+       * 이미 진행 중이고
+       * 기존 Flow가 있다면
+       * 새 Flow를 만들지 않습니다.
        */
       if (
-        tutorial?.progress
+        tutorial
+          ?.progress
           ?.status ===
           'IN_PROGRESS' &&
-        tutorial.progress.flowId
+        tutorial
+          .progress
+          .flowId
       ) {
         openGuidedStudio(
-          tutorial.progress.flowId,
+          tutorial
+            .progress
+            .flowId,
         )
 
         return
@@ -614,11 +859,8 @@ export function TutorialDetailPage() {
 
         try {
           /*
-           * 우선 정식 API 흐름을 사용합니다.
-           *
-           * POST /flows
-           * mode = GUIDED
-           * tutorialId = 현재 튜토리얼
+           * 기존 공식 Tutorial은
+           * 정식 GUIDED Flow 생성 API를 사용합니다.
            */
           const flow =
             await createGuidedFlow(
@@ -631,10 +873,9 @@ export function TutorialDetailPage() {
           guidedFlowError
         ) {
           /*
-           * 제출용 메인 시나리오인 tutorialId=1만
-           * FE fallback을 허용합니다.
-           *
-           * 다른 튜토리얼 오류까지 조용히 우회하지 않습니다.
+           * 기존 제출용 메인 Tutorial인
+           * tutorialId=1만 CREATE fallback을
+           * 허용합니다.
            */
           if (
             tutorialId !==
@@ -643,14 +884,6 @@ export function TutorialDetailPage() {
             throw guidedFlowError
           }
 
-          /*
-           * BE에 공식 튜토리얼 데이터가 없어
-           * GUIDED Flow 생성을 거부하는 경우,
-           *
-           * 일반 CREATE DRAFT Flow를 먼저 만든 뒤
-           * FE에서는 guided 모드로 열어
-           * 가이드 UI를 진행할 수 있게 합니다.
-           */
           const fallbackFlow =
             await createFlow({
               mode:
@@ -662,7 +895,8 @@ export function TutorialDetailPage() {
 
           if (
             !fallbackFlow.success ||
-            !fallbackFlow.result
+            !fallbackFlow
+              .result
               ?.flowId
           ) {
             throw new Error(
@@ -672,15 +906,17 @@ export function TutorialDetailPage() {
           }
 
           flowId =
-            fallbackFlow.result.flowId
+            fallbackFlow
+              .result
+              .flowId
 
           serverGuidedFlow =
             false
         }
 
         /*
-         * 정식 GUIDED Flow 생성에 성공했다면
-         * 기존 진행률 API도 정상적으로 연결합니다.
+         * BE의 정식 GUIDED Flow라면
+         * Tutorial Progress도 연결합니다.
          */
         if (
           serverGuidedFlow
@@ -708,8 +944,9 @@ export function TutorialDetailPage() {
             progressError
           ) {
             /*
-             * 메인 데모 튜토리얼은 Progress API만 실패해도
-             * 만들어진 Flow를 버리지 않습니다.
+             * 기존 메인 Demo Tutorial은
+             * Progress API만 실패해도
+             * 생성된 Flow를 버리지 않습니다.
              */
             if (
               tutorialId !==
@@ -741,9 +978,9 @@ export function TutorialDetailPage() {
           }
         } else {
           /*
-           * CREATE Flow fallback으로 들어온 경우에는
+           * CREATE fallback은
            * BE Tutorial Progress가 없으므로
-           * 현재 화면 세션에서만 진행 중 상태를 유지합니다.
+           * 현재 FE session에만 진행 상태를 둡니다.
            */
           setTutorial(
             (
@@ -786,7 +1023,9 @@ export function TutorialDetailPage() {
       }
     }
 
-  if (isLoading) {
+  if (
+    isLoading
+  ) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
@@ -803,7 +1042,9 @@ export function TutorialDetailPage() {
     )
   }
 
-  if (!tutorial) {
+  if (
+    !tutorial
+  ) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
@@ -820,11 +1061,15 @@ export function TutorialDetailPage() {
               목록으로 돌아가 주세요.
             </p>
 
-            {error && (
-              <p className="mt-3 text-sm font-semibold text-red-600">
-                {error}
-              </p>
-            )}
+            {
+              error && (
+                <p className="mt-3 text-sm font-semibold text-red-600">
+                  {
+                    error
+                  }
+                </p>
+              )
+            }
 
             <Button
               className="mt-8"
@@ -855,7 +1100,9 @@ export function TutorialDetailPage() {
             className="inline-flex items-center gap-2 text-sm font-black text-indigo-500 transition hover:text-indigo-600"
           >
             <ArrowLeft
-              size={16}
+              size={
+                16
+              }
             />
 
             튜토리얼 목록
@@ -866,10 +1113,13 @@ export function TutorialDetailPage() {
               <span
                 className={[
                   'rounded-lg px-3 py-1.5 text-sm font-black',
+
                   levelClassMap[
                     tutorial.level
                   ],
-                ].join(' ')}
+                ].join(
+                  ' ',
+                )}
               >
                 {
                   tutorial.level
@@ -878,23 +1128,29 @@ export function TutorialDetailPage() {
 
               <span className="inline-flex items-center gap-1">
                 <Clock
-                  size={16}
+                  size={
+                    16
+                  }
                 />
 
                 {
-                  tutorial.estimatedMinutes
+                  tutorial
+                    .estimatedMinutes
                 }
                 분
               </span>
 
               <span className="inline-flex items-center gap-1">
                 <Blocks
-                  size={16}
+                  size={
+                    16
+                  }
                 />
 
                 블록{' '}
                 {
-                  tutorial.blockCount
+                  tutorial
+                    .blockCount
                 }
                 개
               </span>
@@ -907,10 +1163,12 @@ export function TutorialDetailPage() {
             </h1>
 
             <p className="mt-5 text-lg font-medium leading-8 text-slate-600">
-              {tutorial.description.replace(
-                '합니다.',
-                '해 봅니다.',
-              )}
+              {
+                tutorial.description.replace(
+                  '합니다.',
+                  '해 봅니다.',
+                )
+              }
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -918,7 +1176,8 @@ export function TutorialDetailPage() {
                 size="lg"
                 disabled={
                   isStarting ||
-                  tutorial.progress
+                  tutorial
+                    .progress
                     ?.status ===
                     'COMPLETED'
                 }
@@ -927,19 +1186,21 @@ export function TutorialDetailPage() {
                 }
                 className="cursor-pointer disabled:cursor-not-allowed"
               >
-                {isStarting
-                  ? '시작 중...'
-                  : tutorial
-                        .progress
-                        ?.status ===
-                      'IN_PROGRESS'
-                    ? '이어서 학습하기'
+                {
+                  isStarting
+                    ? '시작 중...'
                     : tutorial
                           .progress
                           ?.status ===
-                        'COMPLETED'
-                      ? '학습 완료'
-                      : '튜토리얼 시작하기'}
+                        'IN_PROGRESS'
+                      ? '이어서 학습하기'
+                      : tutorial
+                            .progress
+                            ?.status ===
+                          'COMPLETED'
+                        ? '학습 완료'
+                        : '튜토리얼 시작하기'
+                }
               </Button>
 
               <Button
@@ -950,37 +1211,45 @@ export function TutorialDetailPage() {
                   isRemoving
                 }
                 onClick={
-                  tutorial.progress
+                  tutorial
+                    .progress
                     ? handleRemoveTutorial
                     : handleSaveTutorial
                 }
                 className="cursor-pointer disabled:cursor-not-allowed"
               >
-                {isRemoving
-                  ? '해제 중...'
-                  : isSaving
-                    ? '저장 중...'
-                    : tutorial.progress
-                      ? '저장 해제'
-                      : '튜토리얼 저장'}
+                {
+                  isRemoving
+                    ? '해제 중...'
+                    : isSaving
+                      ? '저장 중...'
+                      : tutorial
+                          .progress
+                        ? '저장 해제'
+                        : '튜토리얼 저장'
+                }
               </Button>
             </div>
 
-            {saveMessage && (
-              <p className="mt-3 text-sm font-semibold text-slate-500">
-                {
-                  saveMessage
-                }
-              </p>
-            )}
+            {
+              saveMessage && (
+                <p className="mt-3 text-sm font-semibold text-slate-500">
+                  {
+                    saveMessage
+                  }
+                </p>
+              )
+            }
 
-            {startMessage && (
-              <p className="mt-3 text-sm font-semibold text-red-600">
-                {
-                  startMessage
-                }
-              </p>
-            )}
+            {
+              startMessage && (
+                <p className="mt-3 text-sm font-semibold text-red-600">
+                  {
+                    startMessage
+                  }
+                </p>
+              )
+            }
           </section>
 
           <Card className="px-6 py-5">
@@ -990,27 +1259,31 @@ export function TutorialDetailPage() {
             </p>
 
             <div className="mt-5 grid gap-6 md:grid-cols-2">
-              {tutorial.useCases.map(
-                (useCase) => (
-                  <div
-                    key={
-                      useCase.label
-                    }
-                  >
-                    <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600">
-                      {
+              {
+                tutorial.useCases.map(
+                  (
+                    useCase,
+                  ) => (
+                    <div
+                      key={
                         useCase.label
                       }
-                    </span>
+                    >
+                      <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600">
+                        {
+                          useCase.label
+                        }
+                      </span>
 
-                    <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
-                      {
-                        useCase.description
-                      }
-                    </p>
-                  </div>
-                ),
-              )}
+                      <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
+                        {
+                          useCase.description
+                        }
+                      </p>
+                    </div>
+                  ),
+                )
+              }
             </div>
 
             <div className="mt-6 border-t border-slate-200 pt-5 text-sm font-semibold text-slate-400">
@@ -1018,9 +1291,11 @@ export function TutorialDetailPage() {
                 필요 개념
               </span>
 
-              {tutorial.requiredConcepts.join(
-                ' · ',
-              )}
+              {
+                tutorial.requiredConcepts.join(
+                  ' · ',
+                )
+              }
             </div>
           </Card>
 
@@ -1036,38 +1311,42 @@ export function TutorialDetailPage() {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              {tutorial.flowSteps.map(
-                (
-                  step,
-                  index,
-                ) => (
-                  <div
-                    key={
-                      step.id
-                    }
-                    className="flex items-center gap-3"
-                  >
-                    <FlowStep
-                      label={
-                        step.label
+              {
+                tutorial.flowSteps.map(
+                  (
+                    step,
+                    index,
+                  ) => (
+                    <div
+                      key={
+                        step.id
                       }
-                      color={
-                        step.color
-                      }
-                    />
+                      className="flex items-center gap-3"
+                    >
+                      <FlowStep
+                        label={
+                          step.label
+                        }
+                        color={
+                          step.color
+                        }
+                      />
 
-                    {index <
-                      tutorial
-                        .flowSteps
-                        .length -
-                        1 && (
-                      <span className="text-xl font-black text-slate-300">
-                        →
-                      </span>
-                    )}
-                  </div>
-                ),
-              )}
+                      {
+                        index <
+                          tutorial
+                            .flowSteps
+                            .length -
+                            1 && (
+                          <span className="text-xl font-black text-slate-300">
+                            →
+                          </span>
+                        )
+                      }
+                    </div>
+                  ),
+                )
+              }
             </div>
           </Card>
 
@@ -1077,18 +1356,22 @@ export function TutorialDetailPage() {
             </p>
 
             <div className="grid gap-5 md:grid-cols-2">
-              {tutorial.blocks.map(
-                (block) => (
-                  <BlockCard
-                    key={
-                      block.id
-                    }
-                    block={
-                      block
-                    }
-                  />
-                ),
-              )}
+              {
+                tutorial.blocks.map(
+                  (
+                    block,
+                  ) => (
+                    <BlockCard
+                      key={
+                        block.id
+                      }
+                      block={
+                        block
+                      }
+                    />
+                  ),
+                )
+              }
             </div>
           </section>
 
@@ -1101,7 +1384,8 @@ export function TutorialDetailPage() {
               <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-500">
                 “
                 {
-                  tutorial.exampleInput
+                  tutorial
+                    .exampleInput
                 }
                 ”
               </div>
@@ -1119,19 +1403,21 @@ export function TutorialDetailPage() {
               </div>
 
               <div className="mt-5 space-y-3">
-                {tutorial.exampleResult.map(
-                  (
-                    line,
-                    index,
-                  ) => (
-                    <div
-                      key={`${line}-${index}`}
-                      className="h-3 rounded-full bg-slate-100"
-                    >
-                      <div className="h-3 w-4/5 rounded-full bg-slate-200" />
-                    </div>
-                  ),
-                )}
+                {
+                  tutorial.exampleResult.map(
+                    (
+                      line,
+                      index,
+                    ) => (
+                      <div
+                        key={`${line}-${index}`}
+                        className="h-3 rounded-full bg-slate-100"
+                      >
+                        <div className="h-3 w-4/5 rounded-full bg-slate-200" />
+                      </div>
+                    ),
+                  )
+                }
               </div>
 
               <div className="mt-6 flex items-center justify-between">
@@ -1141,7 +1427,8 @@ export function TutorialDetailPage() {
 
                 <span className="rounded-lg border border-dashed border-slate-200 bg-white px-5 py-2 text-sm font-black text-slate-600">
                   {
-                    tutorial.resultSource
+                    tutorial
+                      .resultSource
                   }
                 </span>
               </div>
