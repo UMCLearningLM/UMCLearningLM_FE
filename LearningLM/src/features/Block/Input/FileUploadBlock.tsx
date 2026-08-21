@@ -25,7 +25,15 @@ const missingOptions = [
   { value: 'warn', label: '경고 후 진행', description: '경고만 표시하고 계속' },
 ]
 
-const allowedExtensions = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx'])
+const allowedExtensions = new Set([
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'md',
+  'txt',
+])
 const maxFileSize = 20 * 1024 * 1024
 
 function getFileValidationError(file: File) {
@@ -112,10 +120,10 @@ export function FileUploadBlock() {
             파일 업로드 <span className="text-rose-500">*</span>
           </p>
           <FileDropzone
-            accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.md,.txt,image/*"
             multiple
             title="파일을 여기에 놓기 또는 찾아보기"
-            description="PDF · DOCX · XLSX · 이미지 · 최대 20MB"
+            description="PDF · DOCX · XLSX · MD · TXT · 이미지 · 최대 20MB"
             onFiles={addFiles}
           />
         </div>

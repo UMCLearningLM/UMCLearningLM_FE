@@ -531,6 +531,8 @@ const policyAllowedExtensions =
     'jpg',
     'jpeg',
     'png',
+    'md',
+    'txt',
   ])
 
 const policyMaxFileSize =
@@ -1522,7 +1524,7 @@ export function LinkPolicyInspector({
               fileInputRef
             }
             type="file"
-            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png"
+            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.md,.txt"
             multiple
             className="hidden"
             onChange={(
@@ -1586,7 +1588,7 @@ export function LinkPolicyInspector({
           )}
 
           <p className="mt-2 text-[11px] text-slate-400">
-            PDF · DOCX · XLSX · JPG · PNG · 파일당 최대 20MB
+            PDF · DOCX · XLSX · JPG · PNG · MD · TXT · 파일당 최대 20MB
           </p>
 
           {uploadErrors.length >
