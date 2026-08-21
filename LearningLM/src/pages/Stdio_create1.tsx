@@ -2219,6 +2219,11 @@ export function Stdio_create1() {
             nodeTypes={studioNodeTypes}
             onNodesChange={studio.onNodesChange}
             onEdgesChange={studio.onEdgesChange}
+            onEdgeDoubleClick={(_event, edge) => {
+              studio.disconnectEdge(
+                edge.id,
+              )
+            }}
             onConnect={(connection) => {
               if (
                 !isGuidedConnectionAllowed(

@@ -802,6 +802,44 @@ export function useStudioEditor({
     ])
 
   /**
+   * 노드는 유지하고 지정한 연결선만 해제합니다.
+   *
+   * 가이드 모드에서는 React Flow의 deleteKeyCode를 비활성화해
+   * 노드 삭제를 막고 있으므로, 연결선 해제는 별도 동작으로 제공합니다.
+   */
+  const disconnectEdge =
+    useCallback(
+      (
+        edgeId: string,
+      ) => {
+        setEdges(
+          (
+            currentEdges,
+          ) =>
+            currentEdges.filter(
+              (
+                edge,
+              ) =>
+                edge.id !==
+                edgeId,
+            ),
+        )
+
+        setValidationResult(
+          null,
+        )
+
+        publishMessage(
+          '노드 연결을 해제했습니다.',
+        )
+      },
+      [
+        publishMessage,
+        setEdges,
+      ],
+    )
+
+  /**
    * 기존 단순 Inspector에서 슬롯 값을 수정할 때 사용합니다.
    *
    * 문자열 value를 변경하고,
@@ -1173,6 +1211,7 @@ export function useStudioEditor({
     updateBlockConfig,
 
     deleteSelectedElements,
+    disconnectEdge,
     resetEditor,
     fitView,
 
