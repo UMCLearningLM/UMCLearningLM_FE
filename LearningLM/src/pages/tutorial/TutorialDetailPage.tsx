@@ -7,6 +7,7 @@ import { PageContainer } from '../../components/layout/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import {
+  REFACTORING_SCENARIO_TUTORIAL_ID,
   getTutorialById,
   type Tutorial,
   type TutorialBlock,
@@ -305,9 +306,12 @@ export function TutorialDetailPage() {
            * FE에 이미 정의된 데이터를 사용합니다.
            */
           const fallbackTutorial =
-            tutorialId === 1
+            tutorialId ===
+              1 ||
+            tutorialId ===
+              REFACTORING_SCENARIO_TUTORIAL_ID
               ? getTutorialById(
-                  1,
+                  tutorialId,
                 )
               : undefined
 
@@ -355,6 +359,67 @@ export function TutorialDetailPage() {
         window.alert(
           '로그인 후 튜토리얼을 저장할 수 있습니다.',
         )
+        return
+      }
+
+            /*
+       * 코드 리팩토링 Scenario Guide는
+       * 현재 FE 하드코딩 실습입니다.
+       *
+       * BE Tutorial / Progress 데이터에 의존하지 않고
+       * 일반 CREATE DRAFT Flow를 만든 뒤
+       * Studio에서는 guided mode로 엽니다.
+       */
+      if (
+        tutorialId ===
+        REFACTORING_SCENARIO_TUTORIAL_ID
+      ) {
+        setIsStarting(
+          true,
+        )
+
+        setStartMessage(
+          '',
+        )
+
+        try {
+          const flow =
+            await createFlow({
+              mode:
+                'CREATE',
+
+              originFlowId:
+                null,
+            })
+
+          if (
+            !flow.success ||
+            !flow.result?.flowId
+          ) {
+            throw new Error(
+              flow.message ||
+                '가이드 작업 공간을 만들지 못했습니다.',
+            )
+          }
+
+          openGuidedStudio(
+            flow.result.flowId,
+          )
+        } catch (
+          requestError
+        ) {
+          setStartMessage(
+            requestError instanceof
+              Error
+              ? requestError.message
+              : '가이드를 시작하지 못했습니다.',
+          )
+        } finally {
+          setIsStarting(
+            false,
+          )
+        }
+
         return
       }
 

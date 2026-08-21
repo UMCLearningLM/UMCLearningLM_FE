@@ -909,12 +909,57 @@ const fileMissingOptions = [
 
 const allowedExtensions =
   new Set([
+    /*
+     * 문서
+     */
     'pdf',
     'docx',
+    'pptx',
     'xlsx',
+
+    /*
+     * 이미지
+     */
     'jpg',
     'jpeg',
     'png',
+
+    /*
+     * 일반 텍스트 / 데이터
+     */
+    'txt',
+    'html',
+    'htm',
+    'md',
+    'csv',
+    'json',
+    'xml',
+
+    /*
+     * 소스 코드
+     *
+     * BE #78 FlowFileService의
+     * ALLOWED_EXTENSIONS / CODE_EXTENSIONS와 맞춥니다.
+     */
+    'java',
+    'c',
+    'h',
+    'cpp',
+    'cc',
+    'cxx',
+    'hpp',
+    'js',
+    'ts',
+    'jsx',
+    'tsx',
+    'py',
+    'kt',
+    'kts',
+    'gradle',
+    'sql',
+    'yaml',
+    'yml',
+    'properties',
   ])
 
 const maxFileSize =
@@ -1651,7 +1696,7 @@ export function FileUploadInspector({
           </p>
 
           <FileDropzone
-            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png"
+            accept=".pdf,.docx,.pptx,.xlsx,.jpg,.jpeg,.png,.txt,.html,.htm,.md,.csv,.json,.xml,.java,.c,.h,.cpp,.cc,.cxx,.hpp,.js,.ts,.jsx,.tsx,.py,.kt,.kts,.gradle,.sql,.yaml,.yml,.properties"
             multiple
             disabled={
               isUploading ||
@@ -1662,7 +1707,7 @@ export function FileUploadInspector({
                 ? '파일을 서버에 업로드하고 있습니다.'
                 : '파일을 여기에 놓기 또는 찾아보기'
             }
-            description="PDF · DOCX · XLSX · JPG · PNG · 파일당 최대 20MB"
+            description="문서 · 이미지 · 소스 코드 · 텍스트 파일 · 파일당 최대 20MB"
             onFiles={
               addFiles
             }

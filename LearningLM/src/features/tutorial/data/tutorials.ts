@@ -609,20 +609,607 @@ const baseTutorials: Tutorial[] = [
   },
 ]
 
-const mockPageSuffixes = ['실습', '응용', '확장']
+export const REFACTORING_SCENARIO_TUTORIAL_ID =
+  25
 
-export const tutorials: Tutorial[] = [
-  ...baseTutorials,
-  ...mockPageSuffixes.flatMap((suffix, suffixIndex) =>
-    baseTutorials.map((tutorial, tutorialIndex) => ({
-      ...tutorial,
-      id: baseTutorials.length * (suffixIndex + 1) + tutorialIndex + 1,
-      title: `${tutorial.title} ${suffix}`,
-      description: `${tutorial.description} ${suffix} 버전입니다.`,
-    })),
-  ),
+export const refactoringScenarioTutorial: Tutorial = {
+  id:
+    REFACTORING_SCENARIO_TUTORIAL_ID,
+
+  title:
+    '최신 개발 트렌드를 반영한 코드 리팩토링 및 개선 제안',
+
+  description:
+    '프로젝트 코드를 직접 분석하고 필요한 블록을 조합해 최신 개발 권장사항, 리팩토링 개선안, 코드 리뷰 체크리스트를 만드는 실습형 가이드입니다.',
+
+  level:
+    '응용',
+
+  categories: [
+    'AI 툴 활용',
+    '결과물 검토',
+  ],
+
+  blockCount:
+    20,
+
+  estimatedMinutes:
+    30,
+
+  useCases: [
+    {
+      label:
+        '개발',
+
+      description:
+        '기존 프로젝트 코드를 분석해 안정성, 테스트 용이성, 유지보수성 관점의 개선안을 만들고 싶을 때.',
+    },
+
+    {
+      label:
+        '코드 리뷰',
+
+      description:
+        '리팩토링 제안과 함께 실제 PR 검토에 사용할 코드 리뷰 체크리스트까지 만들고 싶을 때.',
+    },
+  ],
+
+  requiredConcepts: [
+    '블록 선택',
+    '노드 연결',
+    'Inspector 설정',
+    'Workflow 검증',
+  ],
+
+  /*
+   * 정답 블록 순서는 상세 페이지에서 노출하지 않습니다.
+   *
+   * 사용자는 5개 Stage 구조만 확인하고
+   * 실제 블록 조합과 연결은 Studio에서 직접 해결합니다.
+   */
+  flowSteps: [
+    {
+      id:
+        'input',
+
+      label:
+        '입력 구성',
+
+      color:
+        'blue',
+    },
+
+    {
+      id:
+        'context',
+
+      label:
+        '분석 맥락 구성',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'process',
+
+      label:
+        '코드 분석·리팩토링',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'review',
+
+      label:
+        '결과 검토',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'output',
+
+      label:
+        '개선안 출력',
+
+      color:
+        'green',
+    },
+  ],
+
+  /*
+   * Scenario에서 필수로 사용하는 20개 블록입니다.
+   *
+   * Studio Palette에서도 이 20개만 "필수",
+   * 나머지는 "선택"으로 표시됩니다.
+   *
+   * 상세 화면에서는 블록 목록만 보여주며
+   * 실제 연결 순서나 Inspector 정답은 제공하지 않습니다.
+   */
+  blocks: [
+    {
+      id:
+        'input-text',
+
+      title:
+        '사용자 요청 받기',
+
+      type:
+        'INPUT',
+
+      description:
+        '코드 분석과 리팩토링에 대한 사용자의 요청을 입력합니다.',
+
+      why:
+        'Workflow가 수행할 전체 작업을 정의합니다.',
+
+      color:
+        'blue',
+    },
+
+    {
+      id:
+        'input-topic',
+
+      title:
+        '주제 입력하기',
+
+      type:
+        'INPUT',
+
+      description:
+        '분석할 코드와 리팩토링 주제를 지정합니다.',
+
+      why:
+        '분석 대상과 작업 범위를 구체화합니다.',
+
+      color:
+        'blue',
+    },
+
+    {
+      id:
+        'input-file-upload',
+
+      title:
+        '파일 업로드 받기',
+
+      type:
+        'INPUT',
+
+      description:
+        '분석할 프로젝트 코드 파일을 업로드합니다.',
+
+      why:
+        'AI가 실제 코드를 분석하기 위한 원본 자료입니다.',
+
+      color:
+        'blue',
+    },
+
+    {
+      id:
+        'input-required-skill',
+
+      title:
+        '필요한 스킬 확인하기',
+
+      type:
+        'INPUT',
+
+      description:
+        '코드 분석과 리팩토링에 필요한 작업 능력을 지정합니다.',
+
+      why:
+        'Workflow에서 필요한 처리 방향을 정합니다.',
+
+      color:
+        'blue',
+    },
+
+    {
+      id:
+        'input-result-usage',
+
+      title:
+        '결과 사용 상황 정하기',
+
+      type:
+        'INPUT',
+
+      description:
+        '생성한 개선안과 체크리스트가 사용될 상황을 지정합니다.',
+
+      why:
+        '최종 결과물을 실제 개발 업무에 맞는 형태로 만들기 위해 필요합니다.',
+
+      color:
+        'blue',
+    },
+
+    {
+      id:
+        'context-uploaded-document',
+
+      title:
+        '업로드 문서 읽기',
+
+      type:
+        'CONTEXT',
+
+      description:
+        '업로드한 코드 파일을 분석 Context로 사용합니다.',
+
+      why:
+        '업로드된 실제 코드가 분석 대상이 되도록 연결합니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'context-role',
+
+      title:
+        '역할 부여하기',
+
+      type:
+        'CONTEXT',
+
+      description:
+        'AI에게 백엔드 개발자와 코드 리뷰어 관점을 부여합니다.',
+
+      why:
+        '개발 실무 관점에서 문제와 개선 방법을 판단하기 위해 필요합니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'context-background',
+
+      title:
+        '배경 설명 추가하기',
+
+      type:
+        'CONTEXT',
+
+      description:
+        '프로젝트 환경과 리팩토링의 배경 조건을 제공합니다.',
+
+      why:
+        '코드만으로 알 수 없는 프로젝트 상황을 분석에 반영합니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'process-extract-core',
+
+      title:
+        '핵심 내용 추출하기',
+
+      type:
+        'PROCESS',
+
+      description:
+        '코드에서 핵심 구조와 문제 후보를 추출합니다.',
+
+      why:
+        '후속 리팩토링 분석에 필요한 핵심 정보를 먼저 정리합니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'process-decompose-functions',
+
+      title:
+        '기능으로 분해하기',
+
+      type:
+        'PROCESS',
+
+      description:
+        '코드의 역할과 기능을 분석 가능한 단위로 분해합니다.',
+
+      why:
+        '큰 코드 덩어리를 기능별로 나누어 문제를 찾기 쉽게 만듭니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'process-link-policy',
+
+      title:
+        '정책과 연결하기',
+
+      type:
+        'PROCESS',
+
+      description:
+        '발견된 구현을 공식 권장사항과 개발 정책에 연결합니다.',
+
+      why:
+        '개선 제안이 단순 취향이 아니라 근거를 갖도록 합니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'process-find-exceptions',
+
+      title:
+        '예외 케이스 찾기',
+
+      type:
+        'PROCESS',
+
+      description:
+        '현재 코드에서 발생 가능한 예외 상황과 경계 조건을 찾습니다.',
+
+      why:
+        '안정성과 오류 처리 문제를 함께 발견하기 위해 필요합니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'process-draft',
+
+      title:
+        '초안 작성하기',
+
+      type:
+        'PROCESS',
+
+      description:
+        '분석 내용을 기반으로 리팩토링 개선 제안서의 초안을 만듭니다.',
+
+      why:
+        '분석 결과를 개발자가 읽을 수 있는 문서 구조로 변환합니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'process-table',
+
+      title:
+        '표로 재구성하기',
+
+      type:
+        'PROCESS',
+
+      description:
+        '기존 코드의 문제와 개선 방향을 비교 가능한 표로 구성합니다.',
+
+      why:
+        '변경 전후와 기대 효과를 빠르게 파악할 수 있게 합니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'review-missing',
+
+      title:
+        '누락 확인하기',
+
+      type:
+        'REVIEW',
+
+      description:
+        '핵심 문제와 개선 방법이 빠짐없이 포함되었는지 검사합니다.',
+
+      why:
+        '분석 결과에서 중요한 항목이 누락되는 것을 막습니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'review-quality',
+
+      title:
+        '형식 확인하기',
+
+      type:
+        'REVIEW',
+
+      description:
+        '개발 문서와 체크리스트가 요구된 형식에 맞는지 확인합니다.',
+
+      why:
+        '최종 결과가 실제 업무에서 사용할 수 있는 형태인지 검사합니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'review-error-location',
+
+      title:
+        '오류 위치 표시하기',
+
+      type:
+        'REVIEW',
+
+      description:
+        '발견된 문제와 개선 대상의 코드 위치를 표시합니다.',
+
+      why:
+        '개발자가 수정할 위치를 빠르게 찾을 수 있도록 합니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'review-tone',
+
+      title:
+        '톤 조정하기',
+
+      type:
+        'REVIEW',
+
+      description:
+        '결과를 전문적인 개발 문서의 어조로 정리합니다.',
+
+      why:
+        '실제 코드 리뷰와 기술 문서에 바로 사용할 수 있게 합니다.',
+
+      color:
+        'teal',
+    },
+
+    {
+      id:
+        'output-developer-handoff',
+
+      title:
+        '개발자 전달용으로 출력하기',
+
+      type:
+        'OUTPUT',
+
+      description:
+        '리팩토링 분석과 개선 제안을 개발자 전달 문서로 출력합니다.',
+
+      why:
+        '분석 결과를 실제 수정 작업으로 이어갈 수 있게 합니다.',
+
+      color:
+        'green',
+    },
+
+    {
+      id:
+        'output-checklist',
+
+      title:
+        '체크리스트로 출력하기',
+
+      type:
+        'OUTPUT',
+
+      description:
+        '코드 리뷰에서 사용할 점검 항목을 체크리스트로 출력합니다.',
+
+      why:
+        '리팩토링 이후 검토해야 할 항목을 반복해서 사용할 수 있게 합니다.',
+
+      color:
+        'green',
+    },
+  ],
+
+  exampleInput:
+    '업로드한 LegacyUserService.java를 분석하여 최신 Spring Boot 및 Java 권장사항에 맞는 리팩토링 개선안을 작성해 주세요. 핵심 문제, 개선 코드, 변경 이유와 코드 리뷰 체크리스트를 포함해 주세요.',
+
+  exampleResult: [
+    '현재 코드의 핵심 문제와 유지보수 영향을 분석합니다.',
+    'Spring Boot 및 Java 권장사항을 근거로 적용 가능한 리팩토링 방법을 제안합니다.',
+    '개선 코드와 변경 이유, 코드 리뷰 체크리스트를 함께 제공합니다.',
+  ],
+
+  resultSource:
+    'AI',
+}
+
+const mockPageSuffixes = [
+  '실습',
+  '응용',
+  '확장',
 ]
 
-export function getTutorialById(id: number) {
-  return tutorials.find((tutorial) => tutorial.id === id)
+/*
+ * 기존 mock tutorial ID는 그대로 유지합니다.
+ *
+ * baseTutorials가 6개이므로 기존 mock은
+ * 7 ~ 24번을 계속 사용합니다.
+ *
+ * Scenario Guide는 그 뒤의 고정 ID 25를 사용합니다.
+ */
+const mockTutorials =
+  mockPageSuffixes.flatMap(
+    (
+      suffix,
+      suffixIndex,
+    ) =>
+      baseTutorials.map(
+        (
+          tutorial,
+          tutorialIndex,
+        ) => ({
+          ...tutorial,
+
+          id:
+            baseTutorials.length *
+              (
+                suffixIndex +
+                1
+              ) +
+            tutorialIndex +
+            1,
+
+          title:
+            `${tutorial.title} ${suffix}`,
+
+          description:
+            `${tutorial.description} ${suffix} 버전입니다.`,
+        }),
+      ),
+  )
+
+export const tutorials:
+  Tutorial[] = [
+    ...baseTutorials,
+    ...mockTutorials,
+
+    /*
+     * FE 하드코딩 Scenario Guide입니다.
+     */
+    refactoringScenarioTutorial,
+  ]
+
+export function getTutorialById(
+  id: number,
+) {
+  return tutorials.find(
+    (tutorial) =>
+      tutorial.id ===
+      id,
+  )
 }
