@@ -505,12 +505,6 @@ export function Register() {
         setVerificationStatus(
           'verified',
         )
-        setEmailMessage({
-          type:
-            'success',
-          text:
-            '이메일 인증을 완료했습니다.',
-        })
       } catch (
       error
       ) {
