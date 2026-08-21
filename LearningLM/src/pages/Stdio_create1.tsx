@@ -2007,14 +2007,20 @@ export function Stdio_create1() {
       result,
     )
 
-    /*
-    * 검증에 실패하면 Review 화면으로 이동하지 않습니다.
-    * 우측 검증 결과에 오류가 표시되므로
-    * 사용자는 필요한 설정을 수정한 뒤 다시 저장할 수 있습니다.
-    */
-    if (!result.valid) {
-      return
-    }
+        /*
+        * 검증에 실패하면 Review 화면으로 이동하지 않습니다.
+        * 우측 검증 결과에 오류가 표시되므로
+        * 사용자는 필요한 설정을 수정한 뒤 다시 저장할 수 있습니다.
+        */
+       if (result.valid) {
+        alert('검증에 성공했습니다.')
+      }
+        if (!result.valid) {
+          alert(
+          `검증에 실패했습니다. 오류 ${result.errorCount}건이 있습니다.`,
+          )
+          return
+        }
 
     const state: StudioSaveNavigationState = {
       ...buildNavigationState(),
