@@ -915,6 +915,8 @@ const allowedExtensions =
     'jpg',
     'jpeg',
     'png',
+    'md',
+    'txt',
   ])
 
 const maxFileSize =
@@ -1651,7 +1653,7 @@ export function FileUploadInspector({
           </p>
 
           <FileDropzone
-            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png"
+            accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.md,.txt"
             multiple
             disabled={
               isUploading ||
@@ -1662,7 +1664,7 @@ export function FileUploadInspector({
                 ? '파일을 서버에 업로드하고 있습니다.'
                 : '파일을 여기에 놓기 또는 찾아보기'
             }
-            description="PDF · DOCX · XLSX · JPG · PNG · 파일당 최대 20MB"
+            description="PDF · DOCX · XLSX · JPG · PNG · MD · TXT · 파일당 최대 20MB"
             onFiles={
               addFiles
             }
