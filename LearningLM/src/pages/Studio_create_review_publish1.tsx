@@ -42,8 +42,8 @@ export function Studio_create_review_publish1() {
   const navigationState =
     (
       location.state as
-        | StudioSaveNavigationState
-        | null
+      | StudioSaveNavigationState
+      | null
     ) ?? {}
 
   const initialDraft =
@@ -95,13 +95,13 @@ export function Studio_create_review_publish1() {
 
   const hasExample =
     initialDraft.exampleInput.trim().length >
-      0 ||
+    0 ||
     initialDraft.exampleResult.trim().length >
-      0
+    0
 
   const difficultyLabel =
     difficultyLabelMap[
-      initialDraft.difficulty
+    initialDraft.difficulty
     ]
 
   const primaryCategory =
@@ -288,9 +288,9 @@ export function Studio_create_review_publish1() {
             {
               ...(navigationState.tutorialId
                 ? {
-                    tutorialId:
-                      navigationState.tutorialId,
-                  }
+                  tutorialId:
+                    navigationState.tutorialId,
+                }
                 : {}),
             },
             accessToken,
@@ -302,7 +302,7 @@ export function Studio_create_review_publish1() {
         ) {
           throw new Error(
             blockResponse.message ||
-              '블록 정보를 불러오지 못했습니다.',
+            '블록 정보를 불러오지 못했습니다.',
           )
         }
 
@@ -334,7 +334,7 @@ export function Studio_create_review_publish1() {
         ) {
           throw new Error(
             response.message ||
-              '워크플로우 저장에 실패했습니다.',
+            '워크플로우 저장에 실패했습니다.',
           )
         }
 
@@ -463,7 +463,7 @@ export function Studio_create_review_publish1() {
                 'mt-[21.5px] flex h-[92px] w-full gap-[18px] rounded-[12px] border-[1.5px] pl-[24px] pt-[18px] text-left transition',
 
                 visibility ===
-                'PRIVATE'
+                  'PRIVATE'
                   ? 'border-[#6366F1] bg-[#F8F8FF]'
                   : 'border-[#E4E4E7] bg-white hover:border-[#B8BAFF]',
               ].join(
@@ -475,7 +475,7 @@ export function Studio_create_review_publish1() {
                   'h-[22px] w-[22px] shrink-0 rounded-[50px]',
 
                   visibility ===
-                  'PRIVATE'
+                    'PRIVATE'
                     ? 'border-[6px] border-[#6366F1] bg-white'
                     : 'border-[3px] border-[#C4C4CC]',
                 ].join(
@@ -513,7 +513,7 @@ export function Studio_create_review_publish1() {
                 'mt-[18px] flex h-[92px] w-full gap-[18px] rounded-[12px] border-[1.5px] pl-[24px] pt-[18px] text-left transition',
 
                 visibility ===
-                'PUBLIC'
+                  'PUBLIC'
                   ? 'border-[#6366F1] bg-[#F8F8FF]'
                   : 'border-[#E4E4E7] bg-white hover:border-[#B8BAFF]',
               ].join(
@@ -525,7 +525,7 @@ export function Studio_create_review_publish1() {
                   'h-[22px] w-[22px] shrink-0 rounded-[50px]',
 
                   visibility ===
-                  'PUBLIC'
+                    'PUBLIC'
                     ? 'border-[6px] border-[#6366F1] bg-white'
                     : 'border-[3px] border-[#C4C4CC]',
                 ].join(
@@ -585,7 +585,7 @@ export function Studio_create_review_publish1() {
                     'ml-[21.75px] h-[23px] w-[23px] rounded-[50%]',
 
                     nodeCount >
-                    0
+                      0
                       ? 'bg-[#2F8A5B]'
                       : 'bg-[#B4453A]',
                   ].join(
@@ -604,7 +604,7 @@ export function Studio_create_review_publish1() {
                     'mr-[30px] flex h-[24px] min-w-[44px] items-center justify-center rounded-[8px] px-[8px] text-[14px] font-bold',
 
                     nodeCount >
-                    0
+                      0
                       ? 'bg-[#EEF4EE] text-[#2F7D52]'
                       : 'bg-[#FBF1F0] text-[#B4453A]',
                   ].join(
@@ -612,7 +612,7 @@ export function Studio_create_review_publish1() {
                   )}
                 >
                   {nodeCount >
-                  0
+                    0
                     ? '완료'
                     : '필수'}
                 </p>
@@ -663,22 +663,22 @@ export function Studio_create_review_publish1() {
 
             {visibility ===
               'PUBLIC' && (
-              <div className="mt-[20px] flex min-h-[60px] items-center gap-[15px] rounded-[12px] border-[1.5px] border-[#ECD6B8] bg-[#FBF6EC] pl-[21.8px] pr-[20px]">
-                <p className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[50px] bg-[#B88A3C] text-[15px] font-bold text-white">
-                  !
-                </p>
+                <div className="mt-[20px] flex min-h-[60px] items-center gap-[15px] rounded-[12px] border-[1.5px] border-[#ECD6B8] bg-[#FBF6EC] pl-[21.8px] pr-[20px]">
+                  <p className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[50px] bg-[#B88A3C] text-[15px] font-bold text-white">
+                    !
+                  </p>
 
-                <p className="text-[16.5px] font-semibold text-[#52525B]">
-                  공개하면 다른 사용자가 흐름을{' '}
+                  <p className="text-[16.5px] font-semibold text-[#52525B]">
+                    공개하면 다른 사용자가 흐름을{' '}
 
-                  <span className="font-bold">
-                    보고 복사
-                  </span>
+                    <span className="font-bold">
+                      보고 복사
+                    </span>
 
-                  할 수 있습니다.
-                </p>
-              </div>
-            )}
+                    할 수 있습니다.
+                  </p>
+                </div>
+              )}
           </div>
 
           {/* =========================
@@ -878,7 +878,7 @@ export function Studio_create_review_publish1() {
 
                 <span className="font-bold">
                   {visibility ===
-                  'PUBLIC'
+                    'PUBLIC'
                     ? '공개'
                     : '비공개'}
                 </span>

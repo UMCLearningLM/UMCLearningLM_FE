@@ -14,6 +14,7 @@ import { PageContainer } from '../../components/layout/PageContainer'
 
 import {
   getSavedTutorials,
+  getFlowDetail,
   getStorageFlows,
   updateFlowVisibility,
   type SavedTutorial,
@@ -361,6 +362,49 @@ function MyStoragePage() {
     setFlowsError('')
 
     try {
+      if (nextVisibility === 'public') {
+        const detail =
+          await getFlowDetail(
+            workflowId,
+          )
+
+        const missingRequirements = [
+          !detail.title?.trim()
+            ? '제목'
+            : null,
+          !detail.summary?.trim()
+            ? '한 줄 요약'
+            : null,
+          detail.blockFlow.length === 0
+            ? '블록 흐름 1개 이상'
+            : null,
+          !detail.exampleInput?.trim()
+            ? '예시 입력'
+            : null,
+          !detail.exampleResult?.trim()
+            ? '예시 결과'
+            : null,
+        ].filter(
+          (item): item is string =>
+            item !== null,
+        )
+
+        if (missingRequirements.length > 0) {
+          window.alert(
+            [
+              '공개 설정을 완료할 수 없습니다.',
+              '',
+              '다음 필수 입력값을 먼저 작성해주세요:',
+              ...missingRequirements.map(
+                (item) => `• ${item}`,
+              ),
+            ].join('\n'),
+          )
+
+          return
+        }
+      }
+
       // 전체 갱신 API 내부에서 기존 상세값을 보존하고 공개 상태만 변경합니다.
       await updateFlowVisibility(
         workflowId,

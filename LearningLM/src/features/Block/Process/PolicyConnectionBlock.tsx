@@ -86,10 +86,10 @@ export function PolicyConnectionBlock() {
           </p>
           {files.length === 0 ? (
             <FileDropzone
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx,.md,.txt"
               multiple={false}
               error={validationAttempted && missingCount > 0}
-              description="PDF, DOC, DOCX, TXT"
+              description="PDF, DOC, DOCX, MD, TXT"
               onFiles={(nextFiles) => setFiles(nextFiles.slice(0, 1))}
             />
           ) : (
