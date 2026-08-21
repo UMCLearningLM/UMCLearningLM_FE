@@ -451,6 +451,53 @@ function WorkflowDetailPage() {
           ? 'private'
           : 'public'
 
+      if (
+        nextVisibility ===
+        'public'
+      ) {
+        const missingRequirements = [
+          !flow?.title?.trim()
+            ? '제목'
+            : null,
+          !flow?.summary?.trim()
+            ? '한 줄 요약'
+            : null,
+          !flow?.blockFlow.length
+            ? '블록 흐름 1개 이상'
+            : null,
+          !flow?.exampleInput?.trim()
+            ? '예시 입력'
+            : null,
+          !flow?.exampleResult?.trim()
+            ? '예시 결과'
+            : null,
+        ].filter(
+          (item): item is string =>
+            item !== null,
+        )
+
+        if (
+          missingRequirements.length >
+          0
+        ) {
+          window.alert(
+            [
+              '공개 설정을 완료할 수 없습니다.',
+              '',
+              '다음 필수 입력값을 먼저 작성해주세요:',
+              ...missingRequirements.map(
+                (item) =>
+                  `• ${item}`,
+              ),
+            ].join(
+              '\n',
+            ),
+          )
+
+          return
+        }
+      }
+
       setIsUpdatingVisibility(
         true,
       )

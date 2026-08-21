@@ -163,9 +163,9 @@ function getGuidedSavedSettingsStorageKey(
     'learninglm',
     'guided-research-saved-settings',
     tutorialId ??
-      'tutorial',
+    'tutorial',
     flowId ??
-      'flow',
+    'flow',
   ].join(':')
 }
 
@@ -217,9 +217,9 @@ function getInitialGuidedSavedStepIndices(
             value,
           ) &&
           value >=
-            0 &&
+          0 &&
           value <
-            RESEARCH_GUIDED_STEPS.length,
+          RESEARCH_GUIDED_STEPS.length,
       ),
     )
   } catch {
@@ -490,8 +490,8 @@ export function Stdio_create1() {
   const locationState =
     (
       location.state as
-        | StudioSaveNavigationState
-        | null
+      | StudioSaveNavigationState
+      | null
     ) ?? null
 
   const flowId =
@@ -615,7 +615,7 @@ export function Stdio_create1() {
     useMemo(
       () =>
         isResearchGuidedTutorial &&
-        !locationState?.nodes?.length
+          !locationState?.nodes?.length
           ? createResearchGuidedInitialNodes()
           : [],
       [
@@ -628,7 +628,7 @@ export function Stdio_create1() {
     useMemo(
       () =>
         isResearchGuidedTutorial &&
-        !locationState?.edges?.length
+          !locationState?.edges?.length
           ? createResearchGuidedInitialEdges()
           : [],
       [
@@ -815,7 +815,7 @@ export function Stdio_create1() {
             const isImmediatelyPreviousStage =
               nodeStageIndex ===
               currentStageIndex -
-                1
+              1
 
             const isFutureStage =
               nodeStageIndex >
@@ -1024,7 +1024,7 @@ export function Stdio_create1() {
       const previousStage =
         RESEARCH_GUIDED_STEPS[
           currentIndex -
-            1
+          1
         ]?.stage
 
       const currentStage =
@@ -1048,9 +1048,9 @@ export function Stdio_create1() {
 
       if (
         sourceNode?.data.node.stage !==
-          previousStage ||
+        previousStage ||
         targetNode?.data.node.stage !==
-          currentStage
+        currentStage
       ) {
         return false
       }
@@ -1175,7 +1175,7 @@ export function Stdio_create1() {
             routeFlowId,
           ) ||
           mode !==
-            'create'
+          'create'
         )
 
       if (
@@ -1211,7 +1211,7 @@ export function Stdio_create1() {
             ) {
               throw new Error(
                 response.message ||
-                  '저장된 흐름을 불러오지 못했습니다.',
+                '저장된 흐름을 불러오지 못했습니다.',
               )
             }
 
@@ -1313,7 +1313,7 @@ export function Stdio_create1() {
           ) => {
             const hasInspector =
               block.availability ===
-                'available' &&
+              'available' &&
               hasStudioBlockInspector(
                 block.id,
               )
@@ -1339,7 +1339,7 @@ export function Stdio_create1() {
                   currentGuidedTargetBlockId,
                 ) &&
                 block.id ===
-                  currentGuidedTargetBlockId
+                currentGuidedTargetBlockId
               )
             }
 
@@ -1780,15 +1780,15 @@ export function Stdio_create1() {
       const capturedIsFresh =
         Boolean(captured) &&
         performance.now() -
-          (
-            captured?.capturedAt ??
-            0
-          ) <
-          1000
+        (
+          captured?.capturedAt ??
+          0
+        ) <
+        1000
 
       const scrollTop =
         capturedIsFresh &&
-        captured
+          captured
           ? captured.scrollTop
           : container.scrollTop
 
@@ -1872,10 +1872,10 @@ export function Stdio_create1() {
         window.confirm(
           isLastBlock
             ? [
-                `'${slot.label}' 블록을 삭제할까요?`,
-                '',
-                '이 노드의 마지막 블록이므로 노드와 연결선도 함께 삭제됩니다.',
-              ].join('\n')
+              `'${slot.label}' 블록을 삭제할까요?`,
+              '',
+              '이 노드의 마지막 블록이므로 노드와 연결선도 함께 삭제됩니다.',
+            ].join('\n')
             : `'${slot.label}' 블록을 이 노드에서 삭제할까요?`,
         )
 
@@ -1897,25 +1897,25 @@ export function Stdio_create1() {
           currentNodes.map(
             (node) =>
               node.id ===
-              selectedNode.id
+                selectedNode.id
                 ? {
-                    ...node,
+                  ...node,
 
-                    data: {
-                      ...node.data,
+                  data: {
+                    ...node.data,
 
-                      node: {
-                        ...node.data.node,
+                    node: {
+                      ...node.data.node,
 
-                        slots:
-                          node.data.node.slots.filter(
-                            (currentSlot) =>
-                              currentSlot.id !==
-                              slot.id,
-                          ),
-                      },
+                      slots:
+                        node.data.node.slots.filter(
+                          (currentSlot) =>
+                            currentSlot.id !==
+                            slot.id,
+                        ),
                     },
-                  }
+                  },
+                }
                 : node,
           ),
       )
@@ -1934,104 +1934,104 @@ export function Stdio_create1() {
       )
     }
 
-      /**
-       * 현재 선택된 노드의 전체 Inspector 설정을 확인합니다.
-       *
-       * 각 Inspector의 값은 입력 즉시 studio.nodes에 반영되므로
-       * 여기서는 별도의 저장 처리를 다시 하지 않습니다.
-       *
-       * 대신 현재 노드의 필수 슬롯이 모두 완료됐는지 확인한 뒤
-       * 문제가 없을 때만 Inspector를 닫아
-       * "설정 저장" 완료 상태로 진행합니다.
-       */
-      const handleSaveSelectedNodeSettings = () => {
-        if (!selectedNode) {
-          return
-        }
+  /**
+   * 현재 선택된 노드의 전체 Inspector 설정을 확인합니다.
+   *
+   * 각 Inspector의 값은 입력 즉시 studio.nodes에 반영되므로
+   * 여기서는 별도의 저장 처리를 다시 하지 않습니다.
+   *
+   * 대신 현재 노드의 필수 슬롯이 모두 완료됐는지 확인한 뒤
+   * 문제가 없을 때만 Inspector를 닫아
+   * "설정 저장" 완료 상태로 진행합니다.
+   */
+  const handleSaveSelectedNodeSettings = () => {
+    if (!selectedNode) {
+      return
+    }
 
-        const incompleteRequiredSlots =
-          selectedNode.data.node.slots.filter(
-            (slot) =>
-              slot.required &&
-              !hasSlotValue(slot),
-          )
+    const incompleteRequiredSlots =
+      selectedNode.data.node.slots.filter(
+        (slot) =>
+          slot.required &&
+          !hasSlotValue(slot),
+      )
 
-        if (
-          incompleteRequiredSlots.length >
-          0
-        ) {
-          const incompleteLabels =
-            incompleteRequiredSlots.map(
-              (slot) =>
-                slot.label,
-            )
-
-          window.alert(
-            [
-              '필수 설정이 완료되지 않았습니다.',
-              '',
-              incompleteLabels.join(
-                ', ',
-              ),
-            ].join('\n'),
-          )
-
-          return
-        }
-
-        if (
-          isResearchGuidedTutorial
-        ) {
-          const currentGuidedNode =
-            findGuidedStageNode(
-              guidedTutorial.currentStepIndex,
-            )
-
-          if (
-            currentGuidedNode?.id ===
-              selectedNode.id &&
-            !guidedTutorial.currentStatus
-              ?.configured
-          ) {
-            window.alert(
-              '현재 단계의 대상 블록 설정을 완료한 뒤 설정 저장을 눌러주세요.',
-            )
-
-            return
-          }
-
-          if (
-            currentGuidedNode?.id ===
-            selectedNode.id
-          ) {
-            setGuidedStepSettingsSaved(
-              guidedTutorial.currentStepIndex,
-              true,
-            )
-          }
-        }
-
-        /*
-        * 각 Block Inspector의 onChange에서
-        * config/value/state는 이미 Studio state에 저장된 상태입니다.
-        *
-        * 필수 설정 확인과 Guided 설정 저장 처리가 끝났으므로
-        * 열려 있는 세부 Inspector를 닫습니다.
-        */
-        setOpenInspectorSlotId(
-          null,
+    if (
+      incompleteRequiredSlots.length >
+      0
+    ) {
+      const incompleteLabels =
+        incompleteRequiredSlots.map(
+          (slot) =>
+            slot.label,
         )
+
+      window.alert(
+        [
+          '필수 설정이 완료되지 않았습니다.',
+          '',
+          incompleteLabels.join(
+            ', ',
+          ),
+        ].join('\n'),
+      )
+
+      return
+    }
+
+    if (
+      isResearchGuidedTutorial
+    ) {
+      const currentGuidedNode =
+        findGuidedStageNode(
+          guidedTutorial.currentStepIndex,
+        )
+
+      if (
+        currentGuidedNode?.id ===
+        selectedNode.id &&
+        !guidedTutorial.currentStatus
+          ?.configured
+      ) {
+        window.alert(
+          '현재 단계의 대상 블록 설정을 완료한 뒤 설정 저장을 눌러주세요.',
+        )
+
+        return
       }
 
-
-    const handleValidate = () => {
-      const result =
-        studio.validateWorkflow()
-
-      setValidationResult(
-        result,
-      )
+      if (
+        currentGuidedNode?.id ===
+        selectedNode.id
+      ) {
+        setGuidedStepSettingsSaved(
+          guidedTutorial.currentStepIndex,
+          true,
+        )
+      }
     }
+
+    /*
+    * 각 Block Inspector의 onChange에서
+    * config/value/state는 이미 Studio state에 저장된 상태입니다.
+    *
+    * 필수 설정 확인과 Guided 설정 저장 처리가 끝났으므로
+    * 열려 있는 세부 Inspector를 닫습니다.
+    */
+    setOpenInspectorSlotId(
+      null,
+    )
+  }
+
+
+  const handleValidate = () => {
+    const result =
+      studio.validateWorkflow()
+
+    setValidationResult(
+      result,
+    )
+  }
 
   const buildNavigationState =
     (): StudioSaveNavigationState => ({
@@ -2061,183 +2061,189 @@ export function Stdio_create1() {
         locationState?.saveDraft,
     })
 
-      /**
-     * Studio 밖의 화면으로 이동하기 전에
-     * 현재 History Entry에 최신 편집 상태를 먼저 기록합니다.
-     *
-     * 예시 결과 / 미리보기에서 브라우저 뒤로가기를 사용해도
-     * 최신 nodes / edges / slot config가 복원되도록 합니다.
-     */
-    const preserveCurrentEditorHistory = async (
-      state: StudioSaveNavigationState,
-    ) => {
-      await navigate(
-        `${location.pathname}${location.search}`,
-        {
-          replace: true,
-          state,
-        },
-      )
-    }
-
-    const handleOpenExample = async () => {
-      if (!flowId) {
-        window.alert(
-          '예시 결과를 생성할 flowId가 없습니다.',
-        )
-        return
-      }
-
-      const state =
-        buildNavigationState()
-
-      await preserveCurrentEditorHistory(
+  /**
+ * Studio 밖의 화면으로 이동하기 전에
+ * 현재 History Entry에 최신 편집 상태를 먼저 기록합니다.
+ *
+ * 예시 결과 / 미리보기에서 브라우저 뒤로가기를 사용해도
+ * 최신 nodes / edges / slot config가 복원되도록 합니다.
+ */
+  const preserveCurrentEditorHistory = async (
+    state: StudioSaveNavigationState,
+  ) => {
+    await navigate(
+      `${location.pathname}${location.search}`,
+      {
+        replace: true,
         state,
-      )
+      },
+    )
+  }
 
-      navigate(
-        `/workflows/${flowId}/preview?view=example`,
-        {
-          state,
-        },
+  const handleOpenExample = async () => {
+    if (!flowId) {
+      window.alert(
+        '예시 결과를 생성할 flowId가 없습니다.',
       )
+      return
     }
 
-    const handleOpenPreview = async () => {
-      if (!flowId) {
-        window.alert(
-          '미리보기에 사용할 flowId가 없습니다.',
-        )
-        return
-      }
+    const state =
+      buildNavigationState()
 
-      const state =
-        buildNavigationState()
+    await preserveCurrentEditorHistory(
+      state,
+    )
 
-      await preserveCurrentEditorHistory(
+    navigate(
+      `/flows/${flowId}/preview?view=example`,
+      {
         state,
-      )
+      },
+    )
+  }
 
-      navigate(
-        `/workflows/${flowId}/preview`,
-        {
-          state,
-        },
+  const handleOpenPreview = async () => {
+    if (!flowId) {
+      window.alert(
+        '미리보기에 사용할 flowId가 없습니다.',
       )
+      return
     }
 
-      /**
-       * 저장 버튼을 누른 시점의 최신 Studio 상태로
-       * 전체 Workflow Validation을 다시 실행합니다.
-       *
-       * 사용자가 별도로 "검증" 버튼을 누르지 않았더라도
-       * 저장 직전에 반드시 전체 설정을 확인합니다.
-       */
-      const handleStartSave = async () => {
-        const result =
-          studio.validateWorkflow()
+    const state =
+      buildNavigationState()
 
-        setValidationResult(
-          result,
-        )
+    await preserveCurrentEditorHistory(
+      state,
+    )
+
+    navigate(
+      `/workflows/${flowId}/preview`,
+      {
+        state,
+      },
+    )
+  }
+
+  /**
+   * 저장 버튼을 누른 시점의 최신 Studio 상태로
+   * 전체 Workflow Validation을 다시 실행합니다.
+   *
+   * 사용자가 별도로 "검증" 버튼을 누르지 않았더라도
+   * 저장 직전에 반드시 전체 설정을 확인합니다.
+   */
+  const handleStartSave = async () => {
+    const result =
+      studio.validateWorkflow()
+
+    setValidationResult(
+      result,
+    )
 
         /*
         * 검증에 실패하면 Review 화면으로 이동하지 않습니다.
         * 우측 검증 결과에 오류가 표시되므로
         * 사용자는 필요한 설정을 수정한 뒤 다시 저장할 수 있습니다.
         */
+       if (result.valid) {
+        alert('검증에 성공했습니다.')
+      }
         if (!result.valid) {
+          alert(
+          `검증에 실패했습니다. 오류 ${result.errorCount}건이 있습니다.`,
+          )
           return
         }
 
-        const state: StudioSaveNavigationState = {
-          ...buildNavigationState(),
+    const state: StudioSaveNavigationState = {
+      ...buildNavigationState(),
 
-          /*
-          * setValidationResult는 비동기 State 갱신이므로
-          * 지금 막 생성한 최신 결과를 Navigation State에
-          * 명시적으로 넣습니다.
-          */
-          validationResult:
-            result,
-        }
+      /*
+      * setValidationResult는 비동기 State 갱신이므로
+      * 지금 막 생성한 최신 결과를 Navigation State에
+      * 명시적으로 넣습니다.
+      */
+      validationResult:
+        result,
+    }
 
-        await preserveCurrentEditorHistory(
-          state,
-        )
+    await preserveCurrentEditorHistory(
+      state,
+    )
 
-        navigate(
-          '/studio/save/review',
-          {
-            state,
-          },
-        )
-      }
+    navigate(
+      '/studio/save/review',
+      {
+        state,
+      },
+    )
+  }
 
   return (
     <div className="fixed inset-0 flex h-[100dvh] w-screen min-h-0 flex-col overflow-hidden bg-white text-[#27272A]">
       <div className="shrink-0">
-            {/* 모바일 / 태블릿 Studio 미지원 안내 */}
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F5F5F7] px-[24px] lg:hidden">
-                <div className="w-full max-w-[420px] rounded-[16px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[34px] text-center shadow-sm">
-                  <div className="mx-auto flex h-[52px] w-[52px] items-center justify-center rounded-[12px] bg-[#EAEBFF] text-[26px]">
-                    💻
-                  </div>
+        {/* 모바일 / 태블릿 Studio 미지원 안내 */}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F5F5F7] px-[24px] lg:hidden">
+          <div className="w-full max-w-[420px] rounded-[16px] border-[1.5px] border-[#E4E4E7] bg-white px-[28px] py-[34px] text-center shadow-sm">
+            <div className="mx-auto flex h-[52px] w-[52px] items-center justify-center rounded-[12px] bg-[#EAEBFF] text-[26px]">
+              💻
+            </div>
 
-                  <h1 className="mt-[20px] text-[22px] font-bold text-[#27272A]">
-                    Studio는 데스크톱 전용입니다.
-                  </h1>
+            <h1 className="mt-[20px] text-[22px] font-bold text-[#27272A]">
+              Studio는 데스크톱 전용입니다.
+            </h1>
 
-                  <p className="mt-[12px] text-[15px] leading-[23px] text-[#666666]">
-                    블록 배치와 연결 기능은
-                    PC 환경에서 이용할 수 있습니다.
-                    <br />
-                    데스크톱에서 다시 접속해주세요.
-                  </p>
+            <p className="mt-[12px] text-[15px] leading-[23px] text-[#666666]">
+              블록 배치와 연결 기능은
+              PC 환경에서 이용할 수 있습니다.
+              <br />
+              데스크톱에서 다시 접속해주세요.
+            </p>
 
-                  <p className="mt-[22px] text-[13px] font-bold text-[#777780]">
-                    계속 둘러볼 화면을 선택해 주세요.
-                  </p>
+            <p className="mt-[22px] text-[13px] font-bold text-[#777780]">
+              계속 둘러볼 화면을 선택해 주세요.
+            </p>
 
-                  <div className="mt-[12px] grid grid-cols-1 gap-[9px]">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          '/',
-                        )
-                      }
-                      className="flex h-[46px] w-full items-center justify-center rounded-[10px] bg-[#6366F1] text-[15px] font-bold text-white hover:bg-[#5558DB]"
-                    >
-                      홈
-                    </button>
+            <div className="mt-[12px] grid grid-cols-1 gap-[9px]">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    '/',
+                  )
+                }
+                className="flex h-[46px] w-full items-center justify-center rounded-[10px] bg-[#6366F1] text-[15px] font-bold text-white hover:bg-[#5558DB]"
+              >
+                홈
+              </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          '/official-tutorials',
-                        )
-                      }
-                      className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-[#D8D9F7] bg-white text-[15px] font-bold text-[#6366F1] hover:bg-[#F7F7FF]"
-                    >
-                      공식 튜토리얼
-                    </button>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    '/official-tutorials',
+                  )
+                }
+                className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-[#D8D9F7] bg-white text-[15px] font-bold text-[#6366F1] hover:bg-[#F7F7FF]"
+              >
+                공식 튜토리얼
+              </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          '/public-library',
-                        )
-                      }
-                      className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white text-[15px] font-bold text-[#52525B] hover:bg-[#F7F7F9]"
-                    >
-                      공개 라이브러리
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    '/public-library',
+                  )
+                }
+                className="flex h-[46px] w-full items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white text-[15px] font-bold text-[#52525B] hover:bg-[#F7F7F9]"
+              >
+                공개 라이브러리
+              </button>
+            </div>
+          </div>
+        </div>
         <Header />
       </div>
 
@@ -2352,6 +2358,11 @@ export function Stdio_create1() {
             nodeTypes={studioNodeTypes}
             onNodesChange={studio.onNodesChange}
             onEdgesChange={studio.onEdgesChange}
+            onEdgeDoubleClick={(_event, edge) => {
+              studio.disconnectEdge(
+                edge.id,
+              )
+            }}
             onConnect={(connection) => {
               if (
                 !isGuidedConnectionAllowed(
@@ -2375,7 +2386,7 @@ export function Stdio_create1() {
               if (
                 isResearchGuidedTutorial &&
                 node.data.node.stage !==
-                  currentGuidedStage
+                currentGuidedStage
               ) {
                 return
               }
@@ -2698,7 +2709,7 @@ export function Stdio_create1() {
                                   if (
                                     isResearchGuidedTutorial &&
                                     selectedNode.data.node.stage ===
-                                      currentGuidedStage
+                                    currentGuidedStage
                                   ) {
                                     setGuidedStepSettingsSaved(
                                       guidedTutorial.currentStepIndex,
@@ -2720,7 +2731,7 @@ export function Stdio_create1() {
                                   if (
                                     isResearchGuidedTutorial &&
                                     selectedNode.data.node.stage ===
-                                      currentGuidedStage
+                                    currentGuidedStage
                                   ) {
                                     setGuidedStepSettingsSaved(
                                       guidedTutorial.currentStepIndex,
