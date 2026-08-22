@@ -2096,7 +2096,7 @@ export function Stdio_create1() {
     )
 
     navigate(
-      `/flows/${flowId}/preview?view=example`,
+      `/workflows/${flowId}/preview?view=example`,
       {
         state,
       },
