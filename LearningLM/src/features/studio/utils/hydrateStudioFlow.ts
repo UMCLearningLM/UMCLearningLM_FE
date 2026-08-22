@@ -309,6 +309,231 @@ function buildSlotConfig(
     : undefined
 }
 
+/**
+ * 공개 라이브러리 복사본이나 구버전 Flow는
+ * Inspector config는 존재하지만 FE 전용 options.value가
+ * 저장되어 있지 않을 수 있습니다.
+ *
+ * 이 경우 config에서 Canvas 표시용 짧은 값을 복원합니다.
+ */
+function getHydratedConfigValueSummary(
+  value: unknown,
+): string | undefined {
+  if (
+    typeof value ===
+    'string'
+  ) {
+    const normalized =
+      value.trim()
+
+    return normalized
+      ? normalized
+      : undefined
+  }
+
+  if (
+    typeof value ===
+      'number' &&
+    Number.isFinite(
+      value,
+    )
+  ) {
+    return String(
+      value,
+    )
+  }
+
+  if (
+    Array.isArray(
+      value,
+    )
+  ) {
+    const values =
+      value
+        .map(
+          (
+            item,
+          ) =>
+            getHydratedConfigValueSummary(
+              item,
+            ),
+        )
+        .filter(
+          (
+            item,
+          ): item is string =>
+            Boolean(
+              item,
+            ),
+        )
+
+    if (
+      values.length ===
+      0
+    ) {
+      return undefined
+    }
+
+    const visibleValues =
+      values.slice(
+        0,
+        2,
+      )
+
+    const remainingCount =
+      values.length -
+      visibleValues.length
+
+    return remainingCount >
+      0
+      ? `${visibleValues.join(', ')} 외 ${remainingCount}개`
+      : visibleValues.join(
+          ', ',
+        )
+  }
+
+  if (
+    typeof value ===
+      'object' &&
+    value !== null
+  ) {
+    const object =
+      value as Record<
+        string,
+        unknown
+      >
+
+    /*
+     * 파일이나 객체형 설정에서는
+     * 사람이 읽을 수 있는 값을 우선 사용합니다.
+     */
+    const preferredKeys = [
+      'fileName',
+      'name',
+      'label',
+      'title',
+      'content',
+      'value',
+    ]
+
+    for (
+      const key of
+        preferredKeys
+    ) {
+      const summary =
+        getHydratedConfigValueSummary(
+          object[key],
+        )
+
+      if (summary) {
+        return summary
+      }
+    }
+
+    /*
+     * 위 이름이 없는 일반 객체도
+     * 내부의 첫 의미 있는 값을 찾습니다.
+     */
+    for (
+      const nestedValue of
+        Object.values(
+          object,
+        )
+    ) {
+      const summary =
+        getHydratedConfigValueSummary(
+          nestedValue,
+        )
+
+      if (summary) {
+        return summary
+      }
+    }
+  }
+
+  return undefined
+}
+
+function getHydratedConfigSummary(
+  config:
+    StudioBlockConfig |
+    undefined,
+): string | undefined {
+  if (!config) {
+    return undefined
+  }
+
+  /*
+   * Canvas에 표시하기 좋은 Inspector 필드를
+   * 먼저 탐색합니다.
+   */
+  const preferredKeys = [
+    'request',
+    'userRequest',
+    'topic',
+    'content',
+    'role',
+    'background',
+    'purpose',
+    'resultUsage',
+    'targetAudience',
+    'customCriteria',
+    'targetTone',
+    'extractionTargets',
+    'requiredTargets',
+    'structure',
+    'format',
+    'length',
+    'readRange',
+    'matchingMode',
+    'compositionMode',
+    'files',
+    'uploadedFiles',
+  ]
+
+  for (
+    const key of
+      preferredKeys
+  ) {
+    const summary =
+      getHydratedConfigValueSummary(
+        config[key],
+      )
+
+    if (summary) {
+      return summary.slice(
+        0,
+        100,
+      )
+    }
+  }
+
+  /*
+   * 블록별 config key가 목록에 없어도
+   * 첫 번째 의미 있는 설정값으로 fallback합니다.
+   */
+  for (
+    const value of
+      Object.values(
+        config,
+      )
+  ) {
+    const summary =
+      getHydratedConfigValueSummary(
+        value,
+      )
+
+    if (summary) {
+      return summary.slice(
+        0,
+        100,
+      )
+    }
+  }
+
+  return undefined
+}
+
 function resolveSlotState(
   options:
     Record<
@@ -384,15 +609,29 @@ function createHydratedSlot(
       ? storedNodeId.trim()
       : `studio-${block.stage.toLowerCase()}-hydrated`
 
-  const value =
+  const config =
+    buildSlotConfig(
+      options,
+    )
+
+  /*
+   * 현재 FE에서 정상 저장한 Flow는
+   * options.value를 우선 사용합니다.
+   *
+   * 공개 라이브러리 복사본이나 구버전 Flow처럼
+   * Inspector config만 있고 value가 없는 경우에는
+   * config에서 Canvas 표시용 summary를 복원합니다.
+   */
+  const storedValue =
     typeof options.value ===
       'string'
       ? options.value
       : undefined
 
-  const config =
-    buildSlotConfig(
-      options,
+  const value =
+    storedValue ??
+    getHydratedConfigSummary(
+      config,
     )
 
   return {
