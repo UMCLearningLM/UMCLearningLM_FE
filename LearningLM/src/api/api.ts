@@ -31,7 +31,7 @@ const api = axios.create({
     API_BASE_URL,
 
   timeout:
-    10_000,
+    60_000,
 })
 
 interface RetryableRequestConfig
