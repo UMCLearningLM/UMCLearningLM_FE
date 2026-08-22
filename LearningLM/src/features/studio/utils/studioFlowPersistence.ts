@@ -558,6 +558,21 @@ function sanitizeStudioBlockConfigForRequest(
     }
   }
 
+    /*
+   * OUT-006 개발자 전달용으로 출력하기
+   *
+   * 이전 FE Inspector가 저장하던 legacy key입니다.
+   * 현재 BE OUT-006 option_schema에는 존재하지 않으며
+   * additionalProperties=false이므로 요청 전에 제거합니다.
+   */
+  if (
+    slotId ===
+    'output-developer-handoff'
+  ) {
+    delete sanitized
+      .normalExceptionSeparated
+  }
+
   return sanitized
 }
 

@@ -368,6 +368,18 @@ function getPreviewOptions(
     ]
   }
 
+    /*
+   * OUT-006에서 과거 FE가 저장했던 legacy option.
+   * 현재 BE schema에는 존재하지 않습니다.
+   *
+   * 저장된 기존 Flow를 직접 Preview하는 경우에도
+   * schema validation 전에 제거합니다.
+   */
+  delete previewOptions
+    .normalExceptionSeparated
+
+  return previewOptions
+
   return previewOptions
 }
 
