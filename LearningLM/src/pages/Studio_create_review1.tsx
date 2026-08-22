@@ -123,6 +123,153 @@ function getAccessToken() {
   )
 }
 
+function getPreviewDisplayContent(
+  resultText: string,
+): string {
+  const trimmed =
+    resultText.trim()
+
+  if (!trimmed) {
+    return ''
+  }
+
+  /*
+   * 모델 또는 서버가 JSON을 markdown code fence로
+   * 감싸서 반환하는 경우도 대응합니다.
+   *
+   * ```json
+   * {...}
+   * ```
+   */
+  const normalized =
+    trimmed
+      .replace(
+        /^```(?:json)?\s*/i,
+        '',
+      )
+      .replace(
+        /\s*```$/,
+        '',
+      )
+      .trim()
+
+  try {
+    const parsed:
+      unknown =
+      JSON.parse(
+        normalized,
+      )
+
+    if (
+      typeof parsed !==
+        'object' ||
+      parsed ===
+        null ||
+      Array.isArray(
+        parsed,
+      )
+    ) {
+      return resultText
+    }
+
+    const data =
+      parsed as
+        Record<
+          string,
+          unknown
+        >
+
+    /*
+     * 현재 Preview API의 실제 구조:
+     *
+     * {
+     *   outputs: [
+     *     {
+     *       key: "...",
+     *       format: "...",
+     *       content: "..."
+     *     }
+     *   ]
+     * }
+     */
+    if (
+      Array.isArray(
+        data.outputs,
+      )
+    ) {
+      const contents =
+        data.outputs
+          .map(
+            (
+              output,
+            ) => {
+              if (
+                typeof output !==
+                  'object' ||
+                output ===
+                  null ||
+                Array.isArray(
+                  output,
+                )
+              ) {
+                return ''
+              }
+
+              const content =
+                (
+                  output as
+                    Record<
+                      string,
+                      unknown
+                    >
+                ).content
+
+              return typeof content ===
+                'string'
+                ? content.trim()
+                : ''
+            },
+          )
+          .filter(
+            Boolean,
+          )
+
+      if (
+        contents.length >
+        0
+      ) {
+        return contents.join(
+          '\n\n',
+        )
+      }
+    }
+
+    /*
+     * 혹시 서버 응답이 나중에
+     *
+     * {
+     *   content: "..."
+     * }
+     *
+     * 형태로 단순화되는 경우도 대응합니다.
+     */
+    if (
+      typeof data.content ===
+      'string'
+    ) {
+      return data.content
+    }
+
+    return resultText
+  } catch {
+    /*
+     * JSON이 아닌 일반 텍스트를 반환한 경우에는
+     * 기존 결과를 그대로 표시합니다.
+     */
+    return resultText
+  }
+}
+
 function getInputFromOptions(
   options:
     Record<
@@ -781,18 +928,11 @@ export function Studio_create_review1() {
             nodes.length >
             0
           ) {
-            const blockResponse =
-              await getStudioBlocks(
-                {
-                  ...(navigationState.tutorialId
-                    ? {
-                        tutorialId:
-                          navigationState.tutorialId,
-                      }
-                    : {}),
-                },
-                accessToken,
-              )
+              const blockResponse =
+                await getStudioBlocks(
+                  {},
+                  accessToken,
+                )
 
             if (
               !blockResponse.success ||
@@ -1042,7 +1182,9 @@ export function Studio_create_review1() {
                   </div>
                 ) : previewResult ? (
                   <p className="whitespace-pre-wrap break-words text-[16px] leading-[27px] text-[#3F3F46]">
-                    {previewResult.resultText}
+                    {getPreviewDisplayContent(
+                      previewResult.resultText,
+                    )}
                   </p>
                 ) : (
                   <div className="flex min-h-[310px] items-center justify-center text-[15px] text-[#9A9AA3]">
