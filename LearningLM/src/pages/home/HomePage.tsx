@@ -557,9 +557,9 @@ export function HomePage() {
             </div>
 
             <iframe
-              src="../public/standalone"
-              title="."
-              className="min-h-64 w-full  h-full"
+              src="/standalone.html"
+              title="LearningLM 블록 흐름 모션"
+              className="min-h-64 h-full w-full"
             />
           </div>
         </section>
